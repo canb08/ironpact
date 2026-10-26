@@ -36,13 +36,13 @@ select is((select count(*) from pg_policies where schemaname = 'public'
 select ok(p.prosecdef, p.proname || ': SECURITY DEFINER')
 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public' and p.proname in
- ('is_crewmate','is_member','create_crew','create_invite','leave_crew',
+ ('is_crewmate','is_member','create_crew','create_invite','redeem_invite','leave_crew',
   'create_export_token','revoke_export_token','list_export_tokens');
 select ok(coalesce('search_path=""' = any(p.proconfig), false),
   p.proname || ': empty search_path')
 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public' and p.proname in
- ('is_crewmate','is_member','create_crew','create_invite','leave_crew',
+ ('is_crewmate','is_member','create_crew','create_invite','redeem_invite','leave_crew',
   'create_export_token','revoke_export_token','list_export_tokens');
 select ok(not has_function_privilege('anon', p.oid, 'EXECUTE'),
   p.proname || ': anon cannot execute')

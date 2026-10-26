@@ -86,10 +86,75 @@ select throws_ok($q$select public.create_crew('Missing identity','Europe/Amsterd
 select throws_ok($q$select public.create_invite('00000000-0000-0000-0000-000000000000')$q$,
  'P0001','unauthenticated','Invite creation rejects authenticated role without a user identity');
 reset role;
--- redeem_invite is deliberately not stubbed. The frozen UUID/RAISE contract
--- cannot durably count failed attempts in invite_attempts: RAISE rolls back
--- those writes. D-12 redemption, D-13 rate limiting, D-14 capacity, and D-15
--- rejoin need the contract decision recorded in the A3 PR before implementation.
-select diag('NOT IMPLEMENTED: invite redemption, reuse/expiry/revoke rejection, normalization, rate limit, capacity and rejoin await the redeem_invite contract decision');
+-- Redemption's approved result contract commits expected failures, allowing
+-- these real failed calls (not pre-seeded attempts) to exercise the limiter.
+insert into auth.users (id) values
+ ('10000000-0000-4000-8000-000000000003'),
+ ('10000000-0000-4000-8000-000000000004'),
+ ('10000000-0000-4000-8000-000000000005');
+update public.crew_members set left_at = null where user_id = '10000000-0000-4000-8000-000000000001';
+insert into public.crew_invites (crew_id,code_hash,created_by,expires_at,revoked_at)
+select r.crew_id,encode(extensions.digest(v.code,'sha256'),'hex'),
+ '10000000-0000-4000-8000-000000000001',v.expiry,v.revoked
+from invite_results r cross join (values
+ ('0112345678',now()+interval '7 days',null::timestamptz),
+ ('1111111111',now()-interval '1 second',null::timestamptz),
+ ('2222222222',now()+interval '7 days',now()),
+ ('3333333333',now()+interval '7 days',null::timestamptz),
+ ('4444444444',now()+interval '7 days',null::timestamptz)
+) v(code,expiry,revoked) where r.generation = 1;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated"}';
+select is(public.redeem_invite(' oil23-45678 '),
+ jsonb_build_object('crew_id',(select crew_id from invite_results limit 1),'error',null),
+ 'D-12: valid invite normalizes case, spaces, hyphens and O/I/L aliases');
+select is((select role from public.crew_members where user_id = auth.uid()),'member',
+ 'Redemption creates current member');
+select is(public.redeem_invite('4444444444')->>'error','already_in_crew',
+ 'Current member cannot redeem into another active membership');
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000004","role":"authenticated"}';
+select is(public.redeem_invite('0112345678')->>'error','code_dead','D-12: invite cannot be redeemed twice');
+select is(public.redeem_invite('1111111111')->>'error','code_dead','D-12: expired invite cannot be redeemed');
+select is(public.redeem_invite('2222222222')->>'error','code_dead','D-12: revoked invite cannot be redeemed');
+select is(public.redeem_invite(null)->>'error','code_dead','Null invite returns a recorded failure');
+reset role;
+select is((select used_by from public.crew_invites where code_hash = encode(extensions.digest('0112345678','sha256'),'hex')),
+ '10000000-0000-4000-8000-000000000003'::uuid,'Successful invite records its redeemer');
+select is((select count(*) from public.invite_attempts where user_id = '10000000-0000-4000-8000-000000000004'),
+ 4::bigint,'Failed redemption calls persist their attempt records');
+update public.crews set max_members = 3;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000004","role":"authenticated"}';
+select is(public.redeem_invite('3333333333')->>'error','crew_full','D-14: crew capacity rejects another member');
+reset role;
+select ok((select used_at is null from public.crew_invites where code_hash = encode(extensions.digest('3333333333','sha256'),'hex')),
+ 'Full crew does not consume invite');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated"}';
+select public.leave_crew((select crew_id from invite_results limit 1));
+select is((select count(*) from public.crew_members),0::bigint,'Leaving removes crew membership reads');
+select is(public.redeem_invite('4444444444')->>'error',null::text,'D-15: former member can rejoin');
+select is((select count(*) from public.crew_members where user_id = auth.uid()),1::bigint,
+ 'D-15: rejoin restores membership reads without duplicating membership');
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000005","role":"authenticated"}';
+select is(public.redeem_invite('not-a-code')->>'error','code_dead',
+ 'D-13: failed attempt ' || n || ' returns code_dead') from generate_series(1,10) n;
+select is(public.redeem_invite('not-a-code')->>'error','slow_down','D-13: eleventh failed attempt in an hour is rate limited');
+reset role;
+select is((select count(*) from public.invite_attempts where user_id = '10000000-0000-4000-8000-000000000005'),
+ 10::bigint,'D-13: ten actual failed calls remain recorded after rate limiting');
+update public.invite_attempts set at = now()-interval '2 hours' where user_id = '10000000-0000-4000-8000-000000000005';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000005","role":"authenticated"}';
+select is(public.redeem_invite('not-a-code')->>'error','code_dead','D-13: failed attempts expire after one hour');
+select throws_ok($q$insert into public.invite_attempts(user_id) values(auth.uid())$q$,'42501',null,
+ 'Client cannot tamper with invite attempts');
+set local request.jwt.claims = '{"role":"authenticated"}';
+select throws_ok($q$select public.redeem_invite('0112345678')$q$,'P0001','unauthenticated',
+ 'Redemption rejects authenticated role without identity');
+reset role;
+set local role anon;
+select throws_ok($q$select public.redeem_invite('0112345678')$q$,'42501',null,'Anon cannot call redeem_invite');
+reset role;
 select * from finish();
 rollback;

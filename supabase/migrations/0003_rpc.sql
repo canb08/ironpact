@@ -59,11 +59,57 @@ begin
 end;
 $$;
 
--- redeem_invite is deliberately not installed pending a contract decision.
--- E4.3 requires persistent failed attempts, but the frozen UUID/RAISE contract
--- rolls back those attempts with the failed statement. A safe implementation
--- needs a committed error result or a separately committed trusted limiter.
--- There is no callable stub and no unthrottled redemption path.
+-- Approved A3 contract change: expected failures are values, so failed-attempt
+-- records commit with the response. Unexpected errors still roll back normally.
+create function public.redeem_invite(code text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  caller uuid := auth.uid();
+  normalized text;
+  digest_hex text;
+  target_crew uuid;
+  invitation public.crew_invites%rowtype;
+  capacity integer;
+  failure text;
+begin
+  if caller is null then raise exception 'unauthenticated'; end if;
+  perform pg_advisory_xact_lock(hashtextextended('crew-user:' || caller::text, 0));
+  if (select count(*) from public.invite_attempts a
+      where a.user_id = caller and a.at > now() - interval '1 hour') >= 10 then
+    return jsonb_build_object('crew_id', null, 'error', 'slow_down');
+  end if;
+  normalized := translate(upper(regexp_replace(code, '[- ]', '', 'g')), 'ILO', '110');
+  if normalized is null or normalized !~ '^[0-9A-HJKMNP-TV-Z]{10}$' then
+    failure := 'code_dead';
+  else
+    digest_hex := encode(extensions.digest(normalized, 'sha256'), 'hex');
+    select i.crew_id into target_crew from public.crew_invites i where i.code_hash = digest_hex;
+    if target_crew is null then
+      failure := 'code_dead';
+    else
+      -- Rotation, leave and redemption share the crew lock. Re-read the invite
+      -- after taking it so capacity and single use survive concurrent requests.
+      select c.max_members into capacity from public.crews c where c.id = target_crew for update;
+      select * into invitation from public.crew_invites i where i.code_hash = digest_hex for update;
+      if not found or capacity is null or invitation.expires_at <= now()
+          or invitation.used_at is not null or invitation.revoked_at is not null then
+        failure := 'code_dead';
+      elsif exists (select 1 from public.crew_members m where m.user_id = caller and m.left_at is null) then
+        failure := 'already_in_crew';
+      elsif (select count(*) from public.crew_members m where m.crew_id = target_crew and m.left_at is null) >= capacity then
+        failure := 'crew_full';
+      else
+        insert into public.crew_members (crew_id, user_id, role) values (target_crew, caller, 'member')
+          on conflict (crew_id, user_id) do update set left_at = null;
+        update public.crew_invites set used_at = now(), used_by = caller where id = invitation.id;
+        return jsonb_build_object('crew_id', target_crew, 'error', null);
+      end if;
+    end if;
+  end if;
+  insert into public.invite_attempts (user_id) values (caller);
+  return jsonb_build_object('crew_id', null, 'error', failure);
+end;
+$$;
 
 create function public.leave_crew(crew_id uuid) returns void
 language plpgsql security definer set search_path = '' as $$
@@ -118,10 +164,10 @@ begin
 end;
 $$;
 
-revoke all on function public.create_crew(text, text), public.create_invite(uuid),
+revoke all on function public.create_crew(text, text), public.create_invite(uuid), public.redeem_invite(text),
   public.leave_crew(uuid), public.create_export_token(text), public.revoke_export_token(uuid),
   public.list_export_tokens() from public, anon, authenticated;
-grant execute on function public.create_crew(text, text), public.create_invite(uuid),
+grant execute on function public.create_crew(text, text), public.create_invite(uuid), public.redeem_invite(text),
   public.leave_crew(uuid), public.create_export_token(text), public.revoke_export_token(uuid),
   public.list_export_tokens() to authenticated;
 
