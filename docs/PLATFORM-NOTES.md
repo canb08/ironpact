@@ -16,3 +16,4 @@ Device verification register (reserved for the platform tickets):
 - Keepalive (E3.9): [GitHub schedule docs](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) limit the 60-day inactivity disablement rule to public repositories. SETUP retains a future heartbeat as a guard, not a private-repo requirement.
 
 Phone APIs, installation, startup images and push remain unverified until their platform tickets and real-device checks. A1's service worker only precaches the build manifest.
+| WCAG contrast thresholds | 4.5:1 body text, 3:1 large text and UI graphics. Dark Titanium #C9CCD1 on #121214 = 11.62:1 (culori), passes. Five light-theme/Obsidian pairs fail → DECISIONS L1. | https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Understanding_WCAG/Perceivable/Color_contrast | 2026-10-26 |
