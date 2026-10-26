@@ -1,0 +1,4 @@
+* text=auto eol=lf
+tests/fixtures/** -text
+*.png binary
+*.mp4 binary
