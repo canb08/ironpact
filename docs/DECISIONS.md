@@ -1,0 +1,93 @@
+# Decisions
+
+Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims that later-phase features have shipped.
+
+## Canonical register (§1.6 with errata applied)
+
+- D1: User-facing SPOTTER; repo/package/Dexie `ironpact`; export prefix `spx_` (E1.1).
+- D2: Floor · Log · Crew · Progress; Settings behind the avatar.
+- D3: Invite codes are 10-character Crockford base32, hashed, single use, expire after seven days, shown in two groups of five.
+- D4: Six-digit email OTP is primary; browser magic link is the fallback (E3.2).
+- D5: At most 2.0 credits per local day; weekly target defaults to 3, range 1–7.
+- D6: The Bar gains one plate when both FULL, holds when both at least HELD, loses at most one when anyone REST unless spotted; freeze remains unused in schema (E2.5).
+- D7: Iron 0–3 #9AA0A6; Steel 4–7 #7FA7C9; Titanium 8–15 #C9CCD1; Obsidian 16+ #1A1420 with molten rim (E2.1).
+- D8: Spots open Sunday noon crew time, require own target + 1 credit, one per member per calendar month without rollover.
+- D9: Readiness rows store 1–3; sum ≤5 suggests MIN; skip gives no suggestion (E2.2).
+- D10: Nudge when all working sets reach target and max RPE ≤8 or no RPE; suppress after a gap over 14 days.
+- D11: Partner PR, nudge, recap, spot and opt-in partner start may push; hype never pushes; cap three/day and quiet hours 22:00–08:00 recipient time, subject to E5.10/E9.1 exemptions.
+- D12: Export §5 wins; runs and each martial discipline sum daily; max working-set RPE; distinct notes joined with semicolon and capped at 120; Weight → lifts → martial → Run → MIN.
+- D13: Export is symmetric and personal, at most three active tokens, default lines with JSON/CSV options.
+- D14: DB/import RPE 5–10 step 0.5, weight 30–300, names 1–20; forms RPE 6–10, weight 30–250, names 1–16 (E2.3).
+- D15: Running rest timer occupies the top read-only zone, controls directly above LOG SET, steppers remain usable; no sheet over controls (E7.1).
+- D16: Android vibrations: logged [18], PR [30,40,30,40,120], timer [80,60,80,60,200].
+- D17: Initial JS ≤170 KB gzip; fonts ≤220 KB and four files, aim ≤180 KB, drop Anybody first.
+- D18: Martial disciplines: BJJ, Muay Thai, Boxing, Kickboxing, Judo, Wrestling, MMA, Karate, plus free text ≤16 characters.
+
+## §10 overrides
+
+- E0.1: Ignore corrupted pasted sections; validate real YYYY-MM-DD dates and full 43-character export-token suffixes; invalid token gets delayed empty 401.
+- E0.2: Ignore the leftover drafting note at the end of §3.
+- E0.3: Resolve stale source-document section pointers using §10.0's mapping.
+- E1.1: Canonical identifiers are SPOTTER, `ironpact`, and `spx_`.
+- E1.2: Scan tracked files and dist for full export tokens, secret-key prefixes, privileged-key assignments and JWT signatures.
+- E2.1: Use the canonical four-tier palette above; no Bare bar or Bronze.
+- E2.2: Readiness is 1–3 per row, sum ≤5 suggests MIN.
+- E2.3: Forms are stricter than DB checks; import validation matches DB.
+- E2.4: Reaction kinds are light_weight, clean, again, chalk; no emoji.
+- E2.5: Schema allows spot/freeze; freeze is never written.
+- E2.6: Use the final copy table and gender-neutral partner references.
+- E2.7: E6.2 is the sole Copy for my AI template.
+- E3.1: Custom SMTP is mandatory before inviting a partner; organization-member delivery is only a first-test stop-gap.
+- E3.2: Both signup and magic-link templates include the token; OTP length 6, expiry 600 seconds, UI reads VITE_OTP_LENGTH.
+- E3.3: Never set reserved SUPABASE_ secrets; use injected project keys and set only custom push/dispatch secrets.
+- E3.4: VAPID subject is the application's HTTPS URL, never an email.
+- E3.5: Persist verify_jwt=false for export, health, push-dispatch and rest-alarm in Supabase config with CI checks.
+- E3.6: Build generates CSP headers from the real backend origins and rejects surviving project-ref placeholders.
+- E3.7: Shortcuts are Android-only; generate iOS startup images before device release.
+- E3.8: Join offers copy, user-triggered paste, URL prefill when available, and manual entry.
+- E3.9: Public-repo inactivity can disable schedules; retain the monthly heartbeat only as a guard.
+- E3.10: Phase 4 uses LazyMotion/domAnimation/m.*, lazy domMax/confetti; measure the Log route with that code included.
+- E4.1: Apply the corrected cascade/set-null/restrict foreign keys and test complete account deletion.
+- E4.2: Challenge joining checks the caller, crew membership and proposed status.
+- E4.3: Store invite attempts in a table without client policies for rate limiting.
+- E4.4: Compute acted-on nudges from credit within 24 hours; drop the stored flag.
+- E4.5: LWW guard returns NULL on stale writes and runs before updated_at.
+- E4.6: Exercise preferences, reactions and bodyweights use deterministic UUIDv5 natural keys; date moves replace identity.
+- E4.7: save_push_subscription RPC reassigns unique endpoints to the caller; client insert/update policies are removed.
+- E4.8: Viewing clients verify partner PRs; push waits two minutes if feasible, otherwise sends immediately.
+- E4.9: Reject export-keyword labels and conflicting martial/lift labels.
+- E5.1: Upsert with returned rows; fetch and reconcile any LWW-dropped row.
+- E5.2: Bisect 4xx batches and mark only failing individual rows dead.
+- E5.3: Pull with (updated_at,id) keyset pagination and five-second overlap.
+- E5.4: Measure and apply server clock offset on every launch; ten minutes only controls the warning.
+- E5.5: Sessions use device timezone at start; refresh profile timezone on launch; crew weeks compare local dates, Monday start.
+- E5.6: MIN entries earn 0.5, gym/run/martial sessions with qualifying entries earn 1, gym Do MIN earns 1, cap 2/day.
+- E5.7: Week close is SQL close_week via pg_cron, not an Edge Function; SQL/client credits share fixtures.
+- E5.8: Crew creation and member join weeks cannot lose plates.
+- E5.9: Skip partner-start push for sessions received over ten minutes late.
+- E5.10: Partner PR, recap, spot and rest-alarm bypass the credited-today suppression.
+- E5.11: Week debug mode exists only in dev or mock builds.
+- E6.1: Vault sync pulls the full export with ETag at most hourly and replaces the whole SPOTTER section on 200.
+- E6.2: Use the canonical personal-export instructions, validated header and token stored separately as a secret.
+- E6.3: Banned-copy scans cover only UI copy and shared push copy.
+- E6.4: Keep golden fixtures byte-exact; test reserved labels and separator handling.
+- E7.1: Timer controls/LOG SET/Undo/finish/next start below 60% viewport, steppers/RPE below 40%, compact RPE below 700px.
+- E7.2: Volume PR only at finish as a badge; at most one takeover per exercise/session; foreground visits define screen opens.
+- E7.3: Three readiness skips enable auto-skip, reversible in Settings.
+- E7.4: Seasons and DOTS move to Stretch; Duels stay v1.
+- E7.5: Same-day weigh-in overwrites its deterministic row.
+- E7.6: Crew defaults to Crew, editable later; onboarding never asks for it.
+- E7.7: Presence includes planned_sets and last_active_at.
+- E9.1: v1 self-push rest alarm is device-verified behind a flag, with foreground fallback and no cap/quiet-hours suppression.
+- E9.2: v1 shows an offline PR-within-reach cue outside warm-ups and comeback mode.
+- E9.3: v1 plate-math equivalents use pure arithmetic.
+- E9.4: v1 app badge counts unseen good news only, clears on Crew open, feature-detected no-op fallback.
+
+## A1 scaffold (2026-10-26)
+
+- `npm view <package> version` selects current stable versions: Vite 8 (table 7), React plugin 6, TypeScript 7 (table 5), React Router 8 (table 7), PWA plugin 2 (table 1), ESLint 10 and Vitest 5. Routing remains SPA data mode; PWA remains injectManifest. Exact versions are in STACK.md.
+- TypeScript 7 has no stable compiler API for typescript-eslint. Use Microsoft’s [documented side-by-side aliases](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0): `@typescript/native` → `typescript@7.0.2` provides `tsc`, and `typescript` → `@typescript/typescript6@6.0.2` provides the supported lint API. Both are exact pins; no peer overrides or install bypasses.
+- Secret scanner tests live in-source in the allowed script via Vitest includeSource, avoiding an out-of-scope test file.
+- Folder placeholders follow §4.2 with E5.7/E9.1 applied: credits fixtures and rest-alarm are reserved, functions/week-close is omitted. Future implementation files are not created as stubs.
+- A1's SPOTTER text is confined to the allowed router and HTML; a later ticket can add the frozen copy module. No backend account setup, device feature, fonts, motion or deployment is implemented here.
+- Size-limit conservatively counts every page JS chunk plus registration; font count and total raw bytes are also checked. Revisit chunk selection when lazy feature routes land.
