@@ -14,8 +14,9 @@ select has_table('public', t, t || ' exists') from unnest(array[
 select is((select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public' and c.relkind in ('r','p') and not c.relrowsecurity),
   0::bigint, 'RLS is enabled dynamically on EVERY public table, including future tables');
-select is((select count(*) from pg_policies where schemaname = 'public'), 0::bigint,
-  'A2 intentionally grants no client policies; A3 owns RPCs and policies');
+select is((select count(*) from pg_policies where schemaname = 'public'
+  and tablename in ('crew_invites','export_tokens','invite_attempts','push_log')), 0::bigint,
+  'Secret and server-only tables have no client policies');
 select hasnt_column('public','nudges','acted_on','E4.4 drops stored acted_on');
 select hasnt_column('public','reactions','emoji','E2.4 replaces emoji');
 select has_column('public','reactions','kind','E2.4 reaction kind exists');
