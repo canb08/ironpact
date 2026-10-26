@@ -1,0 +1,23 @@
+@import "tailwindcss" source("../");
+
+:root {
+  --bg: #0A0A0B;
+  --surface-1: #121214;
+  --surface-2: #1C1C1F;
+  --surface-3: #26262A;
+  --line: #2E2E33;
+  --line-steel-a: #3A3A40;
+  --line-steel-b: #5A5A62;
+  --text: #F2F0EB;
+  --text-muted: #8A8A90;
+  --text-faint: #5C5C63;
+  --molten: #FF4D00;
+  --molten-glow: #FF4D0059;
+  --on-molten: #0A0A0B;
+  --danger: #FF5A6E;
+  --rest: #6B6B73;
+  --tier-iron: #9AA0A6;
+  --tier-steel: #7FA7C9;
+  --tier-titanium: #C9CCD1;
+  --tier-obsidian: #1A1420;
+}
