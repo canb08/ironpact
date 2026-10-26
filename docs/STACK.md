@@ -42,6 +42,17 @@ Major changes from SPEC §4.1 and the TypeScript side-by-side aliases are record
 
 Resolved with `npm view <package> version`. Culori converts the specification's hex source colours to OKLCH in `tokens.css`; original hex values remain in comments for review. No production dependency changes. UI tests use the separate Vitest config and jsdom setup; application Vite configuration stays unchanged.
 
+## B2 pure core and coverage (2026-10-26)
+
+| Package | Exact version | Purpose |
+|---|---|---|
+| `zod` | `4.6.7` | DB import schemas and narrower form validation (E2.3) |
+| `date-fns` | `4.4.0` | Calendar date and Monday week arithmetic |
+| `@date-fns/tz` | `1.5.0` | Explicit device/crew timezones and DST boundaries (E5.5) |
+| `@vitest/coverage-v8` (dev only) | `5.0.5` | Matches Vitest; mandatory V8 coverage in `npm test` |
+
+Resolved with `npm view <package> version` (coverage pinned to the existing Vitest version). Coverage includes `src/core/**` and `supabase/functions/_shared/**`, with an independently enforced 95% line threshold for each directory. Calendar dates are grouped without timezone conversion; instant-based scheduling uses `TZDate` and calendar addition rather than 168-hour offsets.
+
 ## A2 database tools (2026-10-26)
 
 | Tool | Exact version |
