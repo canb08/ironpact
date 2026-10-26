@@ -85,6 +85,39 @@ insert into public.exercise_muscles (exercise_id,muscle,weight) values
 insert into public.challenges (id,crew_id,created_by,kind,starts_on,ends_on,status) values
  ('b0000000-0000-4000-8000-000000000001','90000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','sessions','2026-10-26','2026-11-01','proposed'),
  ('b0000000-0000-4000-8000-000000000002','90000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','sessions','2026-10-26','2026-11-01','active');
+-- Seed every table checked by the outsider test. Empty tables cannot prove
+-- that a policy actually hides somebody else's data.
+insert into public.crew_invites (crew_id,code_hash,created_by) values
+ ('90000000-0000-4000-8000-000000000001',encode(extensions.digest('rls-invite-fixture','sha256'),'hex'),'10000000-0000-4000-8000-000000000001');
+insert into public.exercise_prefs (id,exercise_id,rest_s,user_id,local_date,client_updated_at) values
+ ('c0000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001',90,'10000000-0000-4000-8000-000000000001','2026-10-25','2026-10-28');
+insert into public.goals (id,kind,target_value,unit,starts_on,user_id,local_date,client_updated_at) values
+ ('c0000000-0000-4000-8000-000000000002','weekly_sessions',3,'sessions','2026-10-26','10000000-0000-4000-8000-000000000001','2026-10-26','2026-10-28');
+insert into public.pr_events (id,exercise_id,source_id,pr_type,value,user_id,local_date,client_updated_at) values
+ ('c0000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000001','e1rm',70,'10000000-0000-4000-8000-000000000001','2026-10-25','2026-10-28');
+insert into public.reactions (id,crew_id,to_user,target_type,target_id,kind,user_id,local_date,client_updated_at) values
+ ('c0000000-0000-4000-8000-000000000004','90000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','session','20000000-0000-4000-8000-000000000002','clean','10000000-0000-4000-8000-000000000001','2026-10-25','2026-10-28');
+insert into public.nudges (id,crew_id,from_user,to_user,sent_on) values
+ ('c0000000-0000-4000-8000-000000000005','90000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','2026-10-26');
+insert into public.streak_tokens (id,crew_id,kind,week_start,covers_user_id,user_id,local_date,client_updated_at) values
+ ('c0000000-0000-4000-8000-000000000006','90000000-0000-4000-8000-000000000001','spot','2026-10-26','10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001','2026-10-26','2026-10-28');
+insert into public.crew_weeks (crew_id,week_start,statuses,plate_delta,plates_after) values
+ ('90000000-0000-4000-8000-000000000001','2026-10-26','{}',0,0);
+insert into public.challenge_participants (challenge_id,user_id) values
+ ('b0000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001');
+insert into public.push_subscriptions (user_id,endpoint,p256dh,auth) values
+ ('10000000-0000-4000-8000-000000000001','https://push.example.test/fixture','synthetic-key','synthetic-auth');
+insert into public.push_log (user_id,sent_on,count) values
+ ('10000000-0000-4000-8000-000000000001','2026-10-26',1);
+insert into public.export_tokens (user_id,token_hash,label) values
+ ('10000000-0000-4000-8000-000000000001',encode(extensions.digest('rls-token-fixture','sha256'),'hex'),'Synthetic fixture');
+insert into public.invite_attempts (user_id) values
+ ('10000000-0000-4000-8000-000000000001');
+select ok(not pg_temp.cannot_read(t), 'D-5: outsider test has protected fixture rows in ' || t)
+from unnest(array['profiles','crews','crew_members','crew_invites','exercise_prefs','sessions','sets',
+ 'cardio_entries','martial_entries','bodyweight_entries','min_entries','goals','pr_events','reactions',
+ 'nudges','streak_tokens','crew_weeks','challenges','challenge_participants','push_subscriptions',
+ 'push_log','export_tokens','invite_attempts']) as t;
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
@@ -125,6 +158,14 @@ select is((select local_date from public.sets where id = '30000000-0000-4000-800
 select is((select local_date from public.cardio_entries limit 1),date '2026-10-24','S15: editing session date moves cardio');
 select is((select local_date from public.martial_entries limit 1),date '2026-10-24','S15: editing session date moves martial');
 select is((select local_date from public.min_entries limit 1),date '2026-10-24','S15: editing session date moves MIN');
+select is(child.client_updated_at,'2026-10-28'::timestamptz,
+ 'S15: editing session date preserves ' || child.relation_name || ' client timestamp')
+from (
+ select 'sets' as relation_name,client_updated_at from public.sets where id = '30000000-0000-4000-8000-000000000001'
+ union all select 'cardio',client_updated_at from public.cardio_entries
+ union all select 'martial',client_updated_at from public.martial_entries
+ union all select 'MIN',client_updated_at from public.min_entries
+) child;
 select is((select local_date from public.sets where id = '30000000-0000-4000-8000-000000000002'),
  date '2026-10-25','S15: editing A session leaves B sets unchanged');
 select throws_ok($q$delete from public.sets$q$,'42501',null,
@@ -133,6 +174,39 @@ select lives_ok($q$update public.sets set deleted_at = now(),client_updated_at =
  where id = '30000000-0000-4000-8000-000000000001'$q$,'Owner can soft-delete own training set');
 select ok((select deleted_at is not null from public.sets where id = '30000000-0000-4000-8000-000000000001'),
  'Owner soft-delete persists');
+-- A second date edit must also move every tombstoned child without changing
+-- its deletion marker or its own edit timestamp.
+update public.sets set deleted_at = '2026-10-29',client_updated_at = '2026-10-29'
+ where id = '30000000-0000-4000-8000-000000000001';
+update public.cardio_entries set deleted_at = '2026-10-29',client_updated_at = '2026-10-29';
+update public.martial_entries set deleted_at = '2026-10-29',client_updated_at = '2026-10-29';
+update public.min_entries set deleted_at = '2026-10-29',client_updated_at = '2026-10-29';
+update public.sessions set local_date = '2026-10-23',client_updated_at = '2026-10-30'
+ where id = '20000000-0000-4000-8000-000000000001';
+select is(child.local_date,date '2026-10-23',
+ 'S15: editing session date moves tombstoned ' || child.relation_name)
+from (
+ select 'sets' as relation_name,local_date from public.sets where id = '30000000-0000-4000-8000-000000000001'
+ union all select 'cardio',local_date from public.cardio_entries
+ union all select 'martial',local_date from public.martial_entries
+ union all select 'MIN',local_date from public.min_entries
+) child;
+select is(child.client_updated_at,'2026-10-29'::timestamptz,
+ 'S15: editing session date preserves tombstoned ' || child.relation_name || ' client timestamp')
+from (
+ select 'sets' as relation_name,client_updated_at from public.sets where id = '30000000-0000-4000-8000-000000000001'
+ union all select 'cardio',client_updated_at from public.cardio_entries
+ union all select 'martial',client_updated_at from public.martial_entries
+ union all select 'MIN',client_updated_at from public.min_entries
+) child;
+select is(child.deleted_at,'2026-10-29'::timestamptz,
+ 'S15: editing session date preserves ' || child.relation_name || ' tombstone')
+from (
+ select 'sets' as relation_name,deleted_at from public.sets where id = '30000000-0000-4000-8000-000000000001'
+ union all select 'cardio',deleted_at from public.cardio_entries
+ union all select 'martial',deleted_at from public.martial_entries
+ union all select 'MIN',deleted_at from public.min_entries
+) child;
 
 set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated"}';
 select ok(pg_temp.cannot_read(t), 'D-5: non-member C reads no rows from ' || t)

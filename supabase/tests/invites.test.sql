@@ -91,7 +91,8 @@ reset role;
 insert into auth.users (id) values
  ('10000000-0000-4000-8000-000000000003'),
  ('10000000-0000-4000-8000-000000000004'),
- ('10000000-0000-4000-8000-000000000005');
+ ('10000000-0000-4000-8000-000000000005'),
+ ('10000000-0000-4000-8000-000000000006');
 update public.crew_members set left_at = null where user_id = '10000000-0000-4000-8000-000000000001';
 insert into public.crew_invites (crew_id,code_hash,created_by,expires_at,revoked_at)
 select r.crew_id,encode(extensions.digest(v.code,'sha256'),'hex'),
@@ -110,6 +111,11 @@ select is(public.redeem_invite(' oil23-45678 '),
  'D-12: valid invite normalizes case, spaces, hyphens and O/I/L aliases');
 select is((select role from public.crew_members where user_id = auth.uid()),'member',
  'Redemption creates current member');
+reset role;
+select is((select count(*) from public.invite_attempts where user_id = '10000000-0000-4000-8000-000000000003'),
+ 0::bigint,'Successful redemption does not count as a failed attempt');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated"}';
 select is(public.redeem_invite('4444444444')->>'error','already_in_crew',
  'Current member cannot redeem into another active membership');
 set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000004","role":"authenticated"}';
@@ -141,8 +147,29 @@ select is(public.redeem_invite('not-a-code')->>'error','code_dead',
  'D-13: failed attempt ' || n || ' returns code_dead') from generate_series(1,10) n;
 select is(public.redeem_invite('not-a-code')->>'error','slow_down','D-13: eleventh failed attempt in an hour is rate limited');
 reset role;
+-- Make the unused invite joinable so the limiter, rather than capacity or code
+-- validity, is the only reason this caller cannot redeem it.
+update public.crews set max_members = 8;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000005","role":"authenticated"}';
+select is(public.redeem_invite('3333333333'),jsonb_build_object('crew_id',null,'error','slow_down'),
+ 'D-13: ten failed attempts also block a valid unused invite');
+reset role;
+select ok((select used_at is null and used_by is null from public.crew_invites
+ where code_hash = encode(extensions.digest('3333333333','sha256'),'hex')),
+ 'D-13: rate limiting leaves a valid invite unused');
+select is((select count(*) from public.crew_members where user_id = '10000000-0000-4000-8000-000000000005'),
+ 0::bigint,'D-13: rate limiting does not create a membership');
 select is((select count(*) from public.invite_attempts where user_id = '10000000-0000-4000-8000-000000000005'),
  10::bigint,'D-13: ten actual failed calls remain recorded after rate limiting');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000006","role":"authenticated"}';
+select is(public.redeem_invite('3333333333'),
+ jsonb_build_object('crew_id',(select crew_id from invite_results limit 1),'error',null),
+ 'D-13: another caller can redeem the invite while the first caller is rate limited');
+reset role;
+select is((select count(*) from public.invite_attempts where user_id = '10000000-0000-4000-8000-000000000006'),
+ 0::bigint,'D-13: another caller successful redemption creates no failed attempt');
 update public.invite_attempts set at = now()-interval '2 hours' where user_id = '10000000-0000-4000-8000-000000000005';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000005","role":"authenticated"}';
