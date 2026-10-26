@@ -91,3 +91,15 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 - Folder placeholders follow §4.2 with E5.7/E9.1 applied: credits fixtures and rest-alarm are reserved, functions/week-close is omitted. Future implementation files are not created as stubs.
 - A1's SPOTTER text is confined to the allowed router and HTML; a later ticket can add the frozen copy module. No backend account setup, device feature, fonts, motion or deployment is implemented here.
 - Size-limit conservatively counts every page JS chunk plus registration; font count and total raw bytes are also checked. Revisit chunk selection when lazy feature routes land.
+
+## A2 database contract (2026-10-26)
+
+- E2.2/E2.3: readiness requires all three integer rows in 1–3; DB/import names allow 20 characters, bodyweight 300 kg, and every RPE accepts 5–10 in exact half steps. RPE uses unconstrained `numeric` so PostgreSQL cannot round an invalid fraction into a valid value before the CHECK runs.
+- E2.4/E2.5: reactions use `kind` (four chalk stamps), including its natural-key UNIQUE constraint; streak tokens allow spot/freeze, with no freeze-writing logic.
+- E3.2/E3.5: local Auth defaults to six-digit OTPs expiring in 600 seconds; export/health/push-dispatch/rest-alarm persist `verify_jwt=false`. CI asserts these values.
+- E4.1/E4.3/E4.4: apply the corrected cascade/set-null/restrict FKs (crew creator becomes nullable), add indexed server-owned invite attempts, and omit stored `nudges.acted_on`. The account-deletion RPC remains A3's responsibility.
+- E4.5: `a_lww_guard` returns NULL before `b_set_updated_at` on stale writes. Accepted equal timestamps remain last-arrival-wins. Timestamp updates preserve the literal table contract: `jsonb_populate_record` updates `received_at` only on rows that have it, so exercises/profiles/challenges do not gain an undocumented column ([PostgreSQL JSON record rules](https://www.postgresql.org/docs/current/functions-json.html)).
+- E4.6: client IDs remain required without random server defaults on exercise preferences, reactions and bodyweights; UUIDv5 generation belongs to the later client ticket. The three server-created UUID defaults from §4.3 remain.
+- E4.9: reserved labels are case-insensitive CHECKs; martial labels cannot collide with global or same-owner active lift labels, including on reverse exercise edits. Normalize and lock the label before either check so concurrent READ COMMITTED writes cannot create a cross-table collision. Soft-deleted labels do not reserve the namespace.
+- E5.5/E5.6: retain session-start device timezone/local date and force child rows to that date; standalone bodyweights keep their own date. Preserve `sessions.kind`/`mode` and MIN rows; credit calculation and Monday crew-week grouping are deferred to their RPC/client tickets.
+- A2 enables RLS on all 25 public tables and deliberately creates no policies or application RPCs; A3 supplies the allowed access. pgTAP tests run as the local test owner to validate schema behaviour independently of those future policies.
