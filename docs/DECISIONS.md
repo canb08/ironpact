@@ -112,6 +112,10 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 - Approved scope extension: `schema.test.sql` now checks that server-only tables have no client policies, replacing its obsolete A2-only zero-public-policies assertion. The user explicitly approved both changes in this chat on 2026-10-26 ("Yes, apply both fixes").
 - User locks serialize rate counting and crew creation/join/leave, crew-row locks serialize capacity, invite rotation and consumption, and token-user locks serialize the three-active-token cap. Session date propagation preserves child timestamps and locks parent reads to prevent concurrent child inserts from inheriting the old date. These locking mechanisms were reviewed; the sequential pgTAP suite does not claim to exercise simultaneous requests.
 
+## Lead decisions 2026-10-26
+- **L1 · Contrast conflicts from B1 (§3.2.4):** dark theme (the hero) keeps its source colours. Obsidian's 3:1 is carried by its molten rim, so the contrast test asserts rim vs surface-1, not the core. Light theme only: molten, Iron, Steel and Titanium get darker light-theme variants (same hue, lower lightness) until molten ≥ 4.5:1 on surface-2 and each tier ≥ 3:1 on surface-1. Implemented in the Phase 4 visual-system ticket; until then B1's five `it.fails` cases document the gap.
+- **L2 · `redeem_invite` returns jsonb** `{crew_id, error}` (approved on A3) so failed-attempt rows commit and the rate limit works.
+
 ## A5 export endpoint (2026-10-26)
 
 - Scope and formatter remain frozen. No migration, client code or export formatter was changed. The user explicitly approved guarded atomic updates for the export quota ("Yes, use guarded updates"): compare both original window fields, owner, ID and non-revoked state, then re-read on a lost race. This preserves the fixed-window count without a new SQL RPC; it uses function time rather than database `now()` and fails closed after 100 collisions. The strict older-than-one-hour rule and schema's creation-time initial window follow §5.1's SQL.
