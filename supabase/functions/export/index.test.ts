@@ -83,6 +83,9 @@ if (import.meta.vitest) {
         exercises: [{ id: exercise, export_label: 'Archive lift', kind: 'lift' }], sets: [sets[0]!] };
       const call = async (token: string | null = a.token, suffix = '', init: RequestInit = {}) => {
         const headers = new Headers(init.headers);
+        // Compare the function's representation validator without gateway gzip
+        // weakening a GET tag while leaving the bodyless HEAD tag strong.
+        headers.set('Accept-Encoding', 'identity');
         if (token !== null && !headers.has('X-Export-Token')) headers.set('Authorization', `Bearer ${token}`);
         return await fetch(endpoint + suffix, { ...init, headers });
       };
@@ -99,7 +102,6 @@ if (import.meta.vitest) {
         equal(await response.text(), formatExport(input, 'lines'), 'Only A rows byte-match formatExport');
         equal(response.headers.get('Cache-Control'), 'private, no-cache', 'Private revalidation header');
         equal(response.headers.get('X-Content-Type-Options'), 'nosniff', 'No sniffing');
-        assert(!response.headers.has('Access-Control-Allow-Origin'), 'No CORS header');
         assert((await tokenRow(a.token)).last_used_at !== null, 'Last use is recorded');
       });
       await t.step('B token returns only B rows', async () => {
@@ -153,7 +155,8 @@ if (import.meta.vitest) {
         equal(await response.text(), '', '304 empty');
         const head = await call(a.token, '', { method: 'HEAD' });
         equal(head.status, 200, 'HEAD succeeds');
-        equal(head.headers.get('ETag'), etag, 'HEAD ETag');
+        assert(head.headers.get('ETag') === etag,
+          `HEAD ETag differs: GET ${etag}, HEAD ${head.headers.get('ETag')}`);
         equal(head.headers.get('Content-Type'), EXPORT_CONTENT_TYPE.lines, 'HEAD content type');
         equal(await head.text(), '', 'HEAD empty');
         const fallback = await call(null, '', { headers: { 'X-Export-Token': a.token } });
@@ -231,22 +234,22 @@ if (import.meta.vitest) {
         }
         const remappedSessions = fixture.sessions.map(row => ({ ...row, id: mapped(row.id),
           user_id: users.get(row.user_id)!, tz: fixture.tz, client_updated_at: at }));
-        dbOk(await admin.from('sessions').insert(remappedSessions));
+        dbOk(await admin.from('sessions').insert(remappedSessions, { defaultToNull: false }));
         const parent = (id: string) => {
           const session = remappedSessions.find(row => row.id === mapped(id));
           assert(session !== undefined, 'Golden parent exists');
           return { session_id: session.id, local_date: session.local_date, user_id: session.user_id };
         };
         dbOk(await admin.from('sets').insert((fixture.sets ?? []).map(row => ({ ...row,
-          id: mapped(row.id), exercise_id: mapped(row.exercise_id), ...parent(row.session_id), client_updated_at: at }))));
+          id: mapped(row.id), exercise_id: mapped(row.exercise_id), ...parent(row.session_id), client_updated_at: at })), { defaultToNull: false }));
         dbOk(await admin.from('cardio_entries').insert((fixture.cardio_entries ?? []).map(row => ({ ...row,
-          id: mapped(row.id), ...parent(row.session_id), client_updated_at: at }))));
+          id: mapped(row.id), ...parent(row.session_id), client_updated_at: at })), { defaultToNull: false }));
         dbOk(await admin.from('martial_entries').insert((fixture.martial_entries ?? []).map(row => ({ ...row,
-          id: mapped(row.id), ...parent(row.session_id), client_updated_at: at }))));
+          id: mapped(row.id), ...parent(row.session_id), client_updated_at: at })), { defaultToNull: false }));
         dbOk(await admin.from('min_entries').insert((fixture.min_entries ?? []).map(row => ({ ...row,
-          id: mapped(row.id), ...parent(row.session_id!), client_updated_at: at }))));
+          id: mapped(row.id), ...parent(row.session_id!), client_updated_at: at })), { defaultToNull: false }));
         dbOk(await admin.from('bodyweight_entries').insert((fixture.bodyweight_entries ?? []).map(row => ({ ...row,
-          id: mapped(row.id), user_id: b.id, client_updated_at: at }))));
+          id: mapped(row.id), user_id: b.id, client_updated_at: at })), { defaultToNull: false }));
         for (const [format, expected] of [['lines', expectedLines], ['json', expectedJson], ['csv', expectedCsv]] as const) {
           const response = await call(b.token, `?format=${format}`);
           equal(response.status, 200, 'Golden format succeeds');
@@ -311,9 +314,13 @@ if (import.meta.vitest) {
     const handler = createExportHandler({ store: () => store, now: () => 1000, wait: async ms => { waits.push(ms); } });
     const headers = { 'X-Export-Token': 'spx_' + 'A'.repeat(43) };
     const first = await handler(new Request(endpoint, { method: 'HEAD', headers }));
+    assert(!first.headers.has('Access-Control-Allow-Origin'), 'Function emits no CORS header');
+    const get = await handler(new Request(endpoint, { headers }));
+    equal(first.headers.get('ETag'), get.headers.get('ETag'), 'Handler HEAD and GET ETag match');
+    await get.body?.cancel();
     const cached = await handler(new Request(endpoint, { headers: { ...headers, 'If-None-Match': first.headers.get('ETag')! } }));
     equal(cached.status, 304, 'Injected conditional response');
-    equal(consumed, 2, 'HEAD and 304 both consume quota');
+    equal(consumed, 3, 'GET, HEAD and 304 all consume quota');
     live = false;
     const revoked = await handler(new Request(endpoint, { headers }));
     equal(revoked.status, 401, 'Concurrent revocation suppresses export');

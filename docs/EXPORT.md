@@ -9,7 +9,7 @@ GET https://<project-ref>.supabase.co/functions/v1/export[?since=YYYY-MM-DD][&fo
 Authorization: Bearer <MY_TOKEN>
 ```
 
-`HEAD` has the same status and representation headers as GET, with no response body. Other methods return 405 with `Allow: GET, HEAD`. This endpoint sends no CORS headers.
+`HEAD` has the same status and representation headers as GET, with no response body. Other methods return 405 with `Allow: GET, HEAD`. The function emits no CORS headers. The local Supabase gateway adds its own CORS header through its [functions-v1 plugin](https://github.com/supabase/supabase/blob/master/docker/volumes/api/kong.yml); removing platform-added headers is outside these function files and must be verified at G1. Gateways may also weaken an ETag when compressing GET output; weak If-None-Match comparison remains supported. CI requests identity encoding when comparing literal GET/HEAD validators.
 
 Tokens have the exact shape `^spx_[A-Za-z0-9_-]{43}$`. The alternative header is `X-Export-Token: <MY_TOKEN>`. An export Bearer credential takes precedence; a normal gateway JWT may accompany the X-Export-Token fallback. A `token` query parameter is always rejected with 400, including an empty value. Never put a token in a URL, note, log or commit.
 
