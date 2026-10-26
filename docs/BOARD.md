@@ -11,7 +11,7 @@ Status: `todo` · `running` · `pr #n` · `merged` · `parked (why)`. Pull befor
 | A3 | RLS, RPCs, security tests | Codex Astra | friend | merged #6 |
 | B1 | Tokens, UI primitives, copy bank | Codex Sol | Can | merged #7 |
 | C1 | Frozen contracts (types + Repo/Remote) | Claude | Can's Claude | merged (direct) |
-| A5 | Edge Functions export + health | Codex Sol | friend | pr #8: code reviewed OK; CI `db` fails at "Start local Auth, API and function services" (supabase start). Diagnostic log line pushed (e376e41); fix in the same Codex chat |
+| A5 | Edge Functions export + health | Codex Sol | friend | pr #8: code reviewed OK; CI `db` fails at "Start local Auth, API and function services" (supabase start). Cause found: `supabase/config.toml` declares `[functions.push-dispatch]` + `[functions.rest-alarm]` but those folders have no `index.ts` → `supabase start` aborts (plus a Docker Hub `toomanyrequests`, likely transient). Fix: comment those two blocks out until Phase 7 (note in DECISIONS), rerun |
 | B2 | Pure core: validate, weeks, credits, e1RM | Codex Sol | Can | merged #9 |
 | A6 | Offline data layer + mock backend | Codex **Astra** | — | todo (after a fresh window) |
 | R1 | Verify ⚠️ platform facts (research) | Codex Sol, internet | — | todo |
