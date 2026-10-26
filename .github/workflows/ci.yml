@@ -34,6 +34,11 @@ jobs:
       - uses: supabase/setup-cli@v3
         with:
           version: 2.122.0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.9.8
+      - name: Check Edge Functions
+        run: deno check --no-config --no-lock supabase/functions/export/index.ts supabase/functions/health/index.ts
       - name: Verify database and function configuration
         run: |
           python3 - <<'PY'
@@ -56,6 +61,51 @@ jobs:
         run: supabase db reset --local --yes
       - name: Run database tests
         run: supabase test db
-      - name: Stop local database
+      - name: Start local Auth, API and function services
+        run: |
+          # Restart from a full stack: db start alone has no Auth or PostgREST.
+          supabase stop --no-backup
+          umask 077
+          supabase start --exclude edge-runtime > "$RUNNER_TEMP/supabase-start.log" 2>&1
+          supabase functions serve > "$RUNNER_TEMP/supabase-functions.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/supabase-functions.pid"
+      - name: Run Edge Function integration tests
+        run: |
+          umask 077
+          supabase status -o env > "$RUNNER_TEMP/supabase-status.env" 2> "$RUNNER_TEMP/supabase-status.log"
+          set -a
+          source "$RUNNER_TEMP/supabase-status.env"
+          set +a
+          export SUPABASE_URL="${SUPABASE_URL:-${API_URL:-}}"
+          export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SECRET_KEY:-}}"
+          export SUPABASE_ANON_KEY="${ANON_KEY:-${PUBLISHABLE_KEY:-}}"
+          export EXPORT_TEST_URL="$SUPABASE_URL/functions/v1/export"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_SERVICE_ROLE_KEY"
+          test -n "$SUPABASE_ANON_KEY"
+          printf '::add-mask::%s\n' "$SUPABASE_SERVICE_ROLE_KEY" "$SUPABASE_ANON_KEY"
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --max-time 2 "$SUPABASE_URL/functions/v1/health" | grep -qx ok; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then
+            echo 'Local Edge Functions did not become ready.'
+            exit 1
+          fi
+          deno test --no-config --no-lock --allow-env --allow-net --allow-read=tests/fixtures/export supabase/functions/export/index.test.ts
+      - name: Show local container status on failure
+        if: failure()
+        # Do not dump CLI output, environment or request logs: they may contain keys.
+        run: docker ps --all --filter name=supabase_ --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+      - name: Stop local stack
         if: always()
-        run: supabase stop --no-backup
+        run: |
+          if [ -f "$RUNNER_TEMP/supabase-functions.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/supabase-functions.pid")" 2>/dev/null || true
+          fi
+          supabase stop --no-backup
+          rm -f "$RUNNER_TEMP/supabase-status.env" "$RUNNER_TEMP/supabase-start.log" "$RUNNER_TEMP/supabase-status.log" "$RUNNER_TEMP/supabase-functions.log" "$RUNNER_TEMP/supabase-functions.pid"
