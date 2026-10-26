@@ -66,7 +66,7 @@ jobs:
           # Restart from a full stack: db start alone has no Auth or PostgREST.
           supabase stop --no-backup
           umask 077
-          supabase start --exclude edge-runtime > "$RUNNER_TEMP/supabase-start.log" 2>&1
+          supabase start --exclude edge-runtime > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { grep -iE "error|fail|denied|invalid|unhealthy" "$RUNNER_TEMP/supabase-start.log" | grep -viE "key|secret|jwt" | head -40; exit 1; }
           supabase functions serve > "$RUNNER_TEMP/supabase-functions.log" 2>&1 &
           echo "$!" > "$RUNNER_TEMP/supabase-functions.pid"
       - name: Run Edge Function integration tests
