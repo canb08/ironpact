@@ -30,6 +30,18 @@ Resolved on 2026-10-26 with `npm view <package> version`; every direct npm depen
 
 Major changes from SPEC §4.1 and the TypeScript side-by-side aliases are recorded in DECISIONS.md. No fonts, motion or later-phase feature packages are installed.
 
+## B1 UI test and token tools (2026-10-26)
+
+| Package (dev only) | Exact version |
+|---|---|
+| `@testing-library/react` | `16.3.3` |
+| `@testing-library/user-event` | `14.6.8` |
+| `jsdom` | `30.1.3` |
+| `culori` | `4.0.2` |
+| `@types/culori` | `4.0.1` |
+
+Resolved with `npm view <package> version`. Culori converts the specification's hex source colours to OKLCH in `tokens.css`; original hex values remain in comments for review. No production dependency changes. UI tests use the separate Vitest config and jsdom setup; application Vite configuration stays unchanged.
+
 ## A2 database tools (2026-10-26)
 
 | Tool | Exact version |
