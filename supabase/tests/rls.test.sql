@@ -94,7 +94,7 @@ select is((select count(*) from public.sessions where user_id = '10000000-0000-4
  'D-4: A reads crewmate B sessions');
 select throws_ok($q$insert into public.sets (id,session_id,exercise_id,set_index,reps,weight_kg,logged_at,user_id,local_date,client_updated_at)
  values (gen_random_uuid(),'20000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',2,5,60,now(),'10000000-0000-4000-8000-000000000002','2026-10-25','2026-10-28')$q$,
- '42501',null,'D-2: A cannot insert a set with B user_id');
+ '23503','session_missing','D-2: A cannot insert a set with B user_id');
 select throws_ok($q$update public.sessions set user_id = '10000000-0000-4000-8000-000000000002'
  where id = '20000000-0000-4000-8000-000000000001'$q$,'42501',null,
  'A cannot update own session to B user_id');
@@ -106,7 +106,7 @@ with changed as (update public.sets set reps = 99 where user_id = '10000000-0000
 select is((select count(*) from changed),0::bigint,'Crewmate cannot update B sets');
 select throws_ok($q$insert into public.sets (id,session_id,exercise_id,set_index,reps,weight_kg,logged_at,user_id,local_date,client_updated_at)
  values (gen_random_uuid(),'20000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',2,5,60,now(),'10000000-0000-4000-8000-000000000001','2026-10-25','2026-10-28')$q$,
- '23514','owner_mismatch','D-9: A cannot attach a set to B session');
+ '23503','session_missing','D-9: A cannot attach a set to B session');
 select is((select count(*) from public.bodyweight_entries),0::bigint,
  'D-6: B bodyweight hidden from A while show_bodyweight is false');
 set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}';
