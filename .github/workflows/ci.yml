@@ -25,3 +25,37 @@ jobs:
       - run: npm run size
       - run: npm audit --audit-level=high
         continue-on-error: true
+
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+      - name: Verify database and function configuration
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import tomllib
+
+          config = tomllib.loads(pathlib.Path('supabase/config.toml').read_text())
+          assert config['project_id'] == 'ironpact'
+          assert config['db']['migrations']['enabled'] is True
+          assert config['db']['seed']['enabled'] is True
+          assert config['db']['seed']['sql_paths'] == ['./seed.sql']
+          assert config['auth']['email']['otp_length'] == 6
+          assert config['auth']['email']['otp_expiry'] == 600
+          for name in ('export', 'health', 'push-dispatch', 'rest-alarm'):
+              assert config['functions'][name]['verify_jwt'] is False, name
+          PY
+      - name: Start local database
+        run: supabase db start
+      - name: Apply migrations and seed on a clean local database
+        run: supabase db reset --local --yes
+      - name: Run database tests
+        run: supabase test db
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup
