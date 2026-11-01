@@ -71,3 +71,14 @@ The CLI pin was verified with `npm view supabase version` and the [official v2.1
 Pins verified against the [official Deno v2.9.8 release](https://github.com/denoland/deno/releases/tag/v2.9.8) and [Supabase's JSR package](https://jsr.io/@supabase/supabase-js@2.118.0). The function imports `jsr:@supabase/supabase-js@2.118.0` directly; prerelease package versions are excluded. CI installs Deno with the [official setup action](https://github.com/denoland/setup-deno) (`v2`) and runs `deno check` plus `deno test --no-config --no-lock --allow-env --allow-net --allow-read=tests/fixtures/export supabase/functions/export/index.test.ts`. Read access is limited to the frozen golden fixtures.
 
 After pgTAP, CI restarts a [local Supabase stack](https://supabase.com/docs/reference/cli/supabase-start), including Auth, PostgREST and Kong. A private runner-temporary project copy retains only implemented export/health function declarations, with the checked-in JWT settings preserved; the original config still checks all four planned functions. This avoids validating nonexistent future entrypoints. Unneeded containers are excluded before `supabase functions serve`. [Local connection parameters](https://supabase.com/docs/reference/cli/supabase-status) are read into a private runner-temporary file, mapped to the test environment and masked. CLI and function logs stay private; failure diagnostics filter key/secret/JWT lines. No hosted credentials are required, and cleanup runs even when tests fail.
+
+## A6 offline data tools (2026-11-01)
+
+| Package | Exact version | Purpose |
+|---|---|---|
+| `dexie` | `4.4.7` | IndexedDB mirror, outbox and atomic transactions |
+| `dexie-react-hooks` | `4.4.0` | Later UI consumers can observe Repo queries |
+| `uuid` | `14.0.3` | Deterministic UUIDv5 bodyweight IDs |
+| `fake-indexeddb` (dev) | `6.2.7` | Contract tests against the real local data layer |
+
+Each pin was checked with `npm view <package> version` and installed with `--save-exact`. The existing `date-fns@4.4.0` and `@date-fns/tz@1.5.0` pins from B2 remain unchanged. Sources: [Dexie transactions](https://dexie.org/docs/Dexie/Dexie.transaction()), [transaction abort](https://dexie.org/docs/Transaction/Transaction.abort()), [date-fns timezone utilities](https://github.com/date-fns/tz), [UUIDv5](https://github.com/uuidjs/uuid#uuidv5name-namespace-buffer-offset).
