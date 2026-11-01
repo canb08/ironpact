@@ -10,7 +10,6 @@ Status: `todo` · `running` · `pr #n` · `merged` · `parked (why)`. Pull befor
 | Grok (SuperGrok) | friend | independent config/research (R1, A8), then B3 |
 | Grok (SuperGrok) | Can | independent PWA shell (B7), then B5 |
 Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub connector works). Risky code (RLS, sync, export) stays on Codex.
-**Until A6 merges:** B-tickets work on pre-made branches = main + A6 draft (`B3-auth-crew`, `B4-session`, `B5-floor-quicklog`). Commit only to that branch; the Lead rebases them onto main after A6 merges.
 
 ## Phase 0–1 (walking skeleton)
 | ID | What | Engine | Claimed by | Status |
@@ -29,14 +28,12 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
 | A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | Can (friend's Codex out of usage) | running 2026-11-01 23:45 (branch pre-made = main + A6; must not touch A6 files — the A6 fix is running in parallel) |
-| B4 | S6 session + S7 exercise picker | Codex Sol | Can | pr #15 (reviewed OK; muscles deferred L7; merges after A6 + B3) |
+| B4 | S6 session + S7 exercise picker | Codex Sol | Can | merged #15 |
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | merged #14 |
-| B5 | S11 quick logs + S4 Floor | Grok | Can | pr #16 (reviewed OK; merges after A6 + B3) |
-| B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | pr #17 (reviewed OK; merges after A6 + B3) |
-| B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
+| B5 | S11 quick logs + S4 Floor | Grok | Can | merged #16 (Lead: live queries) |
+| B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | merged #17 |
+| B8 | Playwright p1 e2e + CI job | Grok | Can | todo — **fire next** (all screens merged) |
 | G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | — | todo (needs Supabase project + Cloudflare) |
-
-**Merge order once A6 is ready:** A6 #10 → B3 #14 (mounts RepoProvider) → B4 #15 → B5 #16 → B6 #17 (Lead rebases each onto main).
 
 ## Parked / follow-ups
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
