@@ -30,7 +30,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
 | A7 | Supabase Remote + 20-set flight test | Codex Sol | friend | todo (after A6 merged) |
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | running 2026-11-01 (branch pre-made = main + A6) |
-| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | todo — branch `B3-auth-crew` pre-made (main + A6), fire next on friend's Grok |
+| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | pr #14 (questions answered; merges right after A6) |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | running 2026-11-01 (branch pre-made = main + A6 draft; Lead rebases after A6 merges) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | todo (after B4) |
 | B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
@@ -38,7 +38,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 
 ## Parked / follow-ups
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
-- Size budget counts lazy chunks too (`.size-limit.js`) → fix before Phase 3 charts.
+- Size budget: fixed 2026-11-01 (initial = entry + modulepreloads). **Headroom is ~0.7 kB** once the data layer loads (B3: 169.3/170 kB): supabase-js (A7) must be lazy; next shrink candidates are `zod` → `zod/mini` in the data path, or splitting Dexie behind the first query.
 - Dependabot #3 (setup-node v7): rebase requested; merge with human OK.
 - Keep-alive must touch the **database**, not just the `health` function (R1 #9: only DB/API activity is documented to stop the free-tier pause) → at G1 point `HEALTH_URL` at a PostgREST read (e.g. `/rest/v1/exercises?select=id&limit=1` with the anon `apikey` header) or make `health` run `select 1`.
 - Custom SMTP needs a **sender on a domain we own** (R1 #3: Brevo rewrites/blocks `@gmail.com` senders) → human decision before inviting the second user.
