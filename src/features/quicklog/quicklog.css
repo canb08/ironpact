@@ -1,0 +1,79 @@
+.ql-form {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.ql-field {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.ql-field > span,
+.ql-unit {
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.ql-field input,
+.ql-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  padding: var(--s-3);
+  font: 700 var(--t-md) / 1.2 var(--font-data);
+}
+
+.ql-field textarea {
+  min-height: 6rem;
+  font: 500 var(--t-body) / 1.4 var(--font-body);
+  resize: vertical;
+}
+
+.ql-error,
+.ql-count,
+.ql-pace {
+  margin: 0;
+}
+
+.ql-error {
+  color: var(--danger);
+  font-size: var(--t-sm);
+}
+
+.ql-count {
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.ql-pace {
+  font: 700 var(--t-lg) / 1 var(--font-data);
+}
+
+.ql-chips,
+.ql-rpe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.ui-button.ql-save {
+  width: 100%;
+  min-height: 72px;
+}
+
+.ql-missing {
+  display: grid;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  color: var(--text);
+}
+
+.ql-missing a {
+  text-decoration: none;
+  justify-self: start;
+}
