@@ -32,7 +32,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | pr #15 (reviewed OK; muscles deferred L7; merges after A6 + B3) |
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | pr #14 (questions answered; merges right after A6) |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | pr #16 (reviewed OK; merges after A6 + B3) |
-| B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | todo (after B4) |
+| B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | running 2026-11-01 (branch pre-made = main + A6) |
 | B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
 | G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | — | todo (needs Supabase project + Cloudflare) |
 
