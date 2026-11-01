@@ -1,0 +1,48 @@
+name: Keepalive
+
+on:
+  schedule:
+    # 06:00 UTC on day-of-month 1, 3, 5, … (POSIX `*/2` starts at 1).
+    # One schedule only: a second cron at 06:00 on the 1st would start a
+    # second run and the two heartbeat pushes could race.
+    - cron: '0 6 */2 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health
+        env:
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "notice: HEALTH_URL is unset; skipping the health ping"
+            exit 0
+          fi
+          curl -fsS "$HEALTH_URL"
+
+      - name: Check out default branch
+        if: github.event_name == 'schedule'
+        uses: actions/checkout@v7
+
+      - name: Commit monthly heartbeat
+        if: github.event_name == 'schedule'
+        run: |
+          if [ "$(date -u +%d)" != "01" ]; then
+            echo "notice: not the 1st UTC; skipping heartbeat commit"
+            exit 0
+          fi
+          date -u +%F > heartbeat.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add heartbeat.txt
+          if git diff --cached --quiet; then
+            echo "notice: heartbeat.txt unchanged; nothing to commit"
+            exit 0
+          fi
+          git commit -m "A8: heartbeat $(tr -d '\n' < heartbeat.txt)"
+          git push
