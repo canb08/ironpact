@@ -128,6 +128,7 @@ describe('mock Remote semantics (separate from the reusable Repo contract)', () 
     });
     try {
       await repo.ready;
+      await repo.sync.pullNow();
       expect(await repo.q.myCrew()).toBeDefined();
       expect((await repo.q.entriesBetween(MOCK_USER_IDS.bob, '2026-10-25', '2026-10-25')).bodyweight).toHaveLength(1);
       expect(await repo.q.crewFeed(20)).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'set' })]));

@@ -246,18 +246,9 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     restore: (table, id) => ordinary((user) => deletion(table, id, false, user)),
   };
 
-  async function initialize(user: string | null, generation: number): Promise<void> {
-    const offset = (await db.meta.get('clock_offset_ms'))?.value;
-    if (typeof offset === 'number') clock.restoreOffset(offset);
-    const previous = (await db.meta.get('my_user_id'))?.value;
-    if (previous !== user) await db.clearAccount();
-    if (closed || generation !== epoch) return;
-    if (user) await db.meta.put({ key: 'my_user_id', value: user });
-    await engine.pullNow();
-    if (closed || generation !== epoch || !user) return;
+  async function closeStaleSession(user: string, generation: number): Promise<void> {
     await db.transaction('rw', db.tables, async () => {
-      const profile = await db.profiles.get(user);
-      if (profile && profile.tz !== clock.timezone()) await save('profiles', { ...profile, tz: clock.timezone() });
+      if (closed || generation !== epoch) return;
       const session = await openSession(user);
       if (!session) return;
       const sets = await db.sets.where('session_id').equals(session.id).toArray();
@@ -267,17 +258,55 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
         await db.meta.delete('active_session_id');
       } else await db.meta.put({ key: 'active_session_id', value: session.id });
     });
+  }
+  // Network bootstrap follows the local gate. Failures stay inside this task.
+  async function bootstrapNetwork(user: string | null, generation: number): Promise<void> {
+    try {
+      if (closed || generation !== epoch) return;
+      await engine.pullNow();
+      if (closed || generation !== epoch || !user || remote.currentUserId() !== user) return;
+      const profile = await db.profiles.get(user);
+      if (!profile || profile.tz === clock.timezone()) return;
+      await db.transaction('rw', db.tables, async () => {
+        if (closed || generation !== epoch || remote.currentUserId() !== user) return;
+        const current = await db.profiles.get(user);
+        if (current && current.tz !== clock.timezone()) await save('profiles', { ...current, tz: clock.timezone() });
+      });
+    } catch {
+      // A cold or hung server must not reject startup or leave an unhandled rejection.
+    }
+  }
+  function armNetwork(user: string | null, generation: number, local: Promise<void>): void {
+    void local.then(() => {
+      if (!closed && generation === epoch) return bootstrapNetwork(user, generation);
+    }).catch(() => {});
+  }
+  async function initialize(user: string | null, generation: number): Promise<void> {
+    const offset = (await db.meta.get('clock_offset_ms'))?.value;
+    if (typeof offset === 'number') clock.restoreOffset(offset);
+    const previous = (await db.meta.get('my_user_id'))?.value;
+    if (user !== null && previous != null && previous !== user) await db.clearAccount();
+    if (closed || generation !== epoch) return;
+    if (user) await db.meta.put({ key: 'my_user_id', value: user });
+    if (closed || generation !== epoch) return;
+    if (user) await closeStaleSession(user, generation);
+    if (closed || generation !== epoch) return;
     await engine.refresh();
   }
-  gate = initialize(remote.currentUserId(), epoch);
+  const initialUser = remote.currentUserId();
+  const initialGeneration = epoch;
+  gate = initialize(initialUser, initialGeneration);
+  armNetwork(initialUser, initialGeneration, gate);
   const unsubscribeAuth = remote.onAuthChange((user) => {
     const generation = ++epoch; engine.invalidate();
-    gate = gate.catch(() => {}).then(() => initialize(user, generation)).then(() => {
+    const local = gate.catch(() => {}).then(() => initialize(user, generation));
+    gate = local.then(() => {
       if (!closed && generation === epoch) {
         for (const cb of authListeners) cb(user);
         if (options.autoStart !== false) engine.afterWrite();
       }
     });
+    armNetwork(user, generation, local);
   });
   const ready = gate.then(() => { if (!closed && options.autoStart !== false) engine.start(); });
   const repo: ManagedRepo = {
