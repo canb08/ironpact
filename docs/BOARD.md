@@ -39,10 +39,10 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
 | C6 | Router + copy anchors for Phase 2–3 | Claude | C | merged (direct) |
-| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Codex Astra | C | todo — fire first |
-| P2F | Server re-check of PR events (0007) | Codex Sol | C | todo — fire first (parallel) |
-| P2B | Core: PRs, progression, readiness, prefill | Grok | C | todo — fire first |
-| P2C | Rest timer engine + Wake Lock + haptics | Grok | C | todo — fire first (parallel) |
+| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Codex Astra | C | running 2026-11-02 |
+| P2F | Server re-check of PR events (0007) | Codex Sol | C | running 2026-11-02 |
+| P2B | Core: PRs, progression, readiness, prefill | Grok | C | running 2026-11-02 |
+| P2C | Rest timer engine + Wake Lock + haptics | Grok | C | running 2026-11-02 |
 | P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Codex Sol | C | todo — after P2A, P2B, P2C |
 | P2E | S14 exercise detail + S15 day editor | Grok | C | todo — after P2A |
 | P2G | Playwright Phase 2 | Grok | C | todo — after P2D, P2E |

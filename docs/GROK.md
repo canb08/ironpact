@@ -11,7 +11,7 @@ Grok follows `AGENTS.md` exactly like Codex: one ticket, one branch, one PR, onl
 
 ## Route B: grok.com chat with the GitHub connector (what the Leads use)
 Model picker → **Build** (the coding agent; it clones, runs npm and pushes).
-Works only because the repo owner installed the **Grok (by xAI)** GitHub App on `canb08/ironpact`. Connect GitHub in Grok's settings (your own GitHub login), then in a chat attach the `ironpact` repo and send the same prompt as Route A. It can't run the test suite, so CI is the only check: read the CI result on the PR before asking for review.
+Works only because the repo owner installed the **Grok (by xAI)** GitHub App on `canb08/ironpact`. Connect GitHub in Grok's settings (your own GitHub login), then in a chat attach the `ironpact` repo and send the same prompt as Route A. Build mode clones the repo and runs npm, so it runs the checks itself; CI still decides.
 
 ## Rules that bite
 - Never push to `main`, never force-push, never merge your own PR (a Claude Lead reviews and merges).
