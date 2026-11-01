@@ -116,6 +116,7 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 - **L1 · Contrast conflicts from B1 (§3.2.4):** dark theme (the hero) keeps its source colours. Obsidian's 3:1 is carried by its molten rim, so the contrast test asserts rim vs surface-1, not the core. Light theme only: molten, Iron, Steel and Titanium get darker light-theme variants (same hue, lower lightness) until molten ≥ 4.5:1 on surface-2 and each tier ≥ 3:1 on surface-1. Implemented in the Phase 4 visual-system ticket; until then B1's five `it.fails` cases document the gap.
 - **L3 · CSP origins (A8, E3.6):** Phase 1 ships `https://*.supabase.co wss://*.supabase.co` in `public/_headers`; G1 replaces the wildcard with the real project origin once the project exists. No build-time header generator until then.
 - **L4 · Keep-alive must hit the database (R1 #9):** `health` does one trivial read (`select 1` via the service client, or a 1-row `exercises` read) so the 2-day ping counts as database activity. Built in A7; `keepalive.yml` unchanged.
+- **L5 · B7 gaps:** install/storage bootstrap and the first-launch gate are wired in `App.tsx` by B3. The `storage.persist()` result stays in a localStorage marker (no `meta` API added to the frozen Repo; it's diagnostics only). Apple head metadata and startup images go to the Phase 4 visual ticket.
 - **L2 · `redeem_invite` returns jsonb** `{crew_id, error}` (approved on A3) so failed-attempt rows commit and the rate limit works.
 
 ## A5 export endpoint (2026-10-26)
