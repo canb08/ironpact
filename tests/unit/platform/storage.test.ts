@@ -39,13 +39,16 @@ describe('storage persistence after installation', () => {
     expect(persist).toHaveBeenCalledTimes(1);
   });
 
-  it('requests on appinstalled even while the installing tab is in browser mode', async () => {
+  it('waits for standalone rather than asking in the installing browser tab', async () => {
     const persist = vi.fn().mockResolvedValue(true);
     vi.stubGlobal('navigator', { storage: { persist } });
     const storage = await import('../../../src/platform/storage');
     window.dispatchEvent(new Event('appinstalled'));
+    expect(persist).not.toHaveBeenCalled();
+    installed.mockReturnValue(true);
     window.dispatchEvent(new Event('appinstalled'));
-    expect(await storage.persistStorageAfterInstall(true)).toBe(true);
+    window.dispatchEvent(new Event('appinstalled'));
+    expect(await storage.persistStorageAfterInstall()).toBe(true);
     expect(persist).toHaveBeenCalledTimes(1);
   });
 

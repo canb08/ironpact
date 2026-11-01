@@ -29,6 +29,8 @@ export function persistStorageAfterInstall(installed = isStandalone()): Promise<
 }
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('appinstalled', () => { void persistStorageAfterInstall(true); });
+  // appinstalled can fire in the installing browser tab. Wait for standalone
+  // before asking, since installation can affect the browser's grant heuristic.
+  window.addEventListener('appinstalled', () => { void persistStorageAfterInstall(); });
   void persistStorageAfterInstall();
 }
