@@ -103,6 +103,22 @@ export const copy = {
   devDark: 'Dark',
   devLight: 'Light',
   devMember: '{me} · {partner}',
+  installTitle: 'Add SPOTTER to your home screen',
+  installIntro: 'Install for quick access and better protection for data on this phone.',
+  installIosShare: 'Tap Share in Safari.',
+  installIosAdd: 'Choose Add to Home Screen, then tap Add.',
+  installOpen: 'Open SPOTTER from the home screen icon.',
+  installAndroidMenu: 'Open the browser menu in Chrome.',
+  installAndroidAdd: 'Choose Install app or Add to Home screen, then confirm.',
+  installOther: 'Open this link in Safari on iPhone or Chrome on Android to add SPOTTER to your home screen.',
+  installOpenSafari: 'Open this link in Safari to add SPOTTER to your home screen.',
+  installButton: 'Install',
+  installContinue: 'Continue in browser',
+  installSafari: 'Safari installation steps',
+  installAndroid: 'Android installation steps',
+  installPromptUnavailable: 'Use the browser menu to install SPOTTER, or continue in browser.',
+  shortcutStartSession: 'Start session',
+  shortcutLogMin: 'Log MIN',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
