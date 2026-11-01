@@ -22,10 +22,7 @@ About 25–35 minutes in total, split across checkpoints. The agent tells you wh
 3. Authentication → Providers → Email: **enabled**.
 4. Authentication → Email Templates → both **Confirm signup** and **Magic Link**: include `Your code: {{ .Token }}` and save. Authentication → Sign In / Providers → Auth Providers → Email: set **Email OTP Length = 6** and **Email OTP Expiration = 600** seconds. Confirm the length field in the live dashboard before first invite; `VITE_OTP_LENGTH=6` must match (E3.2).
 5. Authentication → URL Configuration: leave it for now; you fill it in at Step 4.4.
-6. **Custom SMTP is mandatory before inviting your partner (E3.1).** Pick one:
-   - Brevo: create a free account, verify a sender, and enter the provider's SMTP host, port, user and SMTP key in Supabase → Authentication → SMTP Settings. Confirm sender deliverability before inviting anyone; a Gmail sender passing DMARC has not been verified here.
-   - Resend: use a domain you own and verify it first. Ask the project owner before buying a domain. Host `smtp.resend.com`, port 465, user `resend`, password = Resend API key; sender on the verified domain.
-   - First-test stop-gap only: invite the test addresses as Supabase organization members. This does not replace custom SMTP for the partner invite.
+6. **Email (decision L6): no custom SMTP.** Two users only, so Supabase's built-in email is enough: Supabase dashboard → Organization → Team → Invite member → your partner's email (free). Built-in mail reaches organization members only, 2 emails/hour; each phone signs in once and stays signed in. Add custom SMTP (own domain) only if a third user is ever added.
 
 
 ### Step 3: Supabase CLI link (3 min, Phase 0)

@@ -41,5 +41,5 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 - Size budget: fixed 2026-11-01 (initial = entry + modulepreloads). **Headroom is ~0.7 kB** once the data layer loads (B3: 169.3/170 kB): supabase-js (A7) must be lazy; next shrink candidates are `zod` → `zod/mini` in the data path, or splitting Dexie behind the first query.
 - Dependabot #3 (setup-node v7): rebase requested; merge with human OK.
 - Keep-alive must touch the **database**, not just the `health` function (R1 #9: only DB/API activity is documented to stop the free-tier pause) → at G1 point `HEALTH_URL` at a PostgREST read (e.g. `/rest/v1/exercises?select=id&limit=1` with the anon `apikey` header) or make `health` run `select 1`.
-- Custom SMTP needs a **sender on a domain we own** (R1 #3: Brevo rewrites/blocks `@gmail.com` senders) → human decision before inviting the second user.
+- Email: **no custom SMTP** (L6). At G1: invite the friend to the Supabase organization so built-in mail reaches him.
 - Installed iOS app does **not** share Safari storage or open at `/join/<CODE>` (R1 #5) → B3 must show the code big with Copy/Paste/typing.
