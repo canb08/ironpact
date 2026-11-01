@@ -1,0 +1,51 @@
+.vault-screen {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--s-4);
+  display: grid;
+  gap: var(--s-4);
+  overflow-wrap: anywhere;
+}
+.vault-panel, .vault-token, .vault-controls {
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.vault-panel h2, .vault-panel h3, .vault-panel p { margin: 0; }
+.vault-token {
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+.vault-token dl { margin: 0; }
+.vault-token dd { margin: 0 0 var(--s-2); overflow-wrap: anywhere; }
+.vault-token dt { color: var(--text-muted); }
+.vault-controls input {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  box-sizing: border-box;
+}
+.vault-formats { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.vault-formats button { flex: 1 1 4rem; }
+.vault-well {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--s-3);
+  margin: 0;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font: var(--t-sm)/1.5 var(--font-data);
+  user-select: text;
+}
+.vault-preview { max-height: 24rem; overflow-y: auto; }
+.vault-danger { color: var(--danger); border-color: var(--danger); }

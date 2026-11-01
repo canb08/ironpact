@@ -119,6 +119,8 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 - **L5 · B7 gaps:** install/storage bootstrap and the first-launch gate are wired in `App.tsx` by B3. The `storage.persist()` result stays in a localStorage marker (no `meta` API added to the frozen Repo; it's diagnostics only). Apple head metadata and startup images go to the Phase 4 visual ticket.
 - **L6 · No custom SMTP (Can, 2026-11-01; overrides E3.1 "custom SMTP mandatory"):** the app has two users only. Use Supabase's built-in email: both users are members of the Supabase **organization** (built-in mail only reaches team members, 2 emails/hour per R1 #3). No domain, no Brevo. Revisit only if a third user is ever added.
 - **L7 · Exercise muscles deferred (B4 contract request):** Phase 1 creates exercises with name/category/kind only; S7 groups by category. A Phase 2 contract ticket (C4) adds `q.exerciseMuscles` + `w.createExercise({…, muscles})` writing `exercise_muscles` in the same outbox transaction; the muscle picker and grouping land with it (the heatmap needs it anyway).
+- **L8 · Sign-out keeps local rows (A6 fix):** only a real account switch clears the device; a null user (startup, sign-out, expired token) keeps unsynced writes. Two users on their own phones, so not clearing is the safer default.
+- **C5 · Lazy data layer:** `App.tsx` dynamic-imports `src/data/index.ts`; Dexie, zod and the backend adapter are outside initial JS (169.4 → 100.5 kB).
 - **L2 · `redeem_invite` returns jsonb** `{crew_id, error}` (approved on A3) so failed-attempt rows commit and the rate limit works.
 
 ## A5 export endpoint (2026-10-26)
