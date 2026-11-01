@@ -24,13 +24,13 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | A5 | Edge Functions export + health | Codex Sol | friend | merged #8 |
 | B2 | Pure core: validate, weeks, credits, e1RM | Codex Sol | Can | merged #9 |
 | C3 | Frozen route table, placeholder screens, `useRepo()` | Claude | Can's Claude | merged (direct) |
-| A6 | Offline data layer + mock backend | Codex **Astra** → fixes on Grok | friend | pr #10: Can's 2 blockers fixed by Grok (cf09cb5, exception: friend's Codex out of usage); friend's Claude read repo.ts in full + local typecheck/lint/test (data 40/40)/build/size 103 kB green; awaiting CI db, then ready |
+| A6 | Offline data layer + mock backend | Codex **Astra** → fixes on Grok | friend | merged #10 |
 | R1 | Verify ⚠️ platform facts (research) | Grok | friend | merged #11 |
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
 | A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | Can (friend's Codex out of usage) | running 2026-11-01 23:45 (branch pre-made = main + A6; must not touch A6 files — the A6 fix is running in parallel) |
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | pr #15 (reviewed OK; muscles deferred L7; merges after A6 + B3) |
-| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | pr #14 (questions answered; merges right after A6) |
+| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | pr #14: friend's Claude merging main in, then merge when green |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | pr #16 (reviewed OK; merges after A6 + B3) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | pr #17 (reviewed OK; merges after A6 + B3) |
 | B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
