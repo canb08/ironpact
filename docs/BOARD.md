@@ -32,7 +32,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | merged #14 |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | merged #16 (Lead: live queries) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | merged #17 |
-| B8 | Playwright p1 e2e + CI job | Grok | Can | running 2026-11-02 00:2x |
+| B8 | Playwright p1 e2e + CI job | Grok | Can | pr #19 (Lead added CI e2e job; CI running) |
 | G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | — | todo (needs Supabase project + Cloudflare) |
 
 ## Phase 2–3 (two lanes, rules in `docs/LANES.md`)
