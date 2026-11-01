@@ -50,15 +50,13 @@ Before function deployment, the backend ticket must commit `verify_jwt = false` 
    - `VITE_VAPID_PUBLIC_KEY` (added in Phase 7, from the agent);
    - `VITE_BACKEND=supabase`;
    - `VITE_OTP_LENGTH=6`.
-4. Before production release, the platform ticket must generate `dist/_headers` from the real backend HTTPS/WSS origins during build and reject surviving project-ref placeholders (E3.6). It must also generate dark iOS startup images; manifest shortcuts are Android-only (E3.7). Neither is implemented by A1.
+4. Headers: `public/_headers` (A8) allows `https://*.supabase.co` and `wss://*.supabase.co` in the CSP. Phase 1 ships that wildcard (decision L3); G1 narrows it to the real project origin. Dark iOS startup images are still open (E3.7, Phase 4); manifest shortcuts are Android-only. Exact Pages steps: `docs/DEPLOY.md`.
 5. Deploy → copy the `https://<name>.pages.dev` URL → Supabase → Authentication → URL Configuration → **Site URL** = that URL, and add it under **Redirect URLs**.
 
 ### Step 5: Keep-alive (2 min, Phase 1)
-GitHub repo → Settings → Secrets and variables → Actions → New secret:
-- `SUPABASE_URL`;
-- `SUPABASE_ANON_KEY`.
+GitHub repo → Settings → Secrets and variables → Actions → New secret: `HEALTH_URL` = `https://<project-ref>.supabase.co/functions/v1/health` (details in `docs/DEPLOY.md`).
 
-The agent's `keepalive.yml` pings `/functions/v1/health` every 2 days, because the free project pauses after about 7 idle days. It also commits `heartbeat.txt` monthly as a harmless guard. GitHub’s documented 60-day inactivity disablement applies to **public** repositories; this repository is private (E3.9). The keepalive workflow and heartbeat arrive in Phase 1. If you ever get an email that a workflow was disabled, open Actions → keepalive → Enable.
+The agent's `keepalive.yml` pings that URL every 2 days, because the free project pauses after 7 days without database activity. An HTTP ping alone is not documented to count (R1 #9), so `health` runs a tiny database read (decision L4, built in A7). It also commits `heartbeat.txt` monthly as a harmless guard. GitHub’s documented 60-day inactivity disablement applies to **public** repositories; this repository is private (E3.9). The keepalive workflow and heartbeat arrive in Phase 1. If you ever get an email that a workflow was disabled, open Actions → keepalive → Enable.
 
 ### Step 6: Smoke test on your iPhone (5 min, after Phase 1, again after Phase 6)
 1. Safari → open the Pages URL → Share → **Add to Home Screen** → Add.
