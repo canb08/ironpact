@@ -24,8 +24,8 @@ Grok runs tickets per `docs/GROK.md`. Risky code (RLS, sync, export) stays on Co
 | B2 | Pure core: validate, weeks, credits, e1RM | Codex Sol | Can | merged #9 |
 | C3 | Frozen route table, placeholder screens, `useRepo()` | Claude | Can's Claude | merged (direct) |
 | A6 | Offline data layer + mock backend | Codex **Astra** | friend | pr #10 (draft: fix startup-latency item, then ready) |
-| R1 | Verify ⚠️ platform facts (research) | Grok | friend | running (done in chat; push as PR) |
-| A8 | `_headers`, keepalive, deploy docs | Grok | friend | todo (next after R1) |
+| R1 | Verify ⚠️ platform facts (research) | Grok | friend | merged #11 |
+| A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | running 2026-11-01 |
 | A7 | Supabase Remote + 20-set flight test | Codex Sol | friend | todo (after A6 merged) |
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | todo (after A6 merged) |
@@ -39,3 +39,6 @@ Grok runs tickets per `docs/GROK.md`. Risky code (RLS, sync, export) stays on Co
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
 - Size budget counts lazy chunks too (`.size-limit.js`) → fix before Phase 3 charts.
 - Dependabot #3 (setup-node v7): rebase requested; merge with human OK.
+- Keep-alive must touch the **database**, not just the `health` function (R1 #9: only DB/API activity is documented to stop the free-tier pause) → at G1 point `HEALTH_URL` at a PostgREST read (e.g. `/rest/v1/exercises?select=id&limit=1` with the anon `apikey` header) or make `health` run `select 1`.
+- Custom SMTP needs a **sender on a domain we own** (R1 #3: Brevo rewrites/blocks `@gmail.com` senders) → human decision before inviting the second user.
+- Installed iOS app does **not** share Safari storage or open at `/join/<CODE>` (R1 #5) → B3 must show the code big with Copy/Paste/typing.
