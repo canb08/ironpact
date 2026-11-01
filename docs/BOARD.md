@@ -26,7 +26,7 @@ Grok runs tickets per `docs/GROK.md`. Risky code (RLS, sync, export) stays on Co
 | A6 | Offline data layer + mock backend | Codex **Astra** | friend | pr #10 (draft: fix startup-latency item, then ready) |
 | R1 | Verify ⚠️ platform facts (research) | Grok | friend | running (done in chat; push as PR) |
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | todo (next after R1) |
-| B7 | sw.ts, manifest, S1 install gate, storage persist | Grok | Can | todo (fire when Can's Grok is set up) |
+| B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | running 2026-11-01 |
 | A7 | Supabase Remote + 20-set flight test | Codex Sol | friend | todo (after A6 merged) |
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | todo (after A6 merged) |
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring | Grok | friend | todo (after A6 merged + A8) |
