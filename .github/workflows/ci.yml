@@ -118,6 +118,20 @@ jobs:
             exit 1
           fi
           deno test --no-config --no-lock --allow-env --allow-net --allow-read=tests/fixtures/export supabase/functions/export/index.test.ts
+      - name: Run mock and Supabase Repo contracts and 20-set flight test
+        run: |
+          set -a
+          source "$RUNNER_TEMP/supabase-status.env"
+          set +a
+          export SUPABASE_URL="${SUPABASE_URL:-${API_URL:-}}"
+          export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SECRET_KEY:-}}"
+          export SUPABASE_ANON_KEY="${ANON_KEY:-${PUBLISHABLE_KEY:-}}"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_SERVICE_ROLE_KEY"
+          test -n "$SUPABASE_ANON_KEY"
+          printf '::add-mask::%s\n' "$SUPABASE_SERVICE_ROLE_KEY" "$SUPABASE_ANON_KEY"
+          npm ci
+          RUN_SUPABASE_INTEGRATION=1 npx vitest run --coverage.enabled=false --reporter=verbose tests/unit/data/repo.mock.test.ts tests/integration/repo.supabase.test.ts
       - name: Show local container status on failure
         if: failure()
         # Do not dump CLI output, environment or request logs: they may contain keys.
