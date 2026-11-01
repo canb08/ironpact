@@ -117,6 +117,8 @@ export const copy = {
   installSafari: 'Safari installation steps',
   installAndroid: 'Android installation steps',
   installPromptUnavailable: 'Use the browser menu to install SPOTTER, or continue in browser.',
+  shortcutStartSession: 'Start session',
+  shortcutLogMin: 'Log MIN',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`

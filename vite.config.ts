@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { VitePWA } from 'vite-plugin-pwa';
+import { copy } from './src/ui/copy.ts';
 
 export default defineConfig({
   resolve: {
@@ -20,8 +21,8 @@ export default defineConfig({
       injectManifest: { globPatterns: ['**/*.{js,css,html,webmanifest,png}'] },
       manifest: {
         id: '/',
-        name: 'SPOTTER',
-        short_name: 'SPOTTER',
+        name: copy.appName,
+        short_name: copy.appName,
         start_url: '/',
         scope: '/',
         display: 'standalone',
@@ -35,8 +36,8 @@ export default defineConfig({
         ],
         // Android enhancements only; the app never relies on shortcut support.
         shortcuts: [
-          { name: 'Start session', url: '/session?start=1' },
-          { name: 'Log MIN', url: '/?min=1' },
+          { name: copy.shortcutStartSession, url: '/session?start=1' },
+          { name: copy.shortcutLogMin, url: '/?min=1' },
         ],
       },
     }),
