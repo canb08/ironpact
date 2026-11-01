@@ -30,7 +30,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
 | A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | Can (friend's Codex out of usage) | running 2026-11-01 23:45 (branch pre-made = main + A6; must not touch A6 files — the A6 fix is running in parallel) |
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | pr #15 (reviewed OK; muscles deferred L7; merges after A6 + B3) |
-| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | pr #14: main merged by Can (fb861b2); friend's Claude ran the same code locally: typecheck/lint/355 tests/build green, size 169.4/170 kB; Can's Claude merging |
+| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | merged #14 |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | pr #16 (reviewed OK; merges after A6 + B3) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | pr #17 (reviewed OK; merges after A6 + B3) |
 | B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
@@ -41,7 +41,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 ## Parked / follow-ups
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
-- Size budget: fixed 2026-11-01 (initial = entry + modulepreloads). **Headroom is ~0.7 kB** once the data layer loads (B3: 169.3/170 kB): supabase-js (A7) must be lazy; next shrink candidates are `zod` → `zod/mini` in the data path, or splitting Dexie behind the first query.
+- Size budget: initial JS = entry + modulepreloads; the data layer (Dexie, zod, sync, adapters) is lazy-loaded in `App.tsx` (C5) → initial **100.5 / 170 kB**. Keep screens and backend libraries out of the static import graph.
 - Dependabot #3 (setup-node v7): rebase requested; merge with human OK.
 - Keep-alive must touch the **database**, not just the `health` function (R1 #9: only DB/API activity is documented to stop the free-tier pause) → at G1 point `HEALTH_URL` at a PostgREST read (e.g. `/rest/v1/exercises?select=id&limit=1` with the anon `apikey` header) or make `health` run `select 1`.
 - Email: **no custom SMTP** (L6). At G1: invite the friend to the Supabase organization so built-in mail reaches him.

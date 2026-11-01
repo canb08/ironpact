@@ -1,6 +1,6 @@
+import { Suspense, use } from 'react';
 import { RouterProvider } from 'react-router/dom';
 import { RepoProvider } from './app/RepoProvider.tsx';
-import { createRepo } from './data/index.ts';
 import type { Repo } from './data/adapter.ts';
 import { AuthGate } from './features/auth/AuthGate.tsx';
 import './platform/install.ts';
@@ -17,6 +17,21 @@ export function AppShell({ repo }: { repo: Repo }) {
   );
 }
 
+// The data layer (Dexie, zod, sync, backend adapter) loads right after the shell, outside the initial JS budget.
+let repoPromise: Promise<Repo> | undefined;
+function loadRepo(): Promise<Repo> {
+  repoPromise ??= import('./data/index.ts').then(({ createRepo }) => createRepo());
+  return repoPromise;
+}
+
+function LoadedApp() {
+  return <AppShell repo={use(loadRepo())} />;
+}
+
 export default function App() {
-  return <AppShell repo={createRepo()} />;
+  return (
+    <Suspense fallback={null}>
+      <LoadedApp />
+    </Suspense>
+  );
 }
