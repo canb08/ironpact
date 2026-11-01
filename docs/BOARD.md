@@ -9,7 +9,8 @@ Status: `todo` · `running` · `pr #n` · `merged` · `parked (why)`. Pull befor
 | Codex (Sol High / Astra) | friend | backend + sync (A6 finish, A7) |
 | Grok (SuperGrok) | friend | independent config/research (R1, A8), then B3 |
 | Grok (SuperGrok) | Can | independent PWA shell (B7), then B5 |
-Grok runs tickets per `docs/GROK.md`. Risky code (RLS, sync, export) stays on Codex.
+Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub connector works). Risky code (RLS, sync, export) stays on Codex.
+**Until A6 merges:** B-tickets work on pre-made branches = main + A6 draft (`B3-auth-crew`, `B4-session`, `B5-floor-quicklog`). Commit only to that branch; the Lead rebases them onto main after A6 merges.
 
 ## Phase 0–1 (walking skeleton)
 | ID | What | Engine | Claimed by | Status |
@@ -26,10 +27,10 @@ Grok runs tickets per `docs/GROK.md`. Risky code (RLS, sync, export) stays on Co
 | A6 | Offline data layer + mock backend | Codex **Astra** | friend | pr #10 (draft: fix startup-latency item, then ready) |
 | R1 | Verify ⚠️ platform facts (research) | Grok | friend | merged #11 |
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
-| B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | running 2026-11-01 |
+| B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
 | A7 | Supabase Remote + 20-set flight test | Codex Sol | friend | todo (after A6 merged) |
-| B4 | S6 session + S7 exercise picker | Codex Sol | Can | todo (after A6 merged) |
-| B3 | S2 OTP sign-in, S3 crew + /join, App wiring | Grok | friend | todo (after A6 merged + A8) |
+| B4 | S6 session + S7 exercise picker | Codex Sol | Can | running 2026-11-01 (branch pre-made = main + A6) |
+| B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | todo — branch `B3-auth-crew` pre-made (main + A6), fire next on friend's Grok |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | running 2026-11-01 (branch pre-made = main + A6 draft; Lead rebases after A6 merges) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | todo (after B4) |
 | B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
