@@ -82,3 +82,8 @@ After pgTAP, CI restarts a [local Supabase stack](https://supabase.com/docs/refe
 | `fake-indexeddb` (dev) | `6.2.7` | Contract tests against the real local data layer |
 
 Each pin was checked with `npm view <package> version` and installed with `--save-exact`. The existing `date-fns@4.4.0` and `@date-fns/tz@1.5.0` pins from B2 remain unchanged. Sources: [Dexie transactions](https://dexie.org/docs/Dexie/Dexie.transaction()), [transaction abort](https://dexie.org/docs/Transaction/Transaction.abort()), [date-fns timezone utilities](https://github.com/date-fns/tz), [UUIDv5](https://github.com/uuidjs/uuid#uuidv5name-namespace-buffer-offset).
+
+## A7 Supabase browser client (2026-11-02)
+| Package | Exact version | Purpose |
+|---|---|---|
+| `@supabase/supabase-js` | `2.118.0` | Browser Remote (auth OTP, PostgREST, RPCs); loaded lazily with the data layer, 15 s request timeout |

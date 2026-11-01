@@ -27,7 +27,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | R1 | Verify ⚠️ platform facts (research) | Grok | friend | merged #11 |
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
-| A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | Can (friend's Codex out of usage) | running 2026-11-01 23:45 (branch pre-made = main + A6; must not touch A6 files — the A6 fix is running in parallel) |
+| A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | Can | merged #18 (Lead: 15 s request timeout) |
 | B4 | S6 session + S7 exercise picker | Codex Sol | Can | merged #15 |
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | merged #14 |
 | B5 | S11 quick logs + S4 Floor | Grok | Can | merged #16 (Lead: live queries) |

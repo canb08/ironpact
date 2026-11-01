@@ -23,3 +23,6 @@ Phone APIs, installation, startup images and push remain unverified until their 
 - `navigator.storage.persist()` is a request that can be denied and is not a backup. [MDN](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) · [WebKit storage policy](https://webkit.org/blog/14403/updates-to-storage-policy/)
 - Home-screen app storage is isolated from Safari and exempt from ITP's 7-day cap. [WebKit](https://webkit.org/tracking-prevention/)
 - Manifest shortcuts have limited support; navigation never depends on them. [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/shortcuts)
+
+## A7 health function secrets (E3.3, checked 2026-11-02)
+- `health` reads `SUPABASE_URL` plus the legacy `SUPABASE_SERVICE_ROLE_KEY`, falling back to the `default` entry of `SUPABASE_SECRET_KEYS`; reserved `SUPABASE_*` names are never set by us. [Supabase secrets](https://supabase.com/docs/guides/functions/secrets)
