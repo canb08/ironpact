@@ -1,0 +1,89 @@
+.floor,
+.floor * {
+  box-sizing: border-box;
+}
+
+.floor {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--s-4);
+  padding-bottom: max(var(--s-4), env(safe-area-inset-bottom));
+  background: var(--bg);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.floor h1,
+.floor h2,
+.floor h3,
+.floor p {
+  margin: 0;
+}
+
+.floor h1 {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.floor h2 {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.floor h3 {
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+.floor-card {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.floor-week {
+  font: 700 var(--t-xl) / 1.1 var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.floor-empty {
+  color: var(--text-muted);
+}
+
+.floor-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.floor-links a {
+  text-decoration: none;
+}
+
+.floor-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: var(--s-3);
+  margin-top: auto;
+}
+
+.floor-actions .ui-button {
+  min-height: 72px;
+}
+
+.floor-actions .floor-min {
+  width: 72px;
+  min-width: 72px;
+  padding-inline: 0;
+}
