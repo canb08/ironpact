@@ -24,7 +24,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | A5 | Edge Functions export + health | Codex Sol | friend | merged #8 |
 | B2 | Pure core: validate, weeks, credits, e1RM | Codex Sol | Can | merged #9 |
 | C3 | Frozen route table, placeholder screens, `useRepo()` | Claude | Can's Claude | merged (direct) |
-| A6 | Offline data layer + mock backend | Codex **Astra** → fixes on Grok | friend | pr #10 running: Can's 2 blockers (clearAccount on null user, pull outside the write gate) + docs conflicts on **Grok Build** — exception: friend's Codex out of usage until 23:54; friend's Claude reads every line + runs the full suite locally before ready |
+| A6 | Offline data layer + mock backend | Codex **Astra** → fixes on Grok | friend | pr #10: Can's 2 blockers fixed by Grok (cf09cb5, exception: friend's Codex out of usage); friend's Claude read repo.ts in full + local typecheck/lint/test (data 40/40)/build/size 103 kB green; awaiting CI db, then ready |
 | R1 | Verify ⚠️ platform facts (research) | Grok | friend | merged #11 |
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
