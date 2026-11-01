@@ -2,7 +2,7 @@
 
 Status: `todo` · `running` · `pr #n` · `merged` · `parked (why)`. Pull before editing; commit `BOARD: <ID> <status>`.
 
-## Engines (4 coders + 2 Claude Leads)
+## Engines (4 coders + 2 Claude Leads) — Phase 2–3 lanes: see `docs/LANES.md`
 | Engine | Account | Best at here |
 |---|---|---|
 | Codex (Sol High / Astra) | Can | screens with tricky state (B4, B6), e2e |
@@ -34,6 +34,25 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | merged #17 |
 | B8 | Playwright p1 e2e + CI job | Grok | Can | running 2026-11-02 00:2x |
 | G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | — | todo (needs Supabase project + Cloudflare) |
+
+## Phase 2–3 (two lanes, rules in `docs/LANES.md`)
+| ID | What | Engine | Lane | Status |
+|---|---|---|---|---|
+| C6 | Router + copy anchors for Phase 2–3 | Claude | C | merged (direct) |
+| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Codex Astra | C | todo — fire first |
+| P2F | Server re-check of PR events (0007) | Codex Sol | C | todo — fire first (parallel) |
+| P2B | Core: PRs, progression, readiness, prefill | Grok | C | todo — fire first |
+| P2C | Rest timer engine + Wake Lock + haptics | Grok | C | todo — fire first (parallel) |
+| P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Codex Sol | C | todo — after P2A, P2B, P2C |
+| P2E | S14 exercise detail + S15 day editor | Grok | C | todo — after P2A |
+| P2G | Playwright Phase 2 | Grok | C | todo — after P2D, P2E |
+| P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | todo — fire first |
+| P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | todo — fire first |
+| P3D | Ring component | Grok | E | todo — fire first (parallel) |
+| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | todo — after P3A |
+| P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
+| P3F | Progress S13: trend chart | Grok | E | todo — after P3C |
+| P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
 
 ## Parked / follow-ups
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).

@@ -15,5 +15,8 @@ export const router = createBrowserRouter([
   { path: '/log/:kind', ...screen(() => import('./features/quicklog/QuickLogScreen.tsx')) }, // B5
   { path: '/crew', ...screen(() => import('./features/crew-feed/CrewScreen.tsx')) }, // B6
   { path: '/settings', ...screen(() => import('./features/settings/SettingsScreen.tsx')) }, // B6
+  { path: '/exercise/:id', ...screen(() => import('./features/progress/ExerciseDetailScreen.tsx')) }, // P2E (S14)
+  { path: '/day/:date', ...screen(() => import('./features/progress/DayEditorScreen.tsx')) }, // P2E (S15)
+  { path: '/progress', ...screen(() => import('./features/stats/ProgressScreen.tsx')) }, // P3F (S13 minimal)
   ...(import.meta.env.DEV ? [{ path: '/dev/ui', ...screen(() => import('./ui/DevUi.tsx')) }] : []),
 ]);

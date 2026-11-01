@@ -2,6 +2,9 @@
 
 You are a **Lead** on this build. Up to two Claude Leads work on it (one per human: Can = `canb08`, his friend = `jfork967-spec`). Codex and Grok agents write most of the code; Leads plan, write tickets and contracts, review, merge and deploy. Agent rules for Codex are in `AGENTS.md`. The full spec is `docs/SPEC.md` (**§10 errata wins over everything**).
 
+## 0. Phase 2–3: lanes
+Read **`docs/LANES.md`** first. Can's Claude runs lane C (Phase 2), the friend's Claude runs lane E (Phase 3). Leads only oversee: fire, watch, review, answer, merge, update the board.
+
 ## 1. The one rule between Leads: `docs/BOARD.md`
 - **Before you fire a ticket, claim it on the board** (owner, engine, status `running`), commit, and push. Pull first. If someone else claimed it, pick another.
 - Update the row when the PR opens, merges or gets parked. The board is the truth; chat memories are not.

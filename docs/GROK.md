@@ -9,7 +9,8 @@ Grok follows `AGENTS.md` exactly like Codex: one ticket, one branch, one PR, onl
    `Read AGENTS.md, then do the ticket in docs/tickets/<ID>.md on a new branch <ID>-<short-name>. Touch only the files it lists. Run npm run typecheck, lint, test, build and size until green. Then commit, push the branch and open one PR to main with gh pr create, the body = the ticket's acceptance checklist with proofs.`
 4. If Grok can't run `gh`, push the branch yourself and open the PR on github.com.
 
-## Route B: grok.com chat with the GitHub connector
+## Route B: grok.com chat with the GitHub connector (what the Leads use)
+Model picker → **Build** (the coding agent; it clones, runs npm and pushes).
 Works only because the repo owner installed the **Grok (by xAI)** GitHub App on `canb08/ironpact`. Connect GitHub in Grok's settings (your own GitHub login), then in a chat attach the `ironpact` repo and send the same prompt as Route A. It can't run the test suite, so CI is the only check: read the CI result on the PR before asking for review.
 
 ## Rules that bite

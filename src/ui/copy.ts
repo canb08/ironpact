@@ -302,6 +302,30 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   pickerLowerBody: 'Lower body',
   pickerDuplicate: 'You already have one called that.',
   pickerInvalid: 'Use a name of 1–40 characters and an export label of 1–24. Labels cannot contain · or be Run, Weight or MIN.',
+  // Phase 2–3 anchors (C6). Never edit another ticket's block.
+  // ── P2A: add this ticket's strings directly below ──
+
+  // ── P2B: add this ticket's strings directly below ──
+
+  // ── P2C: add this ticket's strings directly below ──
+
+  // ── P2D: add this ticket's strings directly below ──
+
+  // ── P2E: add this ticket's strings directly below ──
+
+  // ── P2F: add this ticket's strings directly below ──
+
+  // ── P3A: add this ticket's strings directly below ──
+
+  // ── P3B: add this ticket's strings directly below ──
+
+  // ── P3C: add this ticket's strings directly below ──
+
+  // ── P3D: add this ticket's strings directly below ──
+
+  // ── P3E: add this ticket's strings directly below ──
+
+  // ── P3F: add this ticket's strings directly below ──
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
