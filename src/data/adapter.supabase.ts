@@ -47,8 +47,9 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
       authChanged = true;
       publish(session?.user.id ?? null);
     });
-    const { data, error } = await client.auth.getSession();
-    if (error) throw new Error('Session restoration failed');
+    // An expired session may fail to refresh while offline. Keep the client
+    // usable so a later auth event or sign-in can recover without a reload.
+    const { data } = await client.auth.getSession();
     if (!authChanged) publish(data.session?.user.id ?? null);
     return client;
   })();

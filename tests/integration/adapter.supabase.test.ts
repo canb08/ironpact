@@ -46,6 +46,17 @@ describe('Supabase adapter failure classification', () => {
     expect(send).toHaveBeenLastCalledWith({ email: 'alice@example.test' });
   });
 
+  it('can sign in after initial session restoration fails offline', async () => {
+    const client = createClient('http://127.0.0.1:54321', 'local-test-placeholder', {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    vi.spyOn(client.auth, 'getSession').mockResolvedValue({ data: { session: null }, error: new AuthApiError('offline', 503, 'unexpected_failure') });
+    const send = vi.spyOn(client.auth, 'signInWithOtp').mockResolvedValue({ data: { user: null, session: null }, error: null });
+    const remote = createSupabaseRemote(client);
+    expect(await remote.sendCode('alice@example.test')).toEqual({ ok: true, value: undefined });
+    expect(send).toHaveBeenCalledOnce();
+  });
+
   it('requires six digits, verifies email OTP and distinguishes expired, bad and retryable codes', async () => {
     const { remote, client } = setup();
     const verify = vi.spyOn(client.auth, 'verifyOtp');
