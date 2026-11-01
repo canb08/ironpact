@@ -17,3 +17,9 @@ Device verification register (reserved for the platform tickets):
 
 Phone APIs, installation, startup images and push remain unverified until their platform tickets and real-device checks. A1's service worker only precaches the build manifest.
 | WCAG contrast thresholds | 4.5:1 body text, 3:1 large text and UI graphics. Dark Titanium #C9CCD1 on #121214 = 11.62:1 (culori), passes. Five light-theme/Obsidian pairs fail → DECISIONS L1. | https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Understanding_WCAG/Perceivable/Color_contrast | 2026-10-26 |
+
+## B7 install + storage (checked 2026-11-01)
+- `beforeinstallprompt`: availability and timing vary; capture it when present, use it once from a tap, otherwise show manual steps + a browser escape. [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event)
+- `navigator.storage.persist()` is a request that can be denied and is not a backup. [MDN](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) · [WebKit storage policy](https://webkit.org/blog/14403/updates-to-storage-policy/)
+- Home-screen app storage is isolated from Safari and exempt from ITP's 7-day cap. [WebKit](https://webkit.org/tracking-prevention/)
+- Manifest shortcuts have limited support; navigation never depends on them. [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/shortcuts)

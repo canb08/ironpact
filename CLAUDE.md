@@ -1,6 +1,6 @@
 # CLAUDE.md: the Lead's manual for SPOTTER (`ironpact`)
 
-You are a **Lead** on this build. Up to two Claude Leads work on it (one per human: Can = `canb08`, his friend = `jfork967-spec`). Codex agents write most of the code; Leads plan, write tickets and contracts, review, merge and deploy. Agent rules for Codex are in `AGENTS.md`. The full spec is `docs/SPEC.md` (**§10 errata wins over everything**).
+You are a **Lead** on this build. Up to two Claude Leads work on it (one per human: Can = `canb08`, his friend = `jfork967-spec`). Codex and Grok agents write most of the code; Leads plan, write tickets and contracts, review, merge and deploy. Agent rules for Codex are in `AGENTS.md`. The full spec is `docs/SPEC.md` (**§10 errata wins over everything**).
 
 ## 1. The one rule between Leads: `docs/BOARD.md`
 - **Before you fire a ticket, claim it on the board** (owner, engine, status `running`), commit, and push. Pull first. If someone else claimed it, pick another.
@@ -13,6 +13,7 @@ You are a **Lead** on this build. Up to two Claude Leads work on it (one per hum
 | Codex (ChatGPT Plus, two accounts) | **GPT-6.1 Sol · High** | almost every ticket |
 | Codex · **GPT-6 Astra · High** | only when the ticket says so | RLS/security, offline sync; or a ticket that failed CI twice on Sol |
 | Astra · Ultra | never by default | last resort for one ticket |
+| Grok (SuperGrok, two accounts) | Grok Build CLI or grok.com + GitHub connector, see `docs/GROK.md` | independent/low-risk tickets: research, config, plain screens; never RLS/sync/export |
 | Claude (you) | review + contracts | never bulk code; your human's usage is scarce |
 
 Plus limits (OpenAI, 2026-10-26): Astra ≈ 5–45 msgs / 5 h, Sol ≈ 15–160, cloud tasks cost more. A run that dies halfway is harmless: nothing merges without review, and Codex can continue in the **same chat** after the reset.
@@ -45,4 +46,4 @@ Template = any file in `docs/tickets/`. Each ticket: owner role, model, branch, 
 - `supabase` local stack runs **in CI only** (no Docker on the dev PCs). CI is the source of truth.
 
 ## 7. Human-only steps (spec §8, with §10 E3.x): ask in one batch, exact screen paths
-Pending before A7/A8/G1: Supabase project + keys, Supabase CLI link, Cloudflare Pages project, custom SMTP (Brevo) before Eytan is invited, keep-alive secrets. Never paste secrets into chat or commits.
+Pending before A7/A8/G1: Supabase project + keys, Supabase CLI link, Cloudflare Pages project, invite the friend to the Supabase organization (L6: built-in email, no SMTP), keep-alive secrets. Never paste secrets into chat or commits.

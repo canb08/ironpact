@@ -1,6 +1,6 @@
 # AGENTS.md: rules for every coding agent in this repo
 
-You are one of three agents building **SPOTTER** (code name `ironpact`): an offline-first gym PWA.
+You are one of several agents (Claude Leads, Codex, Grok) building **SPOTTER** (code name `ironpact`): an offline-first gym PWA.
 The full spec is [`docs/SPEC.md`](docs/SPEC.md). **§10 (errata) wins over every other section**, then §1.6, then §1.1's order.
 
 ## The team
@@ -8,7 +8,10 @@ The full spec is [`docs/SPEC.md`](docs/SPEC.md). **§10 (errata) wins over every
 |---|---|---|
 | Claude (Lead) | plans, writes tickets and frozen contracts, reviews, merges, deploys | `docs/`, `src/data/adapter.ts`, `src/core/types.ts`, `supabase/functions/_shared/export-format.ts`, `tests/fixtures/export/*` |
 | Codex A (backend) | DB, RLS, RPCs, Edge Functions, offline sync | `supabase/**` (except `_shared/export-format.ts`), `src/data/*` (except `adapter.ts`) |
-| Codex B (frontend) | UI, screens, pure logic, device APIs, e2e | `src/ui/*`, `src/features/*`, `src/core/*` (except `types.ts`), `src/platform/*`, `src/router.tsx`, `tests/e2e/*` |
+| Codex B (frontend) | UI, screens, pure logic, device APIs, e2e | `src/ui/*`, `src/features/*`, `src/core/*` (except `types.ts`), `src/platform/*`, `tests/e2e/*` |
+| Grok (two accounts) | same rules as Codex; takes whichever role its ticket names | only the files its ticket lists |
+
+`src/router.tsx` and `src/app/*` are frozen (C3): a screen ticket replaces its own placeholder screen file, never the route table.
 
 ## How you work
 1. You get one ticket: `docs/tickets/<ID>.md`. Do **only** that ticket. Read the spec sections it names before writing code.
