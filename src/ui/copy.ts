@@ -119,6 +119,83 @@ export const copy = {
   installPromptUnavailable: 'Use the browser menu to install SPOTTER, or continue in browser.',
   shortcutStartSession: 'Start session',
   shortcutLogMin: 'Log MIN',
+  crewTitle: 'Crew',
+  settingsTitle: 'Settings',
+  loading: 'Loading…',
+  needsSignal: 'Needs signal',
+  refresh: 'Refresh',
+  crewFeedTitle: 'Latest 20 entries',
+  crewFeedEmpty: 'No entries yet. The next session starts here.',
+  noCrew: 'Join or start a crew to train together.',
+  copyInvite: 'Copy invite link',
+  inviteOwnerOnly: 'Ask the crew owner for an invite link.',
+  inviteCopied: 'Invite link copied.',
+  leaveCrew: 'Leave crew',
+  leaveCrewConfirm: 'Leave this crew? Your own training stays with you.',
+  holdLeaveCrew: 'Hold to leave crew',
+  cancel: 'Cancel',
+  networkRetry: 'Could not connect. Try again.',
+  clipboardUnavailable: 'Copy unavailable. Select the text and copy it yourself.',
+  copied: 'Copied.',
+  crewSession: '{partner} · Session · {date}',
+  crewEntry: '{partner} · {date}',
+  crewSet: '{exercise} · {reps} × {load}',
+  crewLoad: '{kg}kg',
+  crewBodyLoad: 'BW{load}',
+  crewWarmup: 'Warm-up',
+  crewRun: 'Run · {km}km · {duration}',
+  crewMartial: '{discipline} · {minutes}m',
+  crewMin: 'MIN · {description}',
+  crewWeight: 'Weight · {kg}kg',
+  partner: 'Partner',
+  vaultTitle: 'Vault export',
+  vaultEyebrow: 'VAULT EXPORT · YOUR DATA ONLY',
+  tokenPrivacy: 'This token reads only your data. Never send it to anyone — not even your crew.',
+  tokenLabel: 'Token label',
+  tokenDefaultLabel: 'My vault',
+  generateToken: 'Generate token',
+  copyToken: 'Copy token',
+  tokenMask: 'spx_••••',
+  tokenList: 'Your tokens',
+  noTokens: 'No tokens yet.',
+  tokenCreated: 'Created',
+  tokenLastUsed: 'Last used',
+  tokenRevokedAt: 'Revoked',
+  tokenNeverUsed: 'Never',
+  tokenActive: 'Active',
+  tokenRevoked: 'Revoked',
+  revokeToken: 'Revoke',
+  regenerateToken: 'Revoke & regenerate',
+  tokenRevokedNotice: 'Token revoked. Old links stop working now.',
+  tokenLimit: 'Three active tokens already. Revoke one to generate another.',
+  tokenListError: 'Token list did not load. Try again.',
+  exportFormat: 'Export format',
+  exportLines: 'Lines',
+  exportJson: 'JSON',
+  exportCsv: 'CSV',
+  exportPreview: 'Preview (last 7 days)',
+  exportPreviewError: "Export didn't load. Your data's safe. Try again.",
+  exportEmpty: 'No entries in the last 7 days.',
+  exportUrl: 'Export URL',
+  exportUrlMissing: 'Export URL will be available after setup.',
+  copyExportUrl: 'Copy export URL',
+  copyForAi: 'Copy for my AI',
+  profileNeeded: 'Finish setting up your profile to export your data.',
+  copyForAiTemplate: `SPOTTER export for {display_name}: my own training data, read-only. Never anyone else's.
+GET {URL}   optional: ?format=lines|json|csv (my default: {FMT}) · ?since=YYYY-MM-DD (inclusive, by local date)
+Auth: {HEADER} <MY_TOKEN>. The token is in env var SPOTTER_TOKEN. Never put it in a URL, a note, a log or a commit.
+Lines format: newest date first, one line per exercise per day, LF endings, separators " · " (U+00B7) and "×" (U+00D7):
+- 2026-10-24 · Bench · 3×5×80kg · RPE 8 · felt strong
+- 2026-10-23 · Bench · 1×5×80kg + 2×3×85kg · RPE 9      (count×reps×kg groups, joined " + ", in set order)
+- 2026-10-24 · Pull-up · 3×8×BW
+- 2026-10-24 · Dip · 3×10×BW+10kg
+- 2026-10-24 · Run · 5.2km · 27:40
+- 2026-10-24 · BJJ · 60m · RPE 7 · drilled guard
+- 2026-10-24 · Weight · 78.4kg
+- 2026-10-24 · MIN · 20m walk
+Sync: at most hourly. Pull the full export with If-None-Match: <last ETag>. 304 = no change.
+On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). Never append.
+200 with empty body = no entries. 401 = bad or revoked token. 429 = over 60 calls/hour (respect Retry-After).`,
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
