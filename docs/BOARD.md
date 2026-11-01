@@ -29,14 +29,17 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
 | B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
 | A7 | Supabase Remote + 20-set flight test | Codex Sol | friend | todo (after A6 merged) |
-| B4 | S6 session + S7 exercise picker | Codex Sol | Can | running 2026-11-01 (branch pre-made = main + A6) |
+| B4 | S6 session + S7 exercise picker | Codex Sol | Can | pr #15 (reviewed OK; muscles deferred L7; merges after A6 + B3) |
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | pr #14 (questions answered; merges right after A6) |
-| B5 | S11 quick logs + S4 Floor | Grok | Can | running 2026-11-01 (branch pre-made = main + A6 draft; Lead rebases after A6 merges) |
+| B5 | S11 quick logs + S4 Floor | Grok | Can | pr #16 (reviewed OK; merges after A6 + B3) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | todo (after B4) |
 | B8 | Playwright p1 e2e + CI job | Codex Sol | — | todo (after B3–B7) |
 | G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | — | todo (needs Supabase project + Cloudflare) |
 
+**Merge order once A6 is ready:** A6 #10 → B3 #14 (mounts RepoProvider) → B4 #15 → B5 #16 (Lead rebases each onto main).
+
 ## Parked / follow-ups
+- C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
 - Size budget: fixed 2026-11-01 (initial = entry + modulepreloads). **Headroom is ~0.7 kB** once the data layer loads (B3: 169.3/170 kB): supabase-js (A7) must be lazy; next shrink candidates are `zod` → `zod/mini` in the data path, or splitting Dexie behind the first query.
 - Dependabot #3 (setup-node v7): rebase requested; merge with human OK.
