@@ -46,4 +46,4 @@ Template = any file in `docs/tickets/`. Each ticket: owner role, model, branch, 
 - `supabase` local stack runs **in CI only** (no Docker on the dev PCs). CI is the source of truth.
 
 ## 7. Human-only steps (spec §8, with §10 E3.x): ask in one batch, exact screen paths
-Pending before A7/A8/G1: Supabase project + keys, Supabase CLI link, Cloudflare Pages project, custom SMTP (Brevo) before Eytan is invited, keep-alive secrets. Never paste secrets into chat or commits.
+Pending before A7/A8/G1: Supabase project + keys, Supabase CLI link, Cloudflare Pages project, invite the friend to the Supabase organization (L6: built-in email, no SMTP), keep-alive secrets. Never paste secrets into chat or commits.

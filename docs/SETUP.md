@@ -22,10 +22,7 @@ About 25–35 minutes in total, split across checkpoints. The agent tells you wh
 3. Authentication → Providers → Email: **enabled**.
 4. Authentication → Email Templates → both **Confirm signup** and **Magic Link**: include `Your code: {{ .Token }}` and save. Authentication → Sign In / Providers → Auth Providers → Email: set **Email OTP Length = 6** and **Email OTP Expiration = 600** seconds. Confirm the length field in the live dashboard before first invite; `VITE_OTP_LENGTH=6` must match (E3.2).
 5. Authentication → URL Configuration: leave it for now; you fill it in at Step 4.4.
-6. **Custom SMTP is mandatory before inviting your partner (E3.1).** Pick one:
-   - Brevo: create a free account, verify a sender, and enter the provider's SMTP host, port, user and SMTP key in Supabase → Authentication → SMTP Settings. Confirm sender deliverability before inviting anyone; a Gmail sender passing DMARC has not been verified here.
-   - Resend: use a domain you own and verify it first. Ask the project owner before buying a domain. Host `smtp.resend.com`, port 465, user `resend`, password = Resend API key; sender on the verified domain.
-   - First-test stop-gap only: invite the test addresses as Supabase organization members. This does not replace custom SMTP for the partner invite.
+6. **Email (decision L6): no custom SMTP.** Two users only, so Supabase's built-in email is enough: Supabase dashboard → Organization → Team → Invite member → your partner's email (free). Built-in mail reaches organization members only, 2 emails/hour; each phone signs in once and stays signed in. Add custom SMTP (own domain) only if a third user is ever added.
 
 
 ### Step 3: Supabase CLI link (3 min, Phase 0)
@@ -50,15 +47,13 @@ Before function deployment, the backend ticket must commit `verify_jwt = false` 
    - `VITE_VAPID_PUBLIC_KEY` (added in Phase 7, from the agent);
    - `VITE_BACKEND=supabase`;
    - `VITE_OTP_LENGTH=6`.
-4. Before production release, the platform ticket must generate `dist/_headers` from the real backend HTTPS/WSS origins during build and reject surviving project-ref placeholders (E3.6). It must also generate dark iOS startup images; manifest shortcuts are Android-only (E3.7). Neither is implemented by A1.
+4. Headers: `public/_headers` (A8) allows `https://*.supabase.co` and `wss://*.supabase.co` in the CSP. Phase 1 ships that wildcard (decision L3); G1 narrows it to the real project origin. Dark iOS startup images are still open (E3.7, Phase 4); manifest shortcuts are Android-only. Exact Pages steps: `docs/DEPLOY.md`.
 5. Deploy → copy the `https://<name>.pages.dev` URL → Supabase → Authentication → URL Configuration → **Site URL** = that URL, and add it under **Redirect URLs**.
 
 ### Step 5: Keep-alive (2 min, Phase 1)
-GitHub repo → Settings → Secrets and variables → Actions → New secret:
-- `SUPABASE_URL`;
-- `SUPABASE_ANON_KEY`.
+GitHub repo → Settings → Secrets and variables → Actions → New secret: `HEALTH_URL` = `https://<project-ref>.supabase.co/functions/v1/health` (details in `docs/DEPLOY.md`).
 
-The agent's `keepalive.yml` pings `/functions/v1/health` every 2 days, because the free project pauses after about 7 idle days. It also commits `heartbeat.txt` monthly as a harmless guard. GitHub’s documented 60-day inactivity disablement applies to **public** repositories; this repository is private (E3.9). The keepalive workflow and heartbeat arrive in Phase 1. If you ever get an email that a workflow was disabled, open Actions → keepalive → Enable.
+The agent's `keepalive.yml` pings that URL every 2 days, because the free project pauses after 7 days without database activity. An HTTP ping alone is not documented to count (R1 #9), so `health` runs a tiny database read (decision L4, built in A7). It also commits `heartbeat.txt` monthly as a harmless guard. GitHub’s documented 60-day inactivity disablement applies to **public** repositories; this repository is private (E3.9). The keepalive workflow and heartbeat arrive in Phase 1. If you ever get an email that a workflow was disabled, open Actions → keepalive → Enable.
 
 ### Step 6: Smoke test on your iPhone (5 min, after Phase 1, again after Phase 6)
 1. Safari → open the Pages URL → Share → **Add to Home Screen** → Add.

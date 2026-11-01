@@ -252,6 +252,7 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       await restart(decorateRemote(remote, {
         async serverNow() { return new Date(instant + 120_000).toISOString(); },
       }));
+      await repo.sync.pullNow();
       const first = unwrap(await repo.w.logBodyweight(80));
       expect(first.client_updated_at).toBe(new Date(instant + 120_000).toISOString());
       environment.setOnline(false);
@@ -382,7 +383,7 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       expect(unwrap(await remote.fetchByIds('min_entries', [min.id]))).toHaveLength(1);
     });
 
-    it('sign-out clears private mirrors and pending writes, including a late network acknowledgement', async () => {
+    it('sign-out keeps local rows, and a late acknowledgement cannot drop the pending outbox', async () => {
       const rows = await logSets(1);
       const committed = deferred<void>();
       const release = deferred<void>();
@@ -401,9 +402,57 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       await flushing;
       expect(repo.auth.userId()).toBeNull();
       expect(await repo.q.session(rows[0]!.session_id)).toBeUndefined();
-      expect(await db.sets.count()).toBe(0);
-      expect(await db.outbox.count()).toBe(0);
-      expect(await db.profiles.count()).toBe(0);
+      expect(await db.sets.get(rows[0]!.id)).toBeDefined();
+      expect(await db.outbox.where('row_id').equals(rows[0]!.id).count()).toBe(1);
+    });
+
+    it('20 offline sets survive a null user at startup and flush once alice returns', async () => {
+      const rows = await logSets(20);
+      const alice = remote.currentUserId();
+      expect(alice).not.toBeNull();
+      repo.close();
+      let reported: string | null = null;
+      const listeners = new Set<(user: string | null) => void>();
+      const startup = decorateRemote(remote, {
+        currentUserId: () => reported,
+        onAuthChange(cb) {
+          listeners.add(cb);
+          const unsubscribe = remote.onAuthChange(cb);
+          return () => { listeners.delete(cb); unsubscribe(); };
+        },
+      });
+      environment.setOnline(false);
+      repo = createDataRepo(startup, { db, clock: clock(), environment, autoStart: false });
+      await repo.ready;
+      expect(repo.auth.userId()).toBeNull();
+      expect(await db.sets.count()).toBe(20);
+      expect(await db.outbox.where('status').equals('pending').count()).toBeGreaterThanOrEqual(20);
+      reported = alice;
+      for (const listener of listeners) listener(alice);
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      const server = unwrap(await remote.fetchByIds('sets', rows.map((row) => row.id)));
+      expect(server).toHaveLength(20);
+      expect(new Set(server.map((row) => row.id)).size).toBe(20);
+      expect(repo.sync.status().pendingCount).toBe(0);
+    });
+
+    it('a hung serverNow and pullPage still let logSet resolve within 100ms into the outbox', async () => {
+      const { session, exercise } = await gym();
+      repo.close();
+      environment.setOnline(true);
+      const hung = decorateRemote(remote, {
+        serverNow: () => new Promise<string>(() => {}),
+        pullPage: () => new Promise(() => {}),
+      });
+      repo = createDataRepo(hung, { db, clock: clock(), environment, autoStart: false });
+      await repo.ready;
+      const started = Date.now();
+      const row = unwrap(await repo.w.logSet({
+        session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: 60,
+      }));
+      expect(Date.now() - started).toBeLessThan(100);
+      expect(await db.outbox.where('row_id').equals(row.id).count()).toBe(1);
     });
 
     it('quota failure rolls back mirror and outbox together and returns storage_full', async () => {

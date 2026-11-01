@@ -114,6 +114,13 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 
 ## Lead decisions 2026-10-26
 - **L1 · Contrast conflicts from B1 (§3.2.4):** dark theme (the hero) keeps its source colours. Obsidian's 3:1 is carried by its molten rim, so the contrast test asserts rim vs surface-1, not the core. Light theme only: molten, Iron, Steel and Titanium get darker light-theme variants (same hue, lower lightness) until molten ≥ 4.5:1 on surface-2 and each tier ≥ 3:1 on surface-1. Implemented in the Phase 4 visual-system ticket; until then B1's five `it.fails` cases document the gap.
+- **L3 · CSP origins (A8, E3.6):** Phase 1 ships `https://*.supabase.co wss://*.supabase.co` in `public/_headers`; G1 replaces the wildcard with the real project origin once the project exists. No build-time header generator until then.
+- **L4 · Keep-alive must hit the database (R1 #9):** `health` does one trivial read (`select 1` via the service client, or a 1-row `exercises` read) so the 2-day ping counts as database activity. Built in A7; `keepalive.yml` unchanged.
+- **L5 · B7 gaps:** install/storage bootstrap and the first-launch gate are wired in `App.tsx` by B3. The `storage.persist()` result stays in a localStorage marker (no `meta` API added to the frozen Repo; it's diagnostics only). Apple head metadata and startup images go to the Phase 4 visual ticket.
+- **L6 · No custom SMTP (Can, 2026-11-01; overrides E3.1 "custom SMTP mandatory"):** the app has two users only. Use Supabase's built-in email: both users are members of the Supabase **organization** (built-in mail only reaches team members, 2 emails/hour per R1 #3). No domain, no Brevo. Revisit only if a third user is ever added.
+- **L7 · Exercise muscles deferred (B4 contract request):** Phase 1 creates exercises with name/category/kind only; S7 groups by category. A Phase 2 contract ticket (C4) adds `q.exerciseMuscles` + `w.createExercise({…, muscles})` writing `exercise_muscles` in the same outbox transaction; the muscle picker and grouping land with it (the heatmap needs it anyway).
+- **L8 · Sign-out keeps local rows (A6 fix):** only a real account switch clears the device; a null user (startup, sign-out, expired token) keeps unsynced writes. Two users on their own phones, so not clearing is the safer default.
+- **C5 · Lazy data layer:** `App.tsx` dynamic-imports `src/data/index.ts`; Dexie, zod and the backend adapter are outside initial JS (169.4 → 100.5 kB).
 - **L2 · `redeem_invite` returns jsonb** `{crew_id, error}` (approved on A3) so failed-attempt rows commit and the rate limit works.
 
 ## A5 export endpoint (2026-10-26)
