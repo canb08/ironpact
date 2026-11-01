@@ -1,0 +1,12 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
+select plan(6);
+select has_function('public', 'server_now', array[]::text[], 'server_now exists');
+select function_returns('public', 'server_now', array[]::text[], 'timestamp with time zone', 'clock returns timestamptz');
+select is((select provolatile::text from pg_proc where oid = 'public.server_now()'::regprocedure), 's', 'clock is stable');
+select is((select prosecdef from pg_proc where oid = 'public.server_now()'::regprocedure), false, 'clock is security invoker');
+select ok(has_function_privilege('authenticated', 'public.server_now()', 'execute'), 'authenticated may read the clock');
+select ok(not has_function_privilege('anon', 'public.server_now()', 'execute'), 'anonymous cannot read the clock');
+select * from finish();
+rollback;
