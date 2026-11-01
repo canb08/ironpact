@@ -62,6 +62,8 @@ async function makeRepo(startIso: string) {
     autoStart: false,
   });
   await created.ready;
+  // A6: the first pull runs in the background after `ready`; settle it before asserting.
+  await created.sync.pullNow();
   repo = created;
   db = database;
   return {

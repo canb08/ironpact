@@ -1,23 +1,20 @@
+import { liveQuery } from 'dexie';
 import { useMemo, useSyncExternalStore } from 'react';
 
-/** Re-reads the Repo when `deps` change. No Dexie subscription library. */
+/** Live Repo read: re-runs when the Dexie tables it reads change (e.g. a background pull lands) or when `deps` change. */
 export function useRepoQuery<T>(load: () => Promise<T>, deps: readonly unknown[]): T | undefined {
   const store = useMemo(() => {
     let value: T | undefined;
-    const listeners = new Set<() => void>();
     return {
       subscribe(listener: () => void) {
-        listeners.add(listener);
-        let active = true;
-        void load().then((next) => {
-          if (!active) return;
-          value = next;
-          listeners.forEach((item) => item());
+        const subscription = liveQuery(load).subscribe({
+          next(next) {
+            value = next;
+            listener();
+          },
+          error() { /* Keep the last good value; the next change re-runs the query. */ },
         });
-        return () => {
-          active = false;
-          listeners.delete(listener);
-        };
+        return () => subscription.unsubscribe();
       },
       getSnapshot() {
         return value;
