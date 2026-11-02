@@ -350,6 +350,38 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   summarySaved: 'Saved on your phone.',
 
   // ── P2E: add this ticket's strings directly below ──
+  bestE1rm: 'Best e1RM',
+  sessionE1rm: 'Session e1RM',
+  e1rmNone: '—',
+  noSetsYet: 'No sets on this lift yet.',
+  missingExercise: 'That exercise is not on this phone.',
+  restSeconds: 'Rest seconds',
+  saveRest: 'Save rest',
+  restRange: 'Rest is 15–600 seconds.',
+  bigJumps: 'Big jumps',
+  bigJumpsHint: 'Lower-body compounds step up by 5 kg.',
+  historyHeading: 'History',
+  setLine: '{index} {reps} × {kg} kg',
+  emptyDay: 'Nothing logged. Rest counts too.',
+  badDate: 'That date is not valid.',
+  dateLabel: 'Date',
+  holdDeleteSession: 'Hold to delete session',
+  editDay: 'Edit this day',
+  recentDays: 'Recent days',
+  sessionNoteLabel: 'Session note',
+  sessionNoteCount: '{count}/200',
+  moveDateHint: 'Changing the date moves this entry.',
+  deleteEntry: 'Delete {name}',
+  startedAt: 'Started',
+  endedAt: 'Ended',
+  badInstant: 'Use a full timestamp.',
+  measuredAt: 'Measured',
+  sleep: 'Sleep',
+  soreness: 'Soreness',
+  energy: 'Energy',
+  readinessRange: 'Sleep, soreness and energy are 1–3.',
+  disciplineInvalid: 'Use 1–16 characters, without ·, and not Run, Weight or MIN.',
+
 
   // ── P2F: add this ticket's strings directly below ──
 
