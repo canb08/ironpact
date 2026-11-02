@@ -26,7 +26,9 @@ Deno.serve(createDeleteAccountHandler(() => {
       // Auth admin deleteUser's hard-delete endpoint. The database trigger performs
       // cleanup in this same transaction, including restrictive FKs and shared IDs.
       const response = await fetch(new URL(`/auth/v1/admin/users/${id}`, url), {
-        method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` },
+        method: 'DELETE',
+        headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ should_soft_delete: false }),
       });
       await response.body?.cancel();
       // Concurrent, already-authenticated calls may both attempt the same deletion.
