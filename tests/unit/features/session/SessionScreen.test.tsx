@@ -157,7 +157,12 @@ describe('S6 with the A6 mock Repo', () => {
   it('finishes only after the full 600 ms hold; click, short hold and cancellation do not finish', async () => {
     await start();
     const finish = vi.spyOn(harness.repo.w, 'finishSession');
-    const button = screen.getByRole('button', { name: copy.finish });
+    const button = screen.getByRole('button', { name: copy.rackItName });
+    expect(button.getAttribute('aria-label')).toBe(copy.rackItName);
+    expect(button.textContent).toContain(copy.rackIt);
+    expect(button.textContent).toContain(copy.finish);
+    const sets = screen.getByRole('region', { name: copy.sessionSets });
+    expect(sets.tabIndex).toBe(0);
     vi.useFakeTimers();
     fireEvent.click(button);
     fireEvent.keyDown(button, { key: ' ' });

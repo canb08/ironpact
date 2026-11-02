@@ -603,6 +603,9 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
 
   // ── P5F: add this ticket's strings directly below ──
   prsRecalculated: 'PRs recalculated.',
+
+  // ── H7: add this ticket's strings directly below ──
+  rackItName: 'RACK IT, Hold to rack it.',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`

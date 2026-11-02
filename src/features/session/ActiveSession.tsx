@@ -194,7 +194,7 @@ export function ActiveSession({ session, onFinish, onReplace }: {
       }} />
       : <>
         <div className="session-empty"><p>{copy.emptyFloor}</p></div>
-        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} aria-label={copy.finish} disabled={write.busy}
+        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} aria-label={copy.rackItName} disabled={write.busy}
           onHoldComplete={() => { void write.run(() => repo.w.finishSession(session.id), onFinish); }}>
           {copy.rackIt}
         </HoldButton>
