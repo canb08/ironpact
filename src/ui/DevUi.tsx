@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { setSoundOn, useSound } from '../platform/audio';
 import { Check } from 'lucide-react';
 import {
   BarbellGlyph,
@@ -17,6 +18,7 @@ import {
   Button,
   Chip,
   HoldButton,
+  Ring,
   Sheet,
   Stepper,
   ToastProvider,
@@ -28,6 +30,7 @@ function Gallery() {
   const [weight, setWeight] = useState(80);
   const [open, setOpen] = useState(false);
   const { showToast } = useToast();
+  const { enabled: soundOn, play } = useSound();
   const notify = () =>
     showToast({
       message: copy.setLogged,
@@ -125,6 +128,75 @@ function Gallery() {
         </div>
       </section>
       <section>
+        <h2>{copy.ringDemo}</h2>
+        <Ring
+          members={[
+            {
+              id: 'you',
+              name: copy.ringYou,
+              initial: 'Y',
+              color: 'var(--member-volt)',
+              target: 3,
+              credits: 2,
+              minCount: 0,
+            },
+          ]}
+        />
+        <Ring
+          members={[
+            {
+              id: 'you',
+              name: copy.ringYou,
+              initial: 'Y',
+              color: 'var(--member-volt)',
+              target: 3,
+              credits: 2,
+              minCount: 1,
+            },
+            {
+              id: 'partner',
+              name: copy.ringPartner,
+              initial: 'P',
+              color: 'var(--member-ice)',
+              target: 3,
+              credits: 1,
+              minCount: 0,
+            },
+          ]}
+        />
+        <Ring
+          members={[
+            {
+              id: 'you',
+              name: copy.ringYou,
+              initial: 'Y',
+              color: 'var(--member-volt)',
+              target: 3,
+              credits: 2,
+              minCount: 0,
+            },
+            {
+              id: 'partner',
+              name: copy.ringPartner,
+              initial: 'P',
+              color: 'var(--member-ice)',
+              target: 3,
+              credits: 1,
+              minCount: 0,
+            },
+            {
+              id: 'third',
+              name: copy.ringThird,
+              initial: 'T',
+              color: 'oklch(0.78 0.15 320)',
+              target: 3,
+              credits: 0.5,
+              minCount: 1,
+            },
+          ]}
+        />
+      </section>
+      <section>
         <h2>{copy.devStepper}</h2>
         <Stepper
           label={copy.weight}
@@ -201,6 +273,39 @@ function Gallery() {
         <Button variant="secondary" onClick={notify}>
           {copy.devShowToast}
         </Button>
+      </section>
+      <section>
+        <h2>{copy.devSound}</h2>
+        <p>{copy.devSoundHint}</p>
+        <div className="ui-gallery__row">
+          <Button
+            variant="secondary"
+            aria-pressed={soundOn}
+            onClick={() => {
+              setSoundOn(!soundOn);
+            }}
+          >
+            {soundOn ? copy.devSoundOn : copy.devSoundOff}
+          </Button>
+          <Button variant="secondary" onClick={() => play('clank')}>
+            {copy.devSoundClank}
+          </Button>
+          <Button variant="secondary" onClick={() => play('3-2-1')}>
+            {copy.devSoundCountdown}
+          </Button>
+          <Button variant="secondary" onClick={() => play('bell')}>
+            {copy.devSoundBell}
+          </Button>
+          <Button variant="secondary" onClick={() => play('pr-riser')}>
+            {copy.devSoundRiser}
+          </Button>
+          <Button variant="secondary" onClick={() => play('ring-chord')}>
+            {copy.devSoundChord}
+          </Button>
+          <Button variant="secondary" onClick={() => play('plate')}>
+            {copy.devSoundPlate}
+          </Button>
+        </div>
       </section>
       <Sheet open={open} title={copy.devSheet} onClose={() => setOpen(false)}>
         <p>{copy.devSheetBody}</p>

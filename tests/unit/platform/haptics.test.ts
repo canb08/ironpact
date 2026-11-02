@@ -1,10 +1,21 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HAPTIC_PATTERNS, haptic, hapticsEnabled, setHapticsOn } from '../../../src/platform/haptics';
+import {
+  HAPTIC_PATTERNS,
+  haptic,
+  hapticsEnabled,
+  iosHapticsTrickEnabled,
+  setHapticsOn,
+  setIosHapticsTrick,
+} from '../../../src/platform/haptics';
 
 afterEach(() => {
   setHapticsOn(true);
+  setIosHapticsTrick(null);
+  document.getElementById('ironpact-ios-haptic')?.remove();
+  document.querySelector('label[for="ironpact-ios-haptic"]')?.remove();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
 
@@ -41,5 +52,46 @@ describe('haptics', () => {
     vi.stubGlobal('navigator', { vibrate });
     expect(haptic('pr')).toBe(false);
     expect(vibrate).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the iOS switch trick off unless the flag is explicitly on', () => {
+    expect(iosHapticsTrickEnabled()).toBe(false);
+    vi.stubEnv('VITE_IOS_HAPTICS', 'off');
+    expect(iosHapticsTrickEnabled()).toBe(false);
+    vi.stubEnv('VITE_IOS_HAPTICS', 'on');
+    expect(iosHapticsTrickEnabled()).toBe(true);
+    setIosHapticsTrick(false);
+    expect(iosHapticsTrickEnabled()).toBe(false);
+    vi.stubGlobal('navigator', {});
+    expect(haptic('setLogged')).toBe(false);
+    expect(document.querySelector('input[switch]')).toBeNull();
+  });
+
+  it('clicks a hidden checkbox switch only when vibrate is missing and the flag is on', () => {
+    const click = vi.spyOn(HTMLElement.prototype, 'click');
+    vi.stubGlobal('navigator', {});
+    setIosHapticsTrick(true);
+    expect(haptic('setLogged')).toBe(true);
+    expect(haptic('pr')).toBe(true);
+    expect(click).toHaveBeenCalledTimes(2);
+    const input = document.querySelector('input');
+    expect(input?.getAttribute('switch')).toBe('');
+    expect(input?.type).toBe('checkbox');
+    expect(input?.getAttribute('aria-hidden')).toBe('true');
+    expect(input?.tabIndex).toBe(-1);
+    expect(document.querySelectorAll('input[switch]')).toHaveLength(1);
+    const label = document.querySelector('label');
+    expect(label?.htmlFor).toBe(input?.id);
+
+    setHapticsOn(false);
+    expect(haptic('timerZero')).toBe(false);
+    expect(click).toHaveBeenCalledTimes(2);
+
+    setHapticsOn(true);
+    const vibrate = vi.fn(() => true);
+    vi.stubGlobal('navigator', { vibrate });
+    expect(haptic('timerZero')).toBe(true);
+    expect(vibrate).toHaveBeenCalledWith([80, 60, 80, 60, 200]);
+    expect(click).toHaveBeenCalledTimes(2);
   });
 });
