@@ -106,7 +106,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
 | X7 | Crew centred on partner | Grok | E | PR #76 — Lead approved round 2 (partner hero, stat tiles); Lead pushed the feed-dot colour fix; CI running |
-| X8 | Settings grouped sub-pages | Codex Sol High | C | PR #73 — Lead review: section headers + switches instead of checkboxes |
+| X8 | Settings grouped sub-pages | Codex Sol High | C | merged #73 (Lead review round 2: section headers, switches; also fixed the midnight date bug in the ExerciseDetail test; theme radio → segmented in X11) |
 | X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
