@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy } from '../../src/ui/copy.ts';
 import { logBench, mirrorCounts, reachFloor, waitForBench, warmLazyRoutes } from './helpers.ts';
 
@@ -15,8 +16,8 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await logBench(page, 3);
   await expect(page.locator(`[aria-label="${copy.sessionSaved}"]`)).toHaveCount(3);
 
-  // The session screen has no Floor control. History returns to S4 without a reload (offline-safe).
-  await page.goBack();
+  // The Today tab works without a reload in airplane mode.
+  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
   await expect(page.getByTestId('my-week')).toBeVisible();
   await page.getByRole('button', { name: copy.min, exact: true }).click();
   await expect(page.getByText(copy.minLogged)).toBeVisible();
@@ -44,8 +45,8 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await expect(page.getByText(copy.sessionFinished)).toBeVisible();
   await page.keyboard.up('Enter');
 
-  await page.goBack();
-  await page.getByRole('link', { name: copy.settings, exact: true }).click();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
   const preview = page.getByRole('region', { name: copy.exportPreview }).locator('pre');
   await expect(preview).toContainText(BENCH);
   await expect(preview).toContainText(WEIGHT);

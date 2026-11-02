@@ -1,0 +1,77 @@
+.app-shell {
+  --shell-header-height: calc(80px + env(safe-area-inset-top, 0px));
+  --shell-tabs-height: calc(72px + env(safe-area-inset-bottom, 0px));
+  min-height: 100dvh;
+  min-width: 0;
+}
+.app-shell__header {
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: var(--shell-header-height);
+  padding: calc(var(--s-4) + env(safe-area-inset-top, 0px)) max(var(--gutter), env(safe-area-inset-right, 0px)) var(--s-4) max(var(--gutter), env(safe-area-inset-left, 0px));
+  background: var(--bg);
+}
+.app-shell__header > .ui-screen-header { max-width: 38rem; margin-inline: auto; }
+.app-shell__settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  color: var(--text);
+  border-radius: var(--r-md);
+}
+.app-shell__content { min-width: 0; padding-bottom: var(--shell-tabs-height); }
+/* The shell supplies the screen title; retain each screen's remaining layout. */
+.app-shell__content main > h1,
+.app-shell__content main > .session-header > h1 { display: none; }
+.app-shell__content .session-active {
+  height: calc(100dvh - var(--shell-header-height) - var(--shell-tabs-height));
+  min-height: 0;
+  overflow-y: auto;
+}
+.app-shell__tabs {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: 30;
+  inset-inline: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: var(--shell-tabs-height);
+  padding: var(--s-2) max(var(--s-2), env(safe-area-inset-right, 0px)) calc(var(--s-2) + env(safe-area-inset-bottom, 0px)) max(var(--s-2), env(safe-area-inset-left, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+.app-shell__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+  min-height: 56px;
+  min-width: 44px;
+  color: var(--line);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+  touch-action: manipulation;
+}
+.app-shell__tab[aria-current='page'] { color: var(--text); }
+.app-shell__tab-icon { position: relative; display: flex; }
+.app-shell__live {
+  position: absolute;
+  top: -2px;
+  right: -6px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--plate-green);
+}
+/* Keep the reserved space stable: blurring a field must not move Log set
+   between pointer-down and pointer-up and swallow the tap. */
+.app-shell:has(.session-controls :is(input, textarea, [contenteditable='true']):focus, [data-session-dock] :is(input, textarea, [contenteditable='true']):focus, .pr-takeover) .app-shell__tabs { display: none; }

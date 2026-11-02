@@ -1,5 +1,6 @@
 import { devices, expect, test, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { MOCK_USER_IDS } from '../../src/data/adapter.mock.ts';
+import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy, fill } from '../../src/ui/copy.ts';
 import { reachFloor } from './helpers.ts';
 
@@ -150,14 +151,10 @@ async function shareMock(context: BrowserContext, hub: MockHub, pages: Set<Page>
   });
 }
 
-async function clientGo(page: Page, path: string): Promise<void> {
-  await page.evaluate(async (next) => {
-    const specifier = '/src/router.tsx';
-    const mod = await import(specifier) as {
-      router: { state: { location: { pathname: string } }; navigate: (to: string, opts?: { replace?: boolean }) => Promise<unknown> };
-    };
-    if (mod.router.state.location.pathname !== next) await mod.router.navigate(next, { replace: true });
-  }, path);
+async function today(page: Page): Promise<void> {
+  const tab = page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true });
+  if (await tab.isVisible()) await tab.click();
+  else await page.goto('/');
 }
 
 async function onFloor(page: Page): Promise<void> {
@@ -165,7 +162,7 @@ async function onFloor(page: Page): Promise<void> {
     const install = page.getByRole('link', { name: copy.installContinue });
     if (await install.isVisible()) await install.click();
     const path = new URL(page.url()).pathname;
-    if (path === '/install' || path === '/crew/new' || path === '/sign-in') await clientGo(page, '/');
+    if (path === '/install' || path === '/crew/new' || path === '/sign-in') await today(page);
     return new URL(page.url()).pathname === '/' && await page.getByTestId('bar-plates').isVisible();
   }, { timeout: 20_000 }).toBe(true);
 }
@@ -230,10 +227,10 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
     await expect(bob.getByText(fill(copy.sessionSetCount, { count: 1 }), { exact: true })).toBeVisible();
     await expect(page.getByTestId('presence-banner')).toHaveText(BENCH);
 
-    await page.getByRole('link', { name: copy.crew, exact: true }).click();
+    await page.locator('.app-shell__tabs').getByRole('link', { name: copy.crewTitle, exact: true }).click();
     await expect(page.getByRole('list', { name: copy.crewFeedTitle })).toContainText('Bench press', { timeout: 3_000 });
 
-    await clientGo(bob, '/');
+    await today(bob);
     await onFloor(bob);
     await expect(bob.locator(`[data-member="${MOCK_USER_IDS.bob}"][data-state="full"]`).first()).toBeAttached();
     await expect(page.locator(`[data-member="${MOCK_USER_IDS.bob}"][data-state="full"]`).first()).toBeAttached();
