@@ -53,7 +53,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3E | Crew full + presence + Bar + comeback | Grok (friend's Codex out of usage) | E | running 2026-11-02 (Grok) |
 | P3F | Progress S13: trend chart | Grok | E | merged #33 |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
-| P3H | Shared credit fixtures: SQL `week_credits` ↔ TS `credits.ts` parity (E5.7, L12) — **new ticket, test-only, no `src/**` or migrations** | Grok | E | running 2026-11-02 |
+| P3H | Shared credit fixtures: SQL `week_credits` ↔ TS `credits.ts` parity (E5.7, L12) — **new ticket, test-only, no `src/**` or migrations** | Grok | E | pr #36 (test-only, 24 fixtures both sides; awaiting CI db) |
 
 ## Phase 4–5 queue (fire order in `docs/LANES.md`)
 | ID | What | Engine | Lane | Status |
