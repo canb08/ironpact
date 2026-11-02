@@ -1,0 +1,35 @@
+.day-editor { gap: 16px; }
+.day-week { touch-action: pan-y; }
+.day-week-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 8px; }
+.day-week-heading > span { text-align: center; font-size: var(--t-sm); }
+.day-week-heading .ui-button { flex: 0 0 44px; padding: 0; }
+.day-week-chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.day-chip { display: grid; justify-items: center; align-content: center; gap: 4px; min-width: 44px; min-height: 80px; padding: 8px 0; border-radius: 8px; color: var(--text); text-decoration: none; font-size: var(--t-xs); }
+.day-chip strong { font: 600 var(--t-xl)/1 var(--font-number); }
+.day-chip.is-current { background: var(--text); color: var(--bg); }
+.day-chip.is-current .progress-dot { background: var(--bg); }
+.day-workout { display: grid; gap: 16px; }
+.day-session-header.ui-button { display: grid; gap: 4px; width: 100%; text-align: start; justify-items: stretch; grid-template-columns: minmax(0, 1fr); padding: 16px; font-weight: 400; white-space: normal; }
+.day-session-title { display: flex; justify-content: space-between; font-size: var(--t-md); font-weight: 600; }
+.day-session-time { color: var(--text-muted); font-size: var(--t-sm); }
+.day-session-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-exercise h2 { font-size: var(--t-body); margin-bottom: 4px; }
+.day-exercise ol { padding: 0; margin: 0; list-style: none; }
+.day-set-row.ui-button { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto 12px; width: 100%; min-height: 48px; gap: 8px; padding: 4px 0; text-align: start; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; font-weight: 400; }
+.day-set-index, .day-set-meta { font-size: var(--t-xs); color: var(--text-muted); }
+.day-set-numbers { font: 600 var(--t-xl)/1.2 var(--font-number); }
+.day-set-meta { max-width: 6rem; white-space: normal; }
+.day-delete-workout { justify-self: stretch; margin-block: 8px; }
+.day-sheet.progress { padding: 0; overflow: visible; }
+.day-sheet fieldset { display: grid; min-width: 0; padding: 0; border: 0; margin: 0; gap: 12px; }
+.day-sheet .progress-rpe { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: 4px; overflow: visible; }
+.day-sheet .progress-rpe .ui-button { padding: 8px 0; }
+.day-session-sheet .progress-card { border: 0; background: transparent; padding: 0; }
+.day-session-sheet .progress-card > h2, .day-session-sheet .ui-hold { display: none; }
+.day-sheet .progress-form { padding: 0; border: 0; background: transparent; }
+.day-set-form .ui-stepper input { font: 600 var(--t-hero)/1 var(--font-number); }
+.day-sheet textarea { min-height: 64px; }
+.day-chip:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+@media (min-width: 500px) {
+  .day-chip { min-height: 88px; }
+}

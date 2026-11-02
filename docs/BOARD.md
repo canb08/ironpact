@@ -101,15 +101,32 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 |---|---|---|---|---|
 | X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | merged #65 (Lead review round 2: chunkier PlateBar, chalk primary) |
 | X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | merged #66 (shell copy in src/app/shell/copy.ts → fold into copy.ts in X10) |
-| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | running — friend's Codex (Sol High) |
-| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | running — owner's Codex (Sol High) |
-| X5 | Progress hub + exercise detail | Grok or Codex | E | running — friend's Codex (Sol High) |
-| X6 | Day editor: compact rows + edit sheet | Grok | E | **ready** — waiting for friend's usage |
-| X7 | Crew centred on partner | Grok | E | **ready** — waiting for friend's usage |
-| X8 | Settings grouped sub-pages | Grok | C | queued (after X1+X2) |
-| X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
+| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | merged #68 (Lead screenshot review; e2e START helper fixed in round 2) |
+| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — review fixes look right; 3 e2e failures (p7-shell focus, p3-demo flow, 200% wrap) sent back |
+| X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
+| X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
+| X7 | Crew centred on partner | Grok | E | **running** — friend's Grok (re-fired 23:00: the Codex send didn't go through and Codex is at 10% until 00:43) |
+| X8 | Settings grouped sub-pages | Codex Sol High | C | PR #73 — Lead review: section headers + switches instead of checkboxes |
+| X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
+
+## R3 · Feel layer (friend request 2026-11-02, L20) — `docs/FEEL.md`
+Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3) → **Y5 (after X3-X7, before X11)**. Same review rule as R2, plus a GIF of the interaction.
+
+| Ticket | What | Model | Lane | Status |
+|---|---|---|---|---|
+| Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | merged #70 (iOS haptic on-device check still open: WebKit may ignore the switch trick) |
+| Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | Grok Build | E | merged #75 (Lead ran it on mock: 2 taps → bar 1 of 3, combo book; Lead merged main for the Y6 copy/test conflict; one p7-shell Pixel 7 flake, passed on re-run) |
+| Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
+| Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
+| Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
+| Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
+| Y7 | Voice log (experimental) | Grok Build | E | queued (after Y3) |
+| Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
+| Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
+
+**Lane C:** X11 waits for Y5 (L20). Y9 adds a 5th tab (Proof) to the X2 shell, and Y8 adds migration 0012 (L21). Ack/object here.
 
 ## Parked / follow-ups
 - **Flaky e2e (seen twice, 2026-11-02, P3G #49 and H3 #48 PR runs):** `tests/e2e/p1-demo.spec.ts` + `p1-flight.spec.ts` on **Pixel 7** time out in `warmLazyRoutes` (`tests/e2e/helpers.ts:75`): the Floor `Weight` link is "detached from the DOM" while clicking, likely a Floor re-render (P3E/P4E duo moments, live data). Twin push runs pass. Fix: wait for the Floor to settle (e.g. `my-week` stable / moments idle) or navigate by URL in `warmLazyRoutes`. Until then: re-run failed jobs, don't merge on red. **Diagnosis (friend's Claude, 06:00):** `useRepoQuery` (`src/features/floor/useRepoQuery.ts`) builds a fresh store with `value = undefined` whenever its deps change; FloorScreen passes `crewTick` (P3E), so every crew delta pull blanks the Floor to its `aria-busy` shell and remounts the buttons (real UX flicker, and the detached `Weight` link in CI). Tried a keep-last-value fix: unit test proves it, and the detach failure stopped, but locally it produced a new p1-demo failure on Pixel 7 (MIN toast shown twice, strict-mode violation) that main does not show in 5/5 runs, so it was not pushed. Needs a proper ticket (Floor owner) that keeps the last value **and** guards the MIN double-tap/toast.

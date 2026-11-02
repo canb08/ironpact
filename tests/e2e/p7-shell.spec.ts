@@ -18,7 +18,7 @@ test('tabs reach every main screen; Progress reaches an exercise and its day, wi
   await expect(page.getByTestId('session-live')).toBeVisible();
   await tabs(page).getByRole('link', { name: copy.progressTitle, exact: true }).click();
   await expect(tabs(page).getByRole('link', { name: copy.progressTitle, exact: true })).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('link', { name: 'Bench press', exact: true }).click();
+  await page.getByRole('link', { name: /^Bench press/ }).click();
   await expect(page).toHaveURL(new RegExp(`/exercise/${BENCH}$`));
   await expect(page.getByRole('heading', { name: 'Bench press', exact: true })).toBeVisible();
   await page.getByRole('link', { name: copy.editDay, exact: true }).click();
@@ -33,7 +33,7 @@ test('tabs reach every main screen; Progress reaches an exercise and its day, wi
   await page.getByRole('button', { name: copy.x1Back, exact: true }).click();
   await expect(page).toHaveURL(/\/crew$/);
   await tabs(page).getByRole('link', { name: shellCopy.today, exact: true }).click();
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
   const bounds = await tabs(page).boundingBox();
   expect(bounds?.y).toBeGreaterThan(700);
   for (const link of await tabs(page).getByRole('link').all()) {
@@ -59,9 +59,9 @@ for (const [route, parent] of [[`/exercise/${BENCH}`, '/progress'], ['/day/2026-
 
 test('quick logs keep Today mounted behind the sheet and dismiss back to it', async ({ page }) => {
   await reachFloor(page);
-  await page.getByTestId('my-week').evaluate((node) => node.setAttribute('data-shell-kept', 'true'));
-  await page.getByRole('link', { name: copy.weight, exact: true }).click();
-  await expect(page.getByRole('dialog', { name: copy.weight })).toBeVisible();
+  await page.getByTestId('shared-bar').evaluate((node) => node.setAttribute('data-shell-kept', 'true'));
+  await page.getByRole('link', { name: copy.x3WeighIn, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: copy.x3WeighIn })).toBeVisible();
   await expect(page.locator('[data-shell-kept="true"]')).toBeAttached();
   await page.getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page.locator('[data-shell-kept="true"]')).toBeVisible();

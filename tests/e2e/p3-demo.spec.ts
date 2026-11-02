@@ -10,7 +10,7 @@ import { reachFloor } from './helpers.ts';
  * presence between the two pages, so each page's own mock still fans out,
  * pulls and expires presence.
  */
-const PARTNER = 'Athlete';
+const PARTNER = 'Partner';
 const QUIET = new RegExp(String.raw`^${PARTNER} is on the floor · \d+ min$`);
 const BENCH = new RegExp(String.raw`^${PARTNER} is on the floor · Bench 1/1 · \d+ min$`);
 
@@ -163,7 +163,7 @@ async function onFloor(page: Page): Promise<void> {
     if (await install.isVisible()) await install.click();
     const path = new URL(page.url()).pathname;
     if (path === '/install' || path === '/crew/new' || path === '/sign-in') await today(page);
-    return new URL(page.url()).pathname === '/' && await page.getByTestId('bar-plates').isVisible();
+    return new URL(page.url()).pathname === '/' && await page.getByTestId('shared-bar').isVisible();
   }, { timeout: 20_000 }).toBe(true);
 }
 
@@ -172,8 +172,8 @@ async function subscriptionCount(page: Page): Promise<number> {
 }
 
 async function expectMine(page: Page, userId: string): Promise<void> {
-  const mine = page.locator('section', { has: page.locator('#my-week-heading') });
-  await expect(mine.locator(`[data-member="${userId}"]`).first()).toBeAttached();
+  await expect(page.getByTestId('shared-bar').getByRole('img')).toHaveAccessibleName(/^You 0 of 3, Partner 0 of 3$/);
+  await expect(page.getByTestId('shared-bar')).toHaveAttribute('data-user', userId);
 }
 
 function bobContextOptions(info: TestInfo): Record<string, unknown> {
@@ -208,10 +208,10 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
     await expect.poll(() => subscriptionCount(bob)).toBeGreaterThan(0);
     await expectMine(page, MOCK_USER_IDS.alice);
     await expectMine(bob, MOCK_USER_IDS.bob);
-    await expect(page.getByTestId('bar-plates')).toHaveText(/^0/);
+    await expect(page.getByTestId('week-streak')).toHaveCount(0);
     await expect(page.getByTestId('debug-week')).toHaveCount(0);
 
-    await bob.getByRole('button', { name: copy.start, exact: true }).click();
+    await bob.getByRole('link', { name: copy.x3StartWorkout, exact: true }).click();
     const picker = bob.getByRole('dialog', { name: copy.pickerTitle });
     await expect(picker).toBeVisible();
     await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
@@ -231,14 +231,15 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
 
     await today(bob);
     await onFloor(bob);
-    await expect(bob.locator(`[data-member="${MOCK_USER_IDS.bob}"][data-state="full"]`).first()).toBeAttached();
-    await expect(page.locator(`[data-member="${MOCK_USER_IDS.bob}"][data-state="full"]`).first()).toBeAttached();
+    await expect(bob.getByTestId('shared-bar').getByRole('img')).toHaveAccessibleName(/You 1 of 3/);
+    await today(page);
+    await onFloor(page);
+    await expect(page.getByTestId('shared-bar').getByRole('img')).toHaveAccessibleName(/Partner 1 of 3/);
 
     await page.goto('/?debug=week');
-    await expect(page.getByTestId('my-week')).toBeVisible();
-    await expect(page.getByTestId('bar-plates')).toHaveText(/^1/);
-    await expect(page.getByTestId('debug-week')).toHaveText(copy.plateAdded);
-    await expect(page.getByTestId('bar-tier')).toHaveText('Iron');
+    await expect(page.getByTestId('shared-bar')).toBeVisible();
+    await expect(page.getByTestId('week-streak')).toHaveText('1-week streak');
+    await expect(page.getByTestId('debug-week')).toHaveText(copy.x3DebugWeek);
     await expect(page.getByTestId('presence-banner')).toHaveText(BENCH);
 
     await page.clock.fastForward('02:10');

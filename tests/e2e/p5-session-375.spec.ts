@@ -69,7 +69,7 @@ test('three taps to a set, ten sets scroll in the page, and Done returns to Toda
   await reachFloor(page);
   await waitForBench(page);
   let taps = 0;
-  await page.getByRole('button', { name: copy.start, exact: true }).click(); taps++;
+  await page.getByRole('link', { name: copy.x3StartWorkout, exact: true }).click(); taps++;
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect(picker).toBeVisible();
   await picker.getByRole('button', { name: 'Bench press', exact: true }).click(); taps++;
@@ -102,7 +102,7 @@ test('three taps to a set, ten sets scroll in the page, and Done returns to Toda
   await expect(page.getByRole('region', { name: copy.summaryTitle })).toContainText('Bench press');
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
 });
 
 test('current lift stays above the dock, earlier lifts collapse, and summary has one title', async ({ page }) => {

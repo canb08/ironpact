@@ -43,7 +43,7 @@ async function preparePr(page: Page): Promise<void> {
   }
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
   await page.clock.setFixedTime(CLOCK + 120_000);
   await openBench(page);
 }
@@ -199,7 +199,7 @@ test('partner shockwave bridge plays once across two opens in an independent con
       }, event);
     };
     await reachFloor(opened);
-    await expect(opened.locator(`[aria-labelledby="my-week-heading"] [data-member="${MOCK_USER_IDS.bob}"]`).first()).toBeAttached();
+    await expect(opened.getByTestId('shared-bar')).toHaveAttribute('data-user', MOCK_USER_IDS.bob);
     await deliver(opened);
     const shockwave = opened.getByTestId('partner-shockwave');
     await expect(shockwave).toHaveAttribute('data-shockwave', event.id);

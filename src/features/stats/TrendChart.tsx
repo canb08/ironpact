@@ -14,7 +14,6 @@ export function TrendChart({
   window,
   youLabel,
   partnerLabel,
-  partnerHue,
   caption,
 }: {
   model: ChartModel;
@@ -26,8 +25,7 @@ export function TrendChart({
 }): ReactElement {
   const geometry = chartGeometry(model, window);
   const unit = model.mode === 'percent' ? '%' : 'kg';
-  const hue = Number.isFinite(partnerHue) ? ((Math.round(partnerHue) % 360) + 360) % 360 : 200;
-  const partnerStroke = `hsl(${hue} 62% 58%)`;
+  const partnerStroke = 'var(--plate-blue)';
   return (
     <figure className="progress-chart">
       <svg
@@ -50,6 +48,7 @@ export function TrendChart({
         <text className="progress-axis" x="28" y={CHART_HEIGHT - 6}>
           {formatTrendNumber(geometry.yMin)}
         </text>
+        <polyline aria-hidden="true" className="progress-line-outline" fill="none" points={polylinePoints(geometry.mine)} />
         <polyline
           className="progress-line progress-line--you"
           fill="none"
@@ -58,6 +57,7 @@ export function TrendChart({
         {geometry.mine.map((point) => (
           <circle key={point.sessionId} className="progress-dot progress-dot--you" cx={point.x} cy={point.y} r="3" />
         ))}
+        {geometry.partner.length > 0 && <polyline aria-hidden="true" className="progress-line-outline" fill="none" strokeDasharray="5 4" points={polylinePoints(geometry.partner)} />}
         {geometry.partner.length > 0 && (
           <polyline
             className="progress-line progress-line--partner"
@@ -79,9 +79,10 @@ export function TrendChart({
         ))}
       </svg>
       <figcaption className="progress-legend">
+        <span className="progress-chart-caption">{caption}</span>
         <span className="progress-swatch progress-swatch--you">{youLabel}</span>
         {partnerLabel != null && geometry.partner.length > 0 && (
-          <span className="progress-swatch progress-swatch--partner" style={{ color: partnerStroke }}>
+          <span className="progress-swatch progress-swatch--partner" >
             {partnerLabel}
           </span>
         )}

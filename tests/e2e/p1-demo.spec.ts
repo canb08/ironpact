@@ -18,20 +18,27 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
 
   // The Today tab works without a reload in airplane mode.
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
-  await expect(page.getByTestId('my-week')).toBeVisible();
-  await page.getByRole('button', { name: copy.min, exact: true }).click();
-  await expect(page.getByText(copy.minLogged)).toBeVisible();
-  await expect(page.getByText(copy.minLogged, { exact: true })).toHaveCount(1);
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
+  await page.getByRole('link', { name: copy.x3Min, exact: true }).click();
+  const min = page.getByRole('dialog', { name: copy.x3Min });
+  await min.getByRole('button', { name: copy.save, exact: true }).click();
+  await expect.poll(async () => page.evaluate(async () => {
+    const path = '/src/data/index.ts';
+    const { createRepo } = await import(path) as typeof import('../../src/data/index.ts');
+    const me = await createRepo().q.me();
+    return (await createRepo().q.entriesBetween(me!.id, '0000-01-01', '9999-12-31')).min.length;
+  })).toBe(1);
+  await min.getByRole('button', { name: copy.close, exact: true }).click();
 
-  await page.getByRole('link', { name: copy.weight, exact: true }).click();
-  const weight = page.getByRole('dialog', { name: copy.weight });
+  await page.getByRole('link', { name: copy.x3WeighIn, exact: true }).click();
+  const weight = page.getByRole('dialog', { name: copy.x3WeighIn });
   await weight.getByLabel(copy.weight).fill('78.4');
   await weight.getByRole('button', { name: copy.save }).click();
   await expect(weight.getByText('78.4')).toBeVisible();
   await weight.getByRole('button', { name: copy.close }).click();
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
 
-  await page.getByRole('button', { name: copy.start, exact: true }).click();
+  await page.getByRole('link', { name: copy.x3StartWorkout, exact: true }).click();
   await page.getByRole('button', { name: copy.sessionResumeAction }).click();
   await expect(page.locator(`[aria-label="${copy.sessionSaved}"]`)).toHaveCount(3);
 

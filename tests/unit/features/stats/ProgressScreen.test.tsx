@@ -8,7 +8,7 @@ import { emptyBundle, type ProgressData } from '../../../../src/features/stats/b
 import { ProgressView } from '../../../../src/features/stats/ProgressScreen.tsx';
 import { trendWindow } from '../../../../src/features/stats/trend.ts';
 import { copy } from '../../../../src/ui/copy.ts';
-import { bodyweight, exercise, id, profile, session, set } from '../../core/fixtures.ts';
+import { bodyweight, cardio, martial, exercise, id, profile, session, set } from '../../core/fixtures.ts';
 
 const window = trendWindow('2026-11-02');
 const partnerId = id(20);
@@ -34,13 +34,14 @@ function renderProgress(value: ProgressData | null) {
   );
 }
 
-it('shows the empty sentence and no chart when nothing is logged', () => {
+it('teaches a distinct logging action on every empty tab', () => {
   renderProgress(data());
-  expect(screen.getByText(copy.emptyProgress)).toBeTruthy();
-  expect(document.querySelector('polyline')).toBeNull();
-  for (const name of [copy.progressRun, copy.progressMartial, copy.progressBody]) {
-    fireEvent.click(screen.getByRole('tab', { name }));
-    expect(screen.getByText(copy.emptyProgress)).toBeTruthy();
+  for (const [name, empty] of [
+    [copy.progressLifts, copy.x5LiftsEmpty], [copy.x5Cardio, copy.x5CardioEmpty],
+    [copy.x5Fight, copy.x5FightEmpty], [copy.progressBody, copy.x5BodyEmpty],
+  ]) {
+    fireEvent.click(screen.getByRole('radio', { name }));
+    expect(screen.getByText(empty!)).toBeTruthy();
     expect(document.querySelector('polyline')).toBeNull();
   }
 });
@@ -57,19 +58,19 @@ it('links each lift with two sessions to its exercise page and draws a sparkline
   renderProgress(data({
     mine: { ...emptyBundle(), sessions, sets },
   }));
-  const link = screen.getByRole('link', { name: exercise.name });
+  const link = screen.getByRole('link', { name: new RegExp(exercise.name) });
   expect(link.getAttribute('href')).toBe(`/exercise/${exercise.id}`);
   expect(document.querySelector('.progress-line--you')).toBeTruthy();
   expect(screen.getByRole('table', { name: `${exercise.name}. Best e1RM over 12 weeks.` })).toBeTruthy();
 });
 
-it('draws the 7-day average on Body and stays empty below two weigh-ins', () => {
+it('shows the first weigh-in immediately and draws the 7-day average', () => {
   const one = renderProgress(data({
     mine: { ...emptyBundle(), bodyweight: [{ ...bodyweight, user_id: profile.id, local_date: '2026-10-01', weight_kg: 80 }] },
   }));
-  fireEvent.click(screen.getByRole('tab', { name: copy.progressBody }));
-  expect(screen.getByText(copy.emptyProgress)).toBeTruthy();
-  expect(document.querySelector('polyline')).toBeNull();
+  fireEvent.click(screen.getByRole('radio', { name: copy.progressBody }));
+  expect(screen.getByText('Latest weigh-in: 80 kg')).toBeTruthy();
+  expect(document.querySelector('.progress-dot--weight')).toBeTruthy();
   one.unmount();
 
   const rows = [70, 71, 72, 73, 74, 75, 76].map((kg, index) => ({
@@ -82,7 +83,7 @@ it('draws the 7-day average on Body and stays empty below two weigh-ins', () => 
   }));
   const average = movingAverage7(rows, profile.id).at(-1)?.averageKg;
   renderProgress(data({ mine: { ...emptyBundle(), bodyweight: rows } }));
-  fireEvent.click(screen.getByRole('tab', { name: copy.progressBody }));
+  fireEvent.click(screen.getByRole('radio', { name: copy.progressBody }));
   expect(document.querySelector('.progress-line--you')).toBeTruthy();
   expect(document.querySelector('.progress-line--weight')).toBeTruthy();
   const table = screen.getByRole('table', { name: copy.progressBodyCaption });
@@ -136,10 +137,45 @@ it('rebases a partner overlay and never prints the partner raw kilograms', () =>
       bodyweight: weighIns,
     }]]),
   }));
-  fireEvent.click(screen.getByRole('button', { name: 'Show Crewmate' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Crewmate' }));
   expect(document.querySelector('.progress-line--partner')?.getAttribute('stroke-dasharray')).toBe('5 4');
   expect(document.body.textContent).not.toContain(String(heavy));
-  fireEvent.click(screen.getByRole('tab', { name: copy.progressBody }));
+  fireEvent.click(screen.getByRole('radio', { name: copy.progressBody }));
   expect(document.body.textContent).not.toContain(String(heavy));
   expect(document.body.textContent).toContain('%');
+});
+
+it('shows a first run and a first fight session, with real weekly rounds', () => {
+  renderProgress(data({ mine: { ...emptyBundle(),
+    sessions: [{ ...session, id: id(30), user_id: profile.id, local_date: '2026-11-02' }],
+    cardio: [{ ...cardio, user_id: profile.id, session_id: id(30), activity: 'Run', distance_m: 5000, duration_s: 1800 }],
+    martial: [{ ...martial, user_id: profile.id, session_id: id(30), discipline: 'Boxing', duration_min: 40, rounds: 8 }],
+  } }));
+  fireEvent.click(screen.getByRole('radio', { name: copy.x5Cardio }));
+  expect(screen.getByText('Latest run: 5 km at 6:00 per km')).toBeTruthy();
+  expect(screen.queryByText(copy.x5CardioEmpty)).toBeNull();
+  fireEvent.click(screen.getByRole('radio', { name: copy.x5Fight }));
+  expect(screen.getByText('Today: 40 min, 8 rounds')).toBeTruthy();
+  expect(screen.queryByText(copy.x5FightEmpty)).toBeNull();
+});
+
+it('keeps a stored Boxing row and lists Muay Thai combos newest first', () => {
+  renderProgress(data({ mine: { ...emptyBundle(),
+    sessions: [
+      { ...session, id: id(30), user_id: profile.id, local_date: '2026-11-01' },
+      { ...session, id: id(31), user_id: profile.id, local_date: '2026-11-02' },
+    ],
+    martial: [
+      { ...martial, id: id(70), user_id: profile.id, session_id: id(30), local_date: '2026-11-01', discipline: 'Boxing', duration_min: 40, rounds: 8, note: 'drilled guard', logged_at: '2026-11-01T18:00:00.000Z' },
+      { ...martial, id: id(71), user_id: profile.id, session_id: id(31), local_date: '2026-11-02', discipline: 'Muay Thai', duration_min: 38, rounds: 6, note: 'Pads · 1-2 / Teep', logged_at: '2026-11-02T18:00:00.000Z' },
+      { ...martial, id: id(72), user_id: profile.id, session_id: id(31), local_date: '2026-11-02', discipline: 'Muay Thai', duration_min: 18, rounds: 6, note: 'Pads · 1-2', logged_at: '2026-11-02T12:00:00.000Z' },
+    ],
+  } }));
+  fireEvent.click(screen.getByRole('radio', { name: copy.x5Fight }));
+  expect(screen.getByRole('heading', { name: 'Boxing' })).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Muay Thai' })).toBeTruthy();
+  const book = screen.getByRole('region', { name: copy.y2ComboBook });
+  const items = [...book.querySelectorAll('li')].map((item) => item.textContent);
+  expect(items).toEqual(['1-2, drilled 2', 'Teep, drilled 1']);
+  expect(book.textContent).not.toContain('drilled guard');
 });

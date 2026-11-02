@@ -5,8 +5,12 @@ import { localDateOf } from '../../core/weeks.ts';
 import type { Repo } from '../../data/adapter.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button } from '../../ui/Button.tsx';
+import { SegmentedControl } from '../../ui/SegmentedControl.tsx';
+import { ListRow } from '../../ui/ListRow.tsx';
+import { formatDate } from '../../core/formatDate.ts';
 import { copy, fill } from '../../ui/copy.ts';
 import { useRepoQuery } from '../floor/useRepoQuery.ts';
+import { comboBook } from '../quicklog/muaythai/classNote.ts';
 import {
   disciplinesOf,
   formatPaceLabel,
@@ -17,6 +21,7 @@ import {
   weeklyMinutes,
 } from './activity.ts';
 import { movingAverage7 } from './body.ts';
+import { addLocalDays } from './calendar.ts';
 import type { EntryBundle, ProgressData } from './bundle.ts';
 import { plotDated, rebaseSeries, type DatedValue } from './geometry.ts';
 import { HiddenTable } from './HiddenTable.tsx';
@@ -25,12 +30,17 @@ import { LineChart } from './LineChart.tsx';
 import { chartModel, formatTrendNumber, trendWindow, CHART_HEIGHT, CHART_WIDTH } from './trend.ts';
 import './progress.css';
 
+function scaleOf(series: readonly (readonly DatedValue[])[], unit: string) {
+  const values = series.flatMap((line) => line.map((point) => point.value));
+  return { min: Math.min(...values), max: Math.max(...values), unit };
+}
+
 type Tab = 'lifts' | 'run' | 'martial' | 'body';
 
 const TABS: readonly { id: Tab; label: string }[] = [
   { id: 'lifts', label: copy.progressLifts },
-  { id: 'run', label: copy.progressRun },
-  { id: 'martial', label: copy.progressMartial },
+  { id: 'run', label: copy.x5Cardio },
+  { id: 'martial', label: copy.x5Fight },
   { id: 'body', label: copy.progressBody },
 ];
 
@@ -90,10 +100,11 @@ function LiftsPanel({
     mine: data.mine,
     partner: comparing ? data.bundles.get(partner.id) ?? null : null,
   });
-  const anyLine = rows.some((row) => row.mine.length >= 2);
+  const anyLine = rows.length > 0;
   return (
-    <div className="progress-panel" role="tabpanel" id="progress-panel-lifts" aria-labelledby="progress-tab-lifts">
-      {!anyLine && <p className="progress-empty">{copy.emptyProgress}</p>}
+    <div className="progress-panel" role="region" id="progress-panel-lifts" aria-label={copy.progressLifts}>
+      {!anyLine && <p className="progress-empty">{copy.x5LiftsEmpty}</p>}
+      {anyLine && <p className="progress-caption">{copy.x5LiftHint}</p>}
       <ul className="progress-lifts">
         {rows.map((row) => {
           const model = chartModel(row.mine, comparing ? row.partner : [], comparing);
@@ -103,7 +114,12 @@ function LiftsPanel({
           const lines = plotted([mine, theirs], data);
           return (
             <li key={row.exercise.id} className="progress-lift">
-              <Link to={`/exercise/${row.exercise.id}`}>{row.exercise.name}</Link>
+              <Link to={`/exercise/${row.exercise.id}`} className="progress-lift-link">
+                <ListRow title={row.exercise.name}
+                  detail={fill(copy.x5Last, { date: formatDate(row.mine.at(-1)?.localDate ?? data.window.to, data.window.to, copy) })}
+                  trailing={<span className="progress-lift-best"><small>{copy.x5BestLabel}</small><span>{formatTrendNumber(Math.max(...row.mine.map((point) => point.e1rm)))}<span className="progress-lift-unit"> {copy.kg}</span></span></span>}
+                  chevron />
+              </Link>
               {row.mine.length >= 2 && (
                 <>
                   <LineChart
@@ -187,13 +203,16 @@ function RunPanel({
     ? fill(copy.progressCompareCaption, { partner: partner.display_name })
     : copy.progressDistanceCaption;
   return (
-    <div className="progress-panel" role="tabpanel" id="progress-panel-run" aria-labelledby="progress-tab-run">
-      {runs.length < 2 ? (
-        <p className="progress-empty">{copy.emptyProgress}</p>
+    <div className="progress-panel" role="region" id="progress-panel-run" aria-label={copy.x5Cardio}>
+      {runs.length === 0 ? (
+        <p className="progress-empty">{copy.x5CardioEmpty}</p>
       ) : (
         <>
+          <h2>{copy.x5WeeklyDistance}</h2>
+          <p className="progress-caption">{fill(copy.x5LatestRun, { km: formatTrendNumber((runs.at(-1)?.distanceM ?? 0) / 1000), pace: formatPaceLabel(runs.at(-1)?.secondsPerKm ?? 0) })}</p>
           <LineChart
             caption={copy.progressDistanceCaption}
+            scale={scaleOf([distanceMine, distancePartner], comparing ? '%' : copy.x5KmUnit)}
             youLabel={copy.progressYou}
             partnerLabel={comparing && partner != null ? partner.display_name : null}
             partnerHue={partner?.color_hue ?? 200}
@@ -226,9 +245,10 @@ function RunPanel({
               ];
             })}
           />
-          <p className="progress-caption">{copy.progressPaceCaption}</p>
+          <h2>{copy.x5Pace}</h2>
           <LineChart
             caption={copy.progressPaceCaption}
+            scale={scaleOf([paceMine, pacePartner], comparing ? '%' : copy.x5PaceUnit)}
             youLabel={copy.progressYou}
             partnerLabel={comparing && pacePartner.length >= 2 && partner != null ? partner.display_name : null}
             partnerHue={partner?.color_hue ?? 200}
@@ -275,8 +295,8 @@ function RunPanel({
             {prs.map((pr) => (
               <li key={pr.id}>
                 {pr.pr_type === 'distance'
-                  ? fill(copy.progressPrDistance, { date: pr.local_date, km: formatTrendNumber(pr.value / 1000) })
-                  : fill(copy.progressPrPace, { date: pr.local_date, pace: formatPaceLabel(pr.value) })}
+                  ? fill(copy.progressPrDistance, { date: formatDate(pr.local_date, data.window.to, copy), km: formatTrendNumber(pr.value / 1000) })
+                  : fill(copy.progressPrPace, { date: formatDate(pr.local_date, data.window.to, copy), pace: formatPaceLabel(pr.value) })}
               </li>
             ))}
           </ol>
@@ -302,11 +322,22 @@ function MartialPanel({
   const theirs = partnerBundle == null || partner == null
     ? []
     : martialInWindow(partnerBundle.martial, partnerBundle.sessions, partner.id, data.window);
-  const ready = disciplinesOf(mine).filter((name) => mine.filter((point) => point.discipline === name).length >= 2);
+  const ready = disciplinesOf(mine);
+  const book = comboBook(data.mine.martial);
   return (
-    <div className="progress-panel" role="tabpanel" id="progress-panel-martial" aria-labelledby="progress-tab-martial">
-      {mine.length < 2 || ready.length === 0 ? (
-        <p className="progress-empty">{copy.emptyProgress}</p>
+    <div className="progress-panel" role="region" id="progress-panel-martial" aria-label={copy.x5Fight}>
+      {book.length > 0 ? (
+        <section aria-label={copy.y2ComboBook}>
+          <h2>{copy.y2ComboBook}</h2>
+          <ol className="progress-week-list">
+            {book.map((row) => (
+              <li key={row.combo}>{fill(copy.y2Drilled, { combo: row.combo, count: row.count })}</li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+      {ready.length === 0 ? (
+        <p className="progress-empty">{copy.x5FightEmpty}</p>
       ) : ready.map((discipline) => {
         const weeks = weeklyMinutes(mine, discipline, data.window);
         const partnerWeeks = weeklyMinutes(theirs, discipline, data.window);
@@ -316,11 +347,16 @@ function MartialPanel({
         const partnerLine = comparing ? rebaseSeries(partnerSeries) : [];
         const lines = plotted([mineLine, partnerLine], data);
         const caption = fill(copy.progressMartialCaption, { discipline });
+        const rounds = weeks.map((week) => ({ date: week.weekStart, value: mine
+          .filter((point) => point.discipline === discipline && point.localDate >= week.weekStart && point.localDate < addLocalDays(week.weekStart, 7))
+          .reduce((total, point) => total + (data.mine.martial.find((row) => row.id === point.id)?.rounds ?? 0), 0) }));
         return (
           <section key={discipline}>
             <h2>{discipline}</h2>
+            <h3>{copy.x5Minutes}</h3>
             <LineChart
               caption={caption}
+              scale={scaleOf([mineLine, partnerLine], comparing ? '%' : copy.x5MinutesUnit)}
               youLabel={copy.progressYou}
               partnerLabel={comparing && partner != null ? partner.display_name : null}
               partnerHue={partner?.color_hue ?? 200}
@@ -329,6 +365,14 @@ function MartialPanel({
                 { kind: 'partner', points: lines[1] ?? '' },
               ]}
             />
+            <h3>{copy.x5Rounds}</h3>
+            <LineChart caption={copy.x5Rounds} youLabel={copy.progressYou} partnerLabel={null} partnerHue={200}
+              scale={scaleOf([rounds], copy.x5RoundsUnit)}
+              lines={[{ kind: 'you', points: plotted([rounds], data)[0] ?? '' }]} />
+            <ul className="progress-week-list">{weeks.filter((week) => week.minutes > 0).map((week) => <li key={week.weekStart}>{fill(copy.x5FightWeek, {
+              date: formatDate(week.weekStart, data.window.to, copy), minutes: week.minutes,
+              rounds: rounds.find((point) => point.date === week.weekStart)?.value ?? 0,
+            })}</li>)}</ul>
             <HiddenTable
               caption={caption}
               headers={comparing && partner != null
@@ -389,13 +433,16 @@ function BodyPanel({
     ? fill(copy.progressBodyPercent, { partner: partner.display_name })
     : copy.progressBodyCaption;
   return (
-    <div className="progress-panel" role="tabpanel" id="progress-panel-body" aria-labelledby="progress-tab-body">
-      {history.length < 2 ? (
-        <p className="progress-empty">{copy.emptyProgress}</p>
+    <div className="progress-panel" role="region" id="progress-panel-body" aria-label={copy.progressBody}>
+      {history.length === 0 ? (
+        <p className="progress-empty">{copy.x5BodyEmpty}</p>
       ) : (
         <>
+          <h2>{copy.x5BodyChart}</h2>
+          <p className="progress-caption">{fill(copy.x5LatestWeight, { kg: formatTrendNumber(history.at(-1)?.weightKg ?? 0) })}</p>
           <LineChart
             caption={caption}
+            scale={scaleOf(comparing ? [averageLine, partnerLine] : [weight, average], comparing ? '%' : copy.kg)}
             youLabel={copy.progressYou}
             partnerLabel={comparing && partner != null ? partner.display_name : null}
             partnerHue={partner?.color_hue ?? 200}
@@ -466,9 +513,9 @@ export function ProgressView({ data }: { data: ProgressData | null }): ReactElem
 
   if (data == null) {
     return (
-      <main className="progress">
+      <main className="progress progress-hub">
         <h1>{copy.progressTitle}</h1>
-        <p className="progress-empty">{copy.emptyProgress}</p>
+        <p className="progress-empty">{copy.x5LiftsEmpty}</p>
       </main>
     );
   }
@@ -477,23 +524,11 @@ export function ProgressView({ data }: { data: ProgressData | null }): ReactElem
   const activePartner = partner?.id ?? null;
 
   return (
-    <main className="progress">
+    <main className="progress progress-hub">
       <h1>{copy.progressTitle}</h1>
-      <div className="progress-tabs" role="tablist" aria-label={copy.progressTitle}>
-        {TABS.map((item) => (
-          <Button
-            key={item.id}
-            id={`progress-tab-${item.id}`}
-            role="tab"
-            aria-selected={tab === item.id}
-            aria-controls={`progress-panel-${item.id}`}
-            variant={tab === item.id ? 'primary' : 'secondary'}
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
+      <SegmentedControl label={copy.progressTitle} value={tab}
+        options={TABS.map((item) => ({ value: item.id, label: item.label }))}
+        onChange={(value) => setTab(value as Tab)} />
       {data.partners.length > 1 && (
         <label className="progress-field">
           <span>{copy.partner}</span>
@@ -507,12 +542,14 @@ export function ProgressView({ data }: { data: ProgressData | null }): ReactElem
       {partner != null && (
         <Button
           variant={showPartner ? 'primary' : 'secondary'}
-          aria-pressed={showPartner}
+          role="switch"
+          aria-checked={showPartner}
           onClick={() => setShowPartner((value) => !value)}
         >
           {fill(copy.progressShowPartner, { partner: partner.display_name })}
         </Button>
       )}
+      {showPartner && <p className="progress-caption">{copy.x5Comparison}</p>}
       {tab === 'lifts' && <LiftsPanel data={data} partnerId={activePartner} showPartner={showPartner} />}
       {tab === 'run' && <RunPanel data={data} partnerId={activePartner} showPartner={showPartner} />}
       {tab === 'martial' && <MartialPanel data={data} partnerId={activePartner} showPartner={showPartner} />}
@@ -524,6 +561,6 @@ export function ProgressView({ data }: { data: ProgressData | null }): ReactElem
 export default function ProgressScreen() {
   const repo = useRepo();
   const data = useRepoQuery(() => loadProgress(repo), [repo]);
-  if (data === undefined) return <main className="progress" aria-busy="true" />;
+  if (data === undefined) return <main className="progress progress-hub" aria-busy="true" />;
   return <ProgressView data={data} />;
 }

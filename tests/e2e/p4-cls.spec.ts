@@ -44,8 +44,8 @@ for (const screen of ['Floor', 'Session'] as const) {
     test.skip(!supported, 'This engine does not expose layout-shift entries; WebKit CLS is not reported as zero.');
 
     if (screen === 'Floor') {
-      await expect(page.getByTestId('my-week')).toBeVisible();
-      await expect(page.getByTestId('bar-plates')).toBeVisible();
+      await expect(page.getByTestId('shared-bar')).toBeVisible();
+      await expect(page.getByTestId('shared-bar').getByRole('img')).toBeVisible();
     } else {
       await waitForBench(page);
       const picker = page.getByRole('dialog', { name: copy.pickerTitle });

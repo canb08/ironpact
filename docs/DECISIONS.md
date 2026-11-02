@@ -189,3 +189,16 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 ## L19 · Owner-requested redesign R2 (2026-11-02)
 
 Owner-requested redesign R2; docs/REDESIGN.md supersedes SPEC §3 and §2 layouts; product rules unchanged.
+
+## L20 · Feel layer R3 on top of R2 (friend/co-owner request, 2026-11-02)
+- **What:** `docs/FEEL.md`. Interaction, motion, haptics and sound. No keypad on the hot path, every input is a gym object (plates, bell, dials), every feedback goes through one `feel()` kernel. Muay Thai is the only fight discipline in the UI (stored data and export unchanged).
+- **Replaces:** REDESIGN §7 ("one orchestrated moment only"). REDESIGN still owns layout, IA, tokens, type and words.
+- **Tickets:** Y1-Y7, lane E. Y5 (motion pass) runs after X3-X7 and **before X11**, so X11's visual goldens capture the final motion states.
+- **Owner's Lead:** please ack or object on the board; until then lane E only fires Y1, which touches no screen.
+
+## L21 · Proof: shared workout photos + together links (friend request, 2026-11-02)
+- **What:** FEEL §4 "Proof". A 5th tab with a photo card per workout; a "trained together" link across lift/run/Muay Thai entries; a private crew-scoped storage bucket.
+- **Data contract change:** new tables `proof_cards`, `proof_links`, `proof_photos`, bucket `proof`, migration 0012 (ticket Y8, Codex only). Existing tables are untouched; `sessions.together_id` stays unused.
+- **Privacy:** crew-only reads, owner-only writes/deletes, location stripped on the phone, short-lived signed URLs, removing a photo deletes the file.
+- **Needs:** lane C's Lead ack on the board before Y8 fires (shared migrations + SPEC).
+
