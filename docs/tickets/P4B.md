@@ -7,7 +7,7 @@
 ## Scope
 1. `src/ui/motion/`: lazy `MotionProvider` (`LazyMotion` + `domAnimation`), the UI / SLAM / HEAVY spring tokens, `useReducedMotion()` (media query **or** profile `reduce_motion`), feature-detected View Transitions helper, lazy `NumberFlow` wrapper.
 2. `src/ui/moments/queue.ts` + `MomentHost.tsx`: one Tier-1 per screen open, queued with a 400 ms gap, PR first; Tier-2 runs inline. Moments register by id; lane E's ring close and Bar tier-up use the same queue later.
-3. Tier 3 micro on set logged (0.96 → 1 scale, 4 px plate drop, `wdth` flex), "Locked in." toast. Wire it in `src/features/session/` with a single hook call.
+3. Apply the `ui-knurl` class (P4A) to the real RACK IT hold button. Tier 3 micro on set logged (0.96 → 1 scale, 4 px plate drop, `wdth` flex), "Locked in." toast. Wire it in `src/features/session/` with a single hook call.
 4. Flash-rate guard: a helper that asserts no more than 3 flashes per second (used by P4G).
 
 ## Files you may touch

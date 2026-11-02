@@ -5,8 +5,18 @@ import { set } from './fixtures.ts';
 it('U-E1: Epley 100×5 = 116.67 (preserves unrounded precision)', () => {
   expect(e1rm(set)).toBeCloseTo(116.67, 2);
 });
+it('U-E1 epley 100x5 = 116.67', () => {
+  expect(e1rm(set)).toBeCloseTo(116.67, 2);
+});
 it('U-E2/E3: reps 1 returns weight; 12 computed, 13 excluded', () => {
   expect(e1rm({ ...set, reps: 1 })).toBe(100);
+  expect(e1rm({ ...set, reps: 12 })).toBe(140);
+  expect(e1rm({ ...set, reps: 13 })).toBeNull();
+});
+it('U-E2 reps 1 returns weight', () => {
+  expect(e1rm({ ...set, reps: 1 })).toBe(100);
+});
+it('U-E3 reps 12 computed; reps 13 returns null', () => {
   expect(e1rm({ ...set, reps: 12 })).toBe(140);
   expect(e1rm({ ...set, reps: 13 })).toBeNull();
 });
@@ -17,6 +27,15 @@ it('U-E4/E5: BW includes known bodyweight and signed assistance', () => {
   expect(e1rm(set, 'bw_lift')).toBeNull();
   expect(e1rm(set, 'bw_lift', null)).toBeNull();
   expect(e1rm(set, 'lift', 78)).toBe(e1rm(set));
+});
+it('U-E4 bw_lift uses bodyweight_latest + added; with no bodyweight → null', () => {
+  expect(e1rm({ ...set, reps: 1, weight_kg: 10 }, 'bw_lift', 78)).toBe(88);
+  expect(e1rm({ ...set, weight_kg: 0 }, 'bw_lift', 78)).toBeCloseTo(91);
+  expect(e1rm(set, 'bw_lift')).toBeNull();
+  expect(e1rm(set, 'bw_lift', null)).toBeNull();
+});
+it('U-E5 assisted -15 with bw 78 → 63 base', () => {
+  expect(e1rm({ ...set, reps: 1, weight_kg: -15 }, 'bw_lift', 78)).toBe(63);
 });
 it('excludes warm-ups and rejects invalid reps or effective loads', () => {
   expect(e1rm({ ...set, is_warmup: true })).toBeNull();
