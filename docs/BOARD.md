@@ -66,7 +66,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5B | S14 completed | Grok | C | merged #38 |
 | P5C | S16 Settings full | Grok | C | merged #42 |
 | P4G | Playwright Phase 4 | Codex Sol | **C** (owner's Codex) | merged #53 (flaky secret-scan timeout re-run) |
-| P4H | Wire partner-PR shockwave end to end + `mark_seen` RPC (closes H3 G4, L16) | Codex Astra | C | running — resumed 10:14 on owner's Codex (same chat) |
+| P4H | Wire partner-PR shockwave end to end + `mark_seen` RPC (closes H3 G4, L16) | Codex Astra | C | PR #54 — Lead review: owner PR tombstone rejected when partner's seen_by is newer than local copy → fix requested (seen_by server-owned in guard) |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
