@@ -21,32 +21,6 @@ import './settings.css';
 type Patch = Partial<Omit<Profile, 'id'>>;
 type SavePatch = Patch | ((current: Profile) => Patch);
 
-/** Same shape as the seeded default profile, so the form does not grow when the row arrives. */
-const SHELL_PROFILE: Profile = {
-  id: '00000000-0000-4000-8000-000000000000',
-  display_name: 'Athlete',
-  initial: 'A',
-  color_hue: 125,
-  tz: 'Europe/Amsterdam',
-  weekly_target: 3,
-  show_bodyweight: false,
-  share_dots: false,
-  sound_on: false,
-  haptics_on: true,
-  reduce_motion: false,
-  battery_saver: false,
-  big_jumps: false,
-  theme: 'dark',
-  quiet_start: '22:00',
-  quiet_end: '08:00',
-  notify: { partner_start: false, partner_pr: true, nudge: true, recap: true, spot: true },
-  min_default_label: '20m walk',
-  gym_treat_url: null,
-  bar_kg: 20,
-  plates_kg: [25, 20, 15, 10, 5, 2.5, 1.25],
-  export_format: 'lines',
-};
-
 export default function SettingsScreen() {
   const repo = useRepo();
   const user = useSyncExternalStore(repo.auth.onChange, repo.auth.userId);
@@ -62,7 +36,7 @@ function SettingsBody() {
   const repo = useRepo();
   return (
     <>
-      <ProfileSettings repo={repo} initial={SHELL_PROFILE} />
+      <ProfileSettings repo={repo} />
       <VaultExport repo={repo} />
       <SyncPanel repo={repo} />
       <CrewPanel repo={repo} />
@@ -99,22 +73,31 @@ function useSaver(repo: Repo, onSaved: () => void) {
   return { error, save };
 }
 
-function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
+function ProfileSettings({ repo }: { repo: Repo }) {
   const [revision, setRevision] = useState(0);
-  const profile = useLiveQuery(() => repo.q.me(), [repo, revision]) ?? initial;
+  const profile = useLiveQuery(() => repo.q.me(), [repo, revision]);
+  const pending = !profile;
   const { error, save } = useSaver(repo, () => setRevision((value) => value + 1));
-  useEffect(() => { applyDocumentFeel(profile); }, [profile]);
+  useEffect(() => {
+    if (profile) applyDocumentFeel(profile);
+  }, [profile]);
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [minDraft, setMinDraft] = useState<string | null>(null);
   const [minError, setMinError] = useState<string | null>(null);
   const [quietError, setQuietError] = useState<string | null>(null);
-  const name = nameDraft ?? profile.display_name;
-  const minLabel = minDraft ?? profile.min_default_label;
-  if (nameDraft !== null && nameDraft.trim() === profile.display_name) setNameDraft(null);
-  if (minDraft !== null && minDraft.trim() === profile.min_default_label) setMinDraft(null);
+  const name = nameDraft ?? profile?.display_name ?? '';
+  const minLabel = minDraft ?? profile?.min_default_label ?? '';
+  if (profile && nameDraft !== null && nameDraft.trim() === profile.display_name) setNameDraft(null);
+  if (profile && minDraft !== null && minDraft.trim() === profile.min_default_label) setMinDraft(null);
+
+  function saveIfReady(patch: SavePatch) {
+    if (!profile) return;
+    void save(patch);
+  }
 
   function commitName(value: string): boolean {
+    if (!profile) return false;
     const trimmed = value.trim();
     const length = Array.from(trimmed).length;
     const first = Array.from(trimmed)[0];
@@ -123,11 +106,12 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
       return false;
     }
     setNameError(null);
-    if (trimmed !== profile.display_name) void save({ display_name: trimmed, initial: first.toLocaleUpperCase('en') });
+    if (trimmed !== profile.display_name) saveIfReady({ display_name: trimmed, initial: first.toLocaleUpperCase('en') });
     return true;
   }
 
   function commitMin(value: string): boolean {
+    if (!profile) return false;
     const trimmed = value.trim();
     const length = Array.from(trimmed).length;
     if (length < 1 || length > 40) {
@@ -135,11 +119,12 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
       return false;
     }
     setMinError(null);
-    if (trimmed !== profile.min_default_label) void save({ min_default_label: trimmed });
+    if (trimmed !== profile.min_default_label) saveIfReady({ min_default_label: trimmed });
     return true;
   }
 
   function commitQuiet(key: 'quiet_start' | 'quiet_end', value: string) {
+    if (!profile) return;
     const match = /^([01]\d|2[0-3]):([0-5]\d)/.exec(value);
     if (!match) {
       setQuietError(copy.quietInvalid);
@@ -147,15 +132,16 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
     }
     const time = `${match[1]}:${match[2]}`;
     setQuietError(null);
-    if (time !== profile[key]) void save({ [key]: time });
+    if (time !== profile[key]) saveIfReady({ [key]: time });
   }
 
   function setNotify(key: keyof NotifyPrefs, checked: boolean) {
-    void save((current) => ({ notify: { ...current.notify, [key]: checked } }));
+    if (!profile) return;
+    saveIfReady((current) => ({ notify: { ...current.notify, [key]: checked } }));
   }
 
   return (
-    <>
+    <div className="settings-profile" aria-busy={pending} aria-hidden={pending || undefined} inert={pending || undefined}>
       <section className="settings-section" aria-labelledby="settings-profile">
         <h2 id="settings-profile">{copy.settingsProfile}</h2>
         <div className="settings-field">
@@ -165,6 +151,7 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
             type="text"
             value={name}
             autoComplete="nickname"
+            disabled={pending}
             aria-invalid={nameError !== null}
             onChange={(event) => {
               setNameDraft(event.currentTarget.value);
@@ -181,16 +168,21 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
         </div>
         <p className="settings-muted">{copy.noSurnames}</p>
         {nameError ? <p role="alert">{nameError}</p> : null}
-        <Stepper label={copy.weeklyTarget} value={profile.weekly_target} min={1} max={7} onChange={(weekly_target) => void save({ weekly_target })} />
+        {profile ? (
+          <Stepper label={copy.weeklyTarget} value={profile.weekly_target} min={1} max={7} onChange={(weekly_target) => saveIfReady({ weekly_target })} />
+        ) : (
+          <FrozenStepper label={copy.weeklyTarget} />
+        )}
         <div role="group" aria-label={copy.colour} className="settings-hues">
           {MEMBER_HUES.map((hue) => (
             <button
               key={hue}
               type="button"
-              aria-pressed={profile.color_hue === hue}
+              disabled={pending}
+              aria-pressed={profile ? profile.color_hue === hue : false}
               aria-label={hueName(hue)}
               style={{ background: `oklch(0.8 0.15 ${hue})` }}
-              onClick={() => void save({ color_hue: hue })}
+              onClick={() => saveIfReady({ color_hue: hue })}
             />
           ))}
         </div>
@@ -201,6 +193,7 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
             type="text"
             value={minLabel}
             maxLength={40}
+            disabled={pending}
             onChange={(event) => {
               setMinDraft(event.currentTarget.value);
               commitMin(event.currentTarget.value);
@@ -221,36 +214,41 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
         <h2 id="settings-training">{copy.settingsTraining}</h2>
         <p id="plate-inventory">{copy.plateInventory}</p>
         <div role="group" aria-labelledby="plate-inventory">
-          {listedPlates(profile.plates_kg).map((kg) => (
+          {listedPlates(profile?.plates_kg ?? []).map((kg) => (
             <Toggle
               key={kg}
               label={fill(copy.plateKg, { kg })}
-              checked={profile.plates_kg.some((plate) => plate === kg)}
-              onChange={() => void save((current) => ({ plates_kg: togglePlate(current.plates_kg, kg) }))}
+              checked={profile?.plates_kg.some((plate) => plate === kg) ?? false}
+              disabled={pending}
+              onChange={() => saveIfReady((current) => ({ plates_kg: togglePlate(current.plates_kg, kg) }))}
             />
           ))}
         </div>
-        <Stepper label={copy.barKg} value={profile.bar_kg} min={5} max={25} step={2.5} onChange={(bar_kg) => void save({ bar_kg })} />
+        {profile ? (
+          <Stepper label={copy.barKg} value={profile.bar_kg} min={5} max={25} step={2.5} onChange={(bar_kg) => saveIfReady({ bar_kg })} />
+        ) : (
+          <FrozenStepper label={copy.barKg} />
+        )}
         <h3>{copy.restDefaults}</h3>
         <p>{fill(copy.restCompoundLine, { seconds: defaultRestSeconds('compound') })}</p>
         <p>{fill(copy.restIsolationLine, { seconds: defaultRestSeconds('isolation') })}</p>
         <p className="settings-muted">{copy.restRemembered}</p>
-        <Toggle label={copy.bigJumps} checked={profile.big_jumps} onChange={(big_jumps) => void save({ big_jumps })} />
+        <Toggle label={copy.bigJumps} checked={profile?.big_jumps ?? false} disabled={pending} onChange={(big_jumps) => saveIfReady({ big_jumps })} />
         <p className="settings-muted">{copy.bigJumpsHint}</p>
       </section>
 
       <section className="settings-section" aria-labelledby="settings-feel">
         <h2 id="settings-feel">{copy.settingsFeel}</h2>
-        <Toggle label={copy.soundOn} checked={profile.sound_on} onChange={(sound_on) => void save({ sound_on })} />
-        <Toggle label={copy.hapticsOn} checked={profile.haptics_on} onChange={(haptics_on) => void save({ haptics_on })} />
-        <Toggle label={copy.reduceMotionOn} checked={profile.reduce_motion} onChange={(reduce_motion) => void save({ reduce_motion })} />
-        <Toggle label={copy.batterySaverOn} checked={profile.battery_saver} onChange={(battery_saver) => void save({ battery_saver })} />
+        <Toggle label={copy.soundOn} checked={profile?.sound_on ?? false} disabled={pending} onChange={(sound_on) => saveIfReady({ sound_on })} />
+        <Toggle label={copy.hapticsOn} checked={profile?.haptics_on ?? false} disabled={pending} onChange={(haptics_on) => saveIfReady({ haptics_on })} />
+        <Toggle label={copy.reduceMotionOn} checked={profile?.reduce_motion ?? false} disabled={pending} onChange={(reduce_motion) => saveIfReady({ reduce_motion })} />
+        <Toggle label={copy.batterySaverOn} checked={profile?.battery_saver ?? false} disabled={pending} onChange={(battery_saver) => saveIfReady({ battery_saver })} />
         <p className="settings-muted">{copy.batterySaverHint}</p>
         <fieldset>
           <legend>{copy.themeChoice}</legend>
           {(['dark', 'light', 'system'] as const).map((theme) => (
             <label key={theme} className="settings-radio">
-              <input type="radio" name="settings-theme" checked={profile.theme === theme} onChange={() => void save({ theme })} />
+              <input type="radio" name="settings-theme" checked={profile?.theme === theme} disabled={pending} onChange={() => saveIfReady({ theme })} />
               <span>{themeLabel(theme)}</span>
             </label>
           ))}
@@ -260,30 +258,30 @@ function ProfileSettings({ repo, initial }: { repo: Repo; initial: Profile }) {
       <section className="settings-section" aria-labelledby="settings-notify">
         <h2 id="settings-notify">{copy.settingsNotifications}</h2>
         <p className="settings-muted">{copy.notificationsSaved}</p>
-        <Toggle label={copy.notifyPartnerStart} checked={profile.notify.partner_start} onChange={(checked) => setNotify('partner_start', checked)} />
-        <Toggle label={copy.notifyPartnerPr} checked={profile.notify.partner_pr} onChange={(checked) => setNotify('partner_pr', checked)} />
-        <Toggle label={copy.notifyNudge} checked={profile.notify.nudge} onChange={(checked) => setNotify('nudge', checked)} />
-        <Toggle label={copy.notifyRecap} checked={profile.notify.recap} onChange={(checked) => setNotify('recap', checked)} />
-        <Toggle label={copy.notifySpot} checked={profile.notify.spot} onChange={(checked) => setNotify('spot', checked)} />
+        <Toggle label={copy.notifyPartnerStart} checked={profile?.notify.partner_start ?? false} disabled={pending} onChange={(checked) => setNotify('partner_start', checked)} />
+        <Toggle label={copy.notifyPartnerPr} checked={profile?.notify.partner_pr ?? false} disabled={pending} onChange={(checked) => setNotify('partner_pr', checked)} />
+        <Toggle label={copy.notifyNudge} checked={profile?.notify.nudge ?? false} disabled={pending} onChange={(checked) => setNotify('nudge', checked)} />
+        <Toggle label={copy.notifyRecap} checked={profile?.notify.recap ?? false} disabled={pending} onChange={(checked) => setNotify('recap', checked)} />
+        <Toggle label={copy.notifySpot} checked={profile?.notify.spot ?? false} disabled={pending} onChange={(checked) => setNotify('spot', checked)} />
         <h3>{copy.quietHours}</h3>
         <div className="settings-field">
           <label htmlFor="quiet-start">{copy.quietStart}</label>
-          <input id="quiet-start" type="time" value={profile.quiet_start.slice(0, 5)} onChange={(event) => commitQuiet('quiet_start', event.currentTarget.value)} />
+          <input id="quiet-start" type="time" value={profile ? profile.quiet_start.slice(0, 5) : ''} disabled={pending} onChange={(event) => commitQuiet('quiet_start', event.currentTarget.value)} />
         </div>
         <div className="settings-field">
           <label htmlFor="quiet-end">{copy.quietEnd}</label>
-          <input id="quiet-end" type="time" value={profile.quiet_end.slice(0, 5)} onChange={(event) => commitQuiet('quiet_end', event.currentTarget.value)} />
+          <input id="quiet-end" type="time" value={profile ? profile.quiet_end.slice(0, 5) : ''} disabled={pending} onChange={(event) => commitQuiet('quiet_end', event.currentTarget.value)} />
         </div>
         {quietError ? <p role="alert">{quietError}</p> : null}
       </section>
 
       <section className="settings-section" aria-labelledby="settings-privacy">
         <h2 id="settings-privacy">{copy.settingsPrivacy}</h2>
-        <Toggle label={copy.shareBodyweight} checked={profile.show_bodyweight} onChange={(show_bodyweight) => void save({ show_bodyweight })} />
-        <Toggle label={copy.shareDots} checked={profile.share_dots} onChange={(share_dots) => void save({ share_dots })} />
+        <Toggle label={copy.shareBodyweight} checked={profile?.show_bodyweight ?? false} disabled={pending} onChange={(show_bodyweight) => saveIfReady({ show_bodyweight })} />
+        <Toggle label={copy.shareDots} checked={profile?.share_dots ?? false} disabled={pending} onChange={(share_dots) => saveIfReady({ share_dots })} />
       </section>
       {error ? <p role="alert">{error}</p> : null}
-    </>
+    </div>
   );
 }
 
@@ -442,6 +440,20 @@ function AccountPanel({ repo }: { repo: Repo }) {
         {message ? <p role="status">{message}</p> : null}
       </Sheet>
     </section>
+  );
+}
+
+function FrozenStepper({ label }: { label: string }) {
+  const id = useId();
+  return (
+    <div className="ui-stepper">
+      <label id={`${id}-label`} htmlFor={id}>{label}</label>
+      <div className="ui-stepper__controls">
+        <Button size="xl" variant="secondary" disabled aria-label={fill(copy.decrease, { label })}>−</Button>
+        <input id={id} type="number" value="" disabled readOnly />
+        <Button size="xl" variant="secondary" disabled aria-label={fill(copy.increase, { label })}>+</Button>
+      </div>
+    </div>
   );
 }
 

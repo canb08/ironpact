@@ -12,6 +12,12 @@
 .settings-screen p {
   margin: 0;
 }
+/* Same gap the screen grid uses, so reserving the form does not move the vault. */
+.settings-profile {
+  display: grid;
+  gap: var(--s-5);
+  min-width: 0;
+}
 .settings-section {
   display: grid;
   gap: var(--s-3);
