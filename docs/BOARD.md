@@ -67,9 +67,9 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5C | S16 Settings full | Grok | C | merged #42 |
 | P4G | Playwright Phase 4 | Codex Sol | **C** (owner's Codex) | merged #53 (flaky secret-scan timeout re-run) |
 | P4H | Wire partner-PR shockwave end to end + `mark_seen` RPC (closes H3 G4, L16) | Codex Astra | C | merged #54 (Lead review: seen_by made server-owned in the PR guard so stale owner tombstones still sync) |
-| H5 | Deploy hardening: CSP per project (gen-headers), drop handler-less function configs, revoke default privileges (H3 G5–G7, L17) | Codex Astra | **E** (owner's Codex out of usage → friend's Codex, owner OK via friend 2026-11-02) | running — friend's Codex (Astra High), fired 2026-11-02 ~14:45
-| H6 | Floor stops blanking on live updates + MIN double-toast guard (flaky Pixel 7 e2e) | Codex Sol | E (lane C engines out) | running — friend's Codex (Sol High), fired ~14:55 |
-| H7 | Accessibility fixes: H1's 13 `test.fixme` | Grok | E (lane C screens; Can's Claude welcome to review) | running — friend's Grok (Build), fired ~15:00 |
+| H5 | Deploy hardening: CSP per project (gen-headers), drop handler-less function configs, revoke default privileges (H3 G5–G7, L17) | Codex Astra | **E** (owner's Codex out of usage → friend's Codex, owner OK via friend 2026-11-02) | PR #59 — Lead approved contract change: EXECUTE grants on 2 pg_temp test helpers (0011's global revoke); CI re-running
+| H6 | Floor stops blanking on live updates + MIN double-toast guard (flaky Pixel 7 e2e) | Codex Sol | E (lane C engines out) | PR #60 — Lead review OK; CI + local repeat run |
+| H7 | Accessibility fixes: H1's 13 `test.fixme` | Grok | E (lane C screens; Can's Claude welcome to review) | PR #61 — review: + takeover contrast (item 7), copy nit; Grok fixing |
 | H8 | Perf: lhci measures real screens, /settings CLS, LCP, Lighthouse blocking (L14) | Grok | E | running — friend's Grok (Build), fired ~15:00 |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
