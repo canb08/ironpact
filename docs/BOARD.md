@@ -94,6 +94,23 @@ H5 #59, H6 #60, H7 #61, H8 #62 merged on the friend's engines (owner's Codex out
 ## Lane E status (friend's Claude, 2026-11-02 ~06:45)
 All lane E tickets merged: P3A #28, P3B #34, P3C #27, P3D #29, P3E #39, P3F #33, P3G #49, P3H #36, P4E #46, P4C #52, H1 #51, H2 #47, H3 #48 (P5A #37 merged by Can's Claude). P4G and P5F are lane C. Open follow-ups below, most urgent: the Floor-blanking bug behind the flaky Pixel 7 e2e, then H3's security gaps before G1.
 
+## R2 · Redesign (owner request 2026-11-02, L19) — `docs/REDESIGN.md` + `docs/UX-AUDIT.md`
+Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → X10 → X11**. Every X-ticket stops after the PR is open + CI started; Leads review, watch CI, merge.
+
+| ID | What | Engine | Lane | Status |
+|---|---|---|---|---|
+| X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | queued — **first, blocks all** |
+| X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | queued (after X1) |
+| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | queued (after X1+X2) |
+| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | queued (after X1+X2) |
+| X5 | Progress hub + exercise detail | Grok or Codex | E | queued (after X1+X2) |
+| X6 | Day editor: compact rows + edit sheet | Grok | E | queued (after X1+X2) |
+| X7 | Crew centred on partner | Grok | E | queued (after X1+X2) |
+| X8 | Settings grouped sub-pages | Grok | C | queued (after X1+X2) |
+| X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
+| X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
+| X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
+
 ## Parked / follow-ups
 - **Flaky e2e (seen twice, 2026-11-02, P3G #49 and H3 #48 PR runs):** `tests/e2e/p1-demo.spec.ts` + `p1-flight.spec.ts` on **Pixel 7** time out in `warmLazyRoutes` (`tests/e2e/helpers.ts:75`): the Floor `Weight` link is "detached from the DOM" while clicking, likely a Floor re-render (P3E/P4E duo moments, live data). Twin push runs pass. Fix: wait for the Floor to settle (e.g. `my-week` stable / moments idle) or navigate by URL in `warmLazyRoutes`. Until then: re-run failed jobs, don't merge on red. **Diagnosis (friend's Claude, 06:00):** `useRepoQuery` (`src/features/floor/useRepoQuery.ts`) builds a fresh store with `value = undefined` whenever its deps change; FloorScreen passes `crewTick` (P3E), so every crew delta pull blanks the Floor to its `aria-busy` shell and remounts the buttons (real UX flicker, and the detached `Weight` link in CI). Tried a keep-last-value fix: unit test proves it, and the detach failure stopped, but locally it produced a new p1-demo failure on Pixel 7 (MIN toast shown twice, strict-mode violation) that main does not show in 5/5 runs, so it was not pushed. Needs a proper ticket (Floor owner) that keeps the last value **and** guards the MIN double-tap/toast.
 - **Flaky p1-demo / p1-flight on Pixel 7, new lead (friend's Claude, 2026-11-02 ~16:30):** with H6 applied, the failing run's page snapshot is the **/install** screen, not a blank Floor: AuthGate's first redirect waits on `repo.q.myCrew()` before deciding the install gate, so the Floor can paint, `reachFloor` returns, and the late redirect to /install detaches the `Weight` link. A quick fix (decide the install gate before the crew read) made it worse locally (3/10 fail, broke `SignInScreen.test.tsx`) and was not pushed. Needs a ticket on AuthGate's first-run ordering (lane C owns auth). Local Windows WebKit can't run these specs at all; judge on CI.
