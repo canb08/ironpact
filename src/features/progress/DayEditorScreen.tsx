@@ -157,9 +157,10 @@ export default function DayEditorScreen() {
         <div className="day-week-chips">
           {days.map((dayKey, index) => (
             <Link key={dayKey} className={`day-chip${dayKey === date ? ' is-current' : ''}`}
-              to={`/day/${dayKey}`} aria-label={formatDate(dayKey, today, copy)} aria-current={dayKey === date ? 'date' : undefined}>
-              <span>{[copy.x6Mon, copy.x6Tue, copy.x6Wed, copy.x6Thu, copy.x6Fri, copy.x6Sat, copy.x6Sun][index]}</span>
-              <strong>{Number(dayKey.slice(-2))}</strong>
+              to={`/day/${dayKey}`} aria-current={dayKey === date ? 'date' : undefined}>
+              <span>{[copy.x6Mon, copy.x6Tue, copy.x6Wed, copy.x6Thu, copy.x6Fri, copy.x6Sat, copy.x6Sun][index]}</span>{' '}
+              <strong>{Number(dayKey.slice(-2))}</strong>{' '}
+              <span className="progress-sr">{new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' }).format(new Date(`${dayKey}T00:00:00Z`))}</span>
               <DayDots dots={dotsFor(dayKey, span)} />
             </Link>
           ))}

@@ -62,6 +62,23 @@ async function checkLayout(page: Page) {
   expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }))).toEqual([]);
 }
 
+test('week chip names contain their visible weekday and day, including the selected date', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ironpact.install-dismissed', '1'));
+  await reachFloor(page);
+  await page.goto('/day/2026-06-02');
+  await expect(page.locator('.day-chip')).toHaveCount(7);
+  const violations = (await new AxeBuilder({ page }).include('.day-week').withRules(['label-content-name-mismatch']).analyze()).violations;
+  expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }))).toEqual([]);
+  const week = page.getByRole('navigation', { name: copy.x6Week });
+  for (const name of ['Mon 1 Jun', 'Tue 2 Jun', 'Wed 3 Jun', 'Thu 4 Jun', 'Fri 5 Jun', 'Sat 6 Jun', 'Sun 7 Jun']) {
+    const chip = week.getByRole('link', { name, exact: true });
+    await expect(chip).toBeVisible();
+    await expect(chip).not.toHaveAttribute('aria-label');
+  }
+  await expect(week.getByRole('link', { name: 'Tue 2 Jun', exact: true })).toHaveAttribute('aria-current', 'date');
+  await expect(week.locator('[aria-current="date"]')).toHaveCount(1);
+});
+
 test('15 compact sets fit two screens, and weekday chips and sheets work in both themes', async ({ page }) => {
   const date = await openWorkout(page);
   const rows = page.locator('.day-set-row');

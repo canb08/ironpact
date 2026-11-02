@@ -24,7 +24,9 @@ async function openDay() {
   const current = document.querySelector('.day-chip.is-current');
   expect(current?.getAttribute('aria-current')).toBe('date');
   expect(current?.getAttribute('href')).toBe(`/day/${DAY}`);
-  expect(current?.textContent).toContain('Sat24');
+  expect(current?.getAttribute('aria-label')).toBeNull();
+  expect(current?.textContent).toBe('Sat 24 Oct');
+  expect(screen.getByRole('link', { name: 'Sat 24 Oct' })).toBe(current);
   fireEvent.click(screen.getByRole('button', { name: fill(copy.x6EditWorkout, { type: copy.run.toLowerCase() }) }));
   expect(await screen.findByRole('dialog')).toBeTruthy();
   return harness;
