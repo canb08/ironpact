@@ -40,11 +40,25 @@ One call: `feel(kind, { weightKg? })`. It fires the matching haptic, sound and v
 - The slim rest bar fills in your plate colour. At 10 s left you get a `tick`; at 0 you get a `round` haptic, a soft bell, and the dock pulses: "Next set".
 - Swipe the rest bar up for a full-screen rest view: a huge countdown, the next set's ghost row, and ±15 s targets the size of half the screen.
 
-### Muay Thai only (Y2, after X3)
-- "Fight" becomes **Muay Thai**. All other disciplines leave the UI. Old entries with other disciplines still display unchanged, and the data layer is untouched.
-- **Round mode:** a live round timer (3:00 work / 1:00 rest by default, ±30 s steps). It rings `feel('round')` at the start and end of every round and shows a 10 s clap warning (a double tick). It's built for bag and pad work with the phone on the floor: huge digits, the whole screen pauses on tap, and Wake Lock stays on.
-- When you stop, rounds and minutes fill themselves in. **Focus chips:** Pads · Bag · Sparring · Clinch · Technique · Conditioning (multi-select, stored in the note as `Pads · Bag`). Then "Save session" plays `feel('plate')`, and a plate goes onto your side of the bar.
-- **Quick log without the timer:** a rounds dial (`ScrubDial`) × a round-length chip, plus "Same as last session".
+### Muay Thai: the pad class, run by the app (Y2, after X3)
+**How the class actually works** (the friend, 2026-11-02; both users are beginners, no sparring yet):
+1. **Warm-up** 10-15 min (stretching).
+2. **Half 1: punches** (body shots allowed, belly pad on). Partners pair up: one wears **gloves** (striker), the other **pads** (holder). The coach shows a combo; the striker throws it **non-stop for 3:00**. Then the striker does **10 push-ups** while the holder does **10 squats**. That repeats for **3 combos**. Then they **swap gear**, and the other partner strikes the same 3 combos.
+3. **Rest 2:00.**
+4. **Half 2: kicks** (mixed, mostly kick-oriented; **long pads** fingers-to-elbow plus the belly pad). Same structure: 3 combos × 3:00 + push-ups/squats, swap, 3 combos.
+5. Done. Per person per class: **6 striking rounds** (18 min of striking), **6 holding rounds**, 60 push-ups, 60 squats.
+
+**What the app does with it: "Pad class" mode** (the default when you tap Muay Thai)
+- **Before:** one screen: who strikes first (you or partner), round length (3:00 default), reps between rounds (10/10 default), warm-up length (skippable). Start.
+- **During:** the phone lies on the bench, so everything is readable from 2 m away. A full-screen timer, plus a banner in the **striker's plate colour**: "**You strike** · Punches · combo 2 of 3" or "**Can strikes** · you hold". The bell (`feel('round')`) sounds at start and end. At 10 s left you get a double `tick` and the screen edge pulses.
+- **Between rounds:** "**10 push-ups** (you) · **10 squats** (Can)". One big "Done" tap starts the next combo after a 3-2-1. There's no timer, because people are slower or faster.
+- **Swap:** after 3 combos, a "**Swap gear: gloves ↔ pads**" card appears. The next round starts when you tap "Ready".
+- **Half time:** a 2:00 rest countdown with a gear reminder: "**Long pads + belly pad**".
+- **Combo notes (optional, never blocking):** during the push-up screen, a strip of strike chips lets you jot down the coach's combo: `1` jab, `2` cross, `3` lead hook, `4` rear hook, `5` lead upper, `6` rear upper, `Teep`, `L kick`, `R kick`, `Knee`, `Elbow`. Taps build "1-2-R kick". Skip with one tap.
+- **After:** the summary is filled in for you: minutes, **rounds you struck (6)**, rounds held, push-ups/squats, focus `Pads`, and the combos you jotted down. Save → `feel('plate')` → the together prompt (Proof, below).
+- **Storage (no data change):** `discipline: 'Muay Thai'`, `minutes` = elapsed, `rounds` = rounds struck, `note` (≤120 chars) = `Pads · 1-2-3 / 1-1-2 / 2-3-2 · L kick-2 / …`, truncated at a combo boundary if it gets long.
+- **Combo book:** Progress → Muay Thai lists every combo you've jotted down, newest first, with how often you've drilled it. Beginners see their vocabulary grow.
+- **Other ways to log:** "Bag / solo rounds" (a plain round timer: rounds × length, bell) and "Quick log" (rounds `ScrubDial` × round length, focus chips **Pads · Bag · Clinch · Technique · Conditioning**, and "Same as last class"). **No sparring chip** while they're beginners. **Muay Thai is the only discipline.**
 
 ### Runs that feel like running (Y6, after X3)
 - Distance and duration are `ScrubDial`s: 0.1 km detents, with flicks that accelerate. The pace updates live in big numerals while you scrub ("5:12 /km").
@@ -59,6 +73,22 @@ One call: `feel(kind, { weightKg? })`. It fires the matching haptic, sound and v
 - **PR takeover:** the bar bends in proportion to the PR weight, chalk dust bursts from the plates (a canvas, lazy chunk, ≤4 kB, skipped under battery saver and reduced motion), and the yellow plate slams.
 - **Partner shockwave:** on open, the partner's new plates drop onto their side one by one, each with a `plate` feel.
 
+### Proof: the shared photo log (Y8 data, Y9 screens)
+**Idea (the friend's):** every workout you two do together ends with a photo. The app keeps those photos as a wall of cards, so you can scroll back through months of training together. Named **Proof** ("pics or it didn't happen"); it's a 5th tab.
+
+**After any workout** (lift summary "Done", run saved, Muay Thai saved):
+1. A sheet asks "**Trained together?**": **With Can** / **Solo**. Muay Thai pad class defaults to "With Can", because pads always need a partner. "With Can" links your entry and the partner's entry for that day of the same kind (if they've logged it) into one card.
+2. "**Add a photo**": **Take photo** (opens the camera) / **Choose photo** / **Skip**. Skipping is fine; the card still appears with a designed placeholder.
+3. The photo is resized on the phone (longest side 1600 px, JPEG about 80%, ≤400 kB), and **re-encoding strips the location data**. It's stored on the phone first and uploads when you're back online, the same way sets do.
+
+**The Proof tab:**
+- A 2-column grid of **portrait cards** grouped by month ("November · 9 together"). Each card shows the **photo full-bleed**, the date ("Tue 3 Nov"), the workout chip ("Muay Thai · pads · 6 rounds", "Push · 4.2 t", "Run · 5.1 km · 26:40"), both avatar dots if you trained together, and a yellow PR badge if a PR happened.
+- Without a photo, the card shows the workout's plates on the bar in plate colours, so it still looks deliberate.
+- Tap a card → full screen. Swipe between cards, and see the workout details underneath: sets, combos, pace. You can **Replace photo**, **Remove photo** or **Add caption** (≤80 chars). Either crew member can add a photo to a together card, up to 2 photos per card (one each).
+- At the top: "**23 sessions together**" plus your longest together streak in weeks.
+- The partner shockwave applies here too: when the partner adds a photo, their card slides in on your next open.
+- **Privacy:** photos are visible to your crew only (private storage, crew-scoped access rules, short-lived links). Removing a photo deletes the file. The vault export gets a photos folder later (not in Y8/Y9).
+
 ### Voice log (Y7, experimental, after Y3)
 - Hold the mic in the dock and say "ninety by five" or "same again". A pure parser in `src/core/voice.ts`, with tests, turns the speech into a set and fills a ghost row; a tap confirms. It's feature-detected (`SpeechRecognition` / `webkitSpeechRecognition`) and hidden where unsupported. Lazy chunk.
 
@@ -72,9 +102,11 @@ One call: `feel(kind, { weightKg? })`. It fires the matching haptic, sound and v
 | ID | What | Starts after | Engine |
 |---|---|---|---|
 | Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, `ScrubDial`, CSS spring easings | now | Grok |
-| Y2 | Muay Thai only + round mode + focus chips | X3 merged | Grok |
+| Y2 | Muay Thai pad class mode (halves, swaps, push-up/squat breaks, combo notes), bag timer, quick log, combo book | X3 + Y1 merged | Grok |
 | Y3 | Load the bar: plate taps, scrub dials, same again, swipe rows | X4 merged, Y1 | Codex |
 | Y4 | Rest ritual + full-screen rest | Y3 | Grok |
 | Y5 | Motion pass: tabs, list→detail, sheets, bar lockout, PR takeover, shockwave | X3–X7 merged, Y1 | Codex |
 | Y6 | Runs: dials, live pace, same as last run, live run | X3 merged, Y1 | Grok |
 | Y7 | Voice log (experimental) | Y3 | Grok (parser + UI only) |
+| Y8 | Proof data: together links, photo storage + access rules, offline upload queue | Codex free + lane C ack (shared data contract, L21) | Codex |
+| Y9 | Proof screens: together/photo prompt after every workout, Proof tab, card viewer | Y8 + Y2 merged | Codex or Grok (no data files) |

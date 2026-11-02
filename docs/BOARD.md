@@ -117,14 +117,16 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Ticket | What | Model | Lane | Status |
 |---|---|---|---|---|
 | Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | **running** — friend's Grok |
-| Y2 | Muay Thai only + round timer + focus chips | Grok Build | E | queued (after X3, Y1) |
+| Y2 | Muay Thai pad class mode (the real class structure), bag timer, quick log, combo book | Grok Build | E | queued (after X3, Y1) |
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
 | Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | queued (after X3, Y1) |
 | Y7 | Voice log (experimental) | Grok Build | E | queued (after Y3) |
+| Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
+| Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
 
-**Lane C:** X11 waits for Y5 (L20). Ack/object here.
+**Lane C:** X11 waits for Y5 (L20). Y9 adds a 5th tab (Proof) to the X2 shell, and Y8 adds migration 0012 (L21). Ack/object here.
 
 ## Parked / follow-ups
 - **Flaky e2e (seen twice, 2026-11-02, P3G #49 and H3 #48 PR runs):** `tests/e2e/p1-demo.spec.ts` + `p1-flight.spec.ts` on **Pixel 7** time out in `warmLazyRoutes` (`tests/e2e/helpers.ts:75`): the Floor `Weight` link is "detached from the DOM" while clicking, likely a Floor re-render (P3E/P4E duo moments, live data). Twin push runs pass. Fix: wait for the Floor to settle (e.g. `my-week` stable / moments idle) or navigate by URL in `warmLazyRoutes`. Until then: re-run failed jobs, don't merge on red. **Diagnosis (friend's Claude, 06:00):** `useRepoQuery` (`src/features/floor/useRepoQuery.ts`) builds a fresh store with `value = undefined` whenever its deps change; FloorScreen passes `crewTick` (P3E), so every crew delta pull blanks the Floor to its `aria-busy` shell and remounts the buttons (real UX flicker, and the detached `Weight` link in CI). Tried a keep-last-value fix: unit test proves it, and the detach failure stopped, but locally it produced a new p1-demo failure on Pixel 7 (MIN toast shown twice, strict-mode violation) that main does not show in 5/5 runs, so it was not pushed. Needs a proper ticket (Floor owner) that keeps the last value **and** guards the MIN double-tap/toast.
