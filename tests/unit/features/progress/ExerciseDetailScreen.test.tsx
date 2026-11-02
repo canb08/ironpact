@@ -35,6 +35,9 @@ it('shows history and best e1RM, saves rest seconds, and stores big jumps on the
 
   expect((await screen.findByTestId('best-e1rm')).textContent).toContain('93.3');
   expect(screen.getByText(fill(copy.setLine, { index: 2, reps: 5, kg: 80 }))).toBeTruthy();
+  expect(screen.queryByRole('textbox', { name: copy.restSeconds })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: copy.x5Settings }));
+  expect(screen.getByRole('dialog', { name: copy.x5Settings })).toBeTruthy();
   const rest = screen.getByRole('textbox', { name: copy.restSeconds }) as HTMLInputElement;
   expect(rest.value).toBe('120');
 
@@ -117,7 +120,7 @@ it('soft-deletes a set and restores it onto the list and the export preview', as
   const region = within(await screen.findByRole('region', { name: fill(copy.sessionSet, { index: 1 }) }));
   fireEvent.click(region.getByRole('button', { name: fill(copy.deleteEntry, { name: fill(copy.sessionSet, { index: 1 }) }) }));
   await waitFor(() => {
-    expect(screen.queryByText(line)).toBeNull();
+    expect(screen.queryByRole('region', { name: fill(copy.sessionSet, { index: 1 }) })).toBeNull();
   });
   const me = await harness.repo.q.me();
   expect(me).toBeDefined();
@@ -180,4 +183,35 @@ it('shows PRs recalculated only when an edit changes the standing PR', async () 
   expect(screen.queryByText(copy.barAdjusted)).toBeNull();
   const events = await harness.repo.q.prEvents({ exerciseId: exercise.value.id });
   expect(events.find((row) => row.pr_type === 'e1rm')?.value).toBeCloseTo(90 * (1 + 5 / 30), 5);
+});
+
+it('keeps the rep-max table collapsed and labels a private partner overlay with their saved name', async () => {
+  harness = await progressHarness();
+  await harness.repo.sync.pullNow();
+  const { profile, exercise, session, set, id } = await import('../../core/fixtures.ts');
+  const me = await harness.repo.q.me();
+  if (!me) throw new Error('missing viewer');
+  const partnerId = id(80);
+  await harness.db.profiles.put({ ...profile, id: partnerId, display_name: 'Crewmate' });
+  const crew = await harness.repo.q.myCrew();
+  if (!crew) throw new Error('missing crew');
+  await harness.db.crew_members.put({ crew_id: crew.crew.id, user_id: partnerId, role: 'member', joined_at: '2026-10-01T08:00:00Z', left_at: null });
+  await harness.db.exercises.put(exercise);
+  const date = new Date().toISOString().slice(0, 10);
+  for (const [user, n, weight] of [[me.id, 90, 80], [partnerId, 100, 213.7]] as const) {
+    for (let index = 0; index < 2; index++) {
+      await harness.db.sessions.put({ ...session, id: id(n + index), user_id: user, local_date: date });
+      await harness.db.sets.put({ ...set, id: id(n + index + 20), user_id: user, session_id: id(n + index), exercise_id: exercise.id, weight_kg: weight, reps: 1, is_warmup: false });
+    }
+  }
+  harness.render(`/exercise/${exercise.id}`);
+  const toggle = await screen.findByRole('switch', { name: 'Show Crewmate' });
+  expect(toggle.getAttribute('aria-checked')).toBe('false');
+  expect(document.querySelector('.exercise-rep-max')?.hasAttribute('open')).toBe(false);
+  fireEvent.click(toggle);
+  await waitFor(() => expect(document.querySelector('.progress-line--partner')).toBeTruthy());
+  expect(toggle.getAttribute('aria-checked')).toBe('true');
+  expect(document.body.textContent).not.toContain('213.7');
+  expect(screen.getByText(copy.x5Comparison)).toBeTruthy();
+  expect(screen.getAllByRole('link', { name: copy.x5Today })).toHaveLength(1);
 });

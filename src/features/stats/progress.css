@@ -1,210 +1,62 @@
-.progress,
-.progress * {
-  box-sizing: border-box;
-}
-
-.progress {
-  position: relative;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
+.progress, .progress * { box-sizing: border-box; }
+.progress-hub {
+  display: grid;
+  align-content: start;
+  gap: var(--s-5);
   width: 100%;
   max-width: 40rem;
   min-width: 0;
   margin: 0 auto;
   padding: var(--s-4);
-  padding-bottom: max(var(--s-4), env(safe-area-inset-bottom));
   background: var(--bg);
   color: var(--text);
   overflow-wrap: anywhere;
 }
+.progress-hub h1, .progress-hub h2, .progress-hub h3, .progress-hub p { margin: 0; }
+.progress-hub h1 { font-size: 28px; font-weight: 600; }
+.progress-hub h2 { font-size: 22px; font-weight: 600; }
+.progress-hub h3 { font-size: 17px; font-weight: 600; margin-top: var(--s-4); }
+.progress-hub .ui-segmented { width: 100%; min-width: 0; }
+.progress-hub .ui-segmented button { min-width: 0; flex: 1; padding-inline: var(--s-2); }
+.progress-field { display: grid; gap: var(--s-2); min-width: 0; max-width: 100%; }
+.progress-field select { width: 100%; min-width: 0; min-height: 48px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text); padding: var(--s-3); font: inherit; }
+.progress-caption, .progress-empty { color: var(--text-muted); overflow-wrap: anywhere; max-width: 100%; }
+.progress-empty { padding-block: var(--s-6); font-size: 17px; line-height: 1.6; }
+.progress-chart { margin: 0; min-width: 0; max-width: 100%; }
+.progress-svg { display: block; width: 100%; max-width: 100%; height: auto; min-width: 0; background: var(--surface-1); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.progress-svg--spark { background: transparent; height: 52px; border: 0; }
+.progress-axis { fill: var(--text-muted); font: 400 13px var(--font-body); }
+.progress-axis-line { stroke: var(--line); stroke-width: 1; }
+.progress-line { fill: none; stroke-width: 3; }
+.progress-line--you { stroke: var(--plate-red); }
+.progress-line--partner { stroke: var(--plate-blue); }
+.progress-line--weight { stroke: var(--text-muted); stroke-width: 1.5; }
+.progress-dot--you { fill: var(--plate-red); }
+.progress-dot--partner { fill: var(--plate-blue); }
+.progress-dot--weight { fill: var(--text-muted); }
+.progress-legend, .progress-readout { display: flex; flex-wrap: wrap; gap: var(--s-3); min-width: 0; max-width: 100%; color: var(--text-muted); font-size: 13px; padding-top: var(--s-2); }
+.progress-chart-caption { flex-basis: 100%; }
+.progress-swatch--you { color: var(--text); border-bottom: 3px solid var(--plate-red); }
+.progress-swatch--partner { color: var(--text); border-bottom: 3px dashed var(--plate-blue); }
+.progress-lifts, .progress-week-list { list-style: none; margin: 0; padding: 0; display: grid; min-width: 0; max-width: 100%; }
+.progress-week-list { gap: var(--s-3); font-size: 15px; }
+.progress-lift { display: grid; gap: var(--s-2); padding-block: var(--s-3); border-bottom: 1px solid var(--line); min-width: 0; max-width: 100%; }
+.progress-lift-link { display: block; color: inherit; text-decoration: none; min-height: 44px; }
+.progress-lift .ui-list-row { padding-inline: 0; border: 0; }
+.progress-lift .ui-list-row__trailing { font-family: var(--font-display); font-size: 28px; }
+.progress-lift .progress-svg--spark + figcaption { display: none; }
+.progress-panel, .progress-panel > section { display: grid; gap: var(--s-4); min-width: 0; max-width: 100%; }
+.progress-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.progress :is(a, button, summary, select):focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
 
-.progress h1,
-.progress h2,
-.progress p {
-  margin: 0;
-}
+.progress-lift .ui-list-row__body { flex: 1; }
+.progress-lift .ui-list-row__trailing { flex-shrink: 0; }
+.progress-lift-best { display: grid; white-space: nowrap; text-align: end; }
+.progress-lift-best small { font: 400 13px var(--font-body); color: var(--text-muted); }
+.progress-hub .progress-axis { font: 400 13px var(--font-body); }
 
-.progress h1 {
-  font-size: var(--t-sm);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.progress h2 {
-  font-size: var(--t-sm);
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.progress-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-  min-width: 0;
-  max-width: 100%;
-}
-
-.progress-tabs .ui-button {
-  flex: 1 1 8rem;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.progress-field {
-  display: grid;
-  gap: var(--s-2);
-  min-width: 0;
-  max-width: 100%;
-}
-
-.progress-field > span {
-  color: var(--text-muted);
-  font-size: var(--t-sm);
-}
-
-.progress-field select {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface-1);
-  color: var(--text);
-  padding: var(--s-3);
-  font: inherit;
-}
-
-.progress-caption,
-.progress-empty {
-  color: var(--text-muted);
-  overflow-wrap: anywhere;
-  max-width: 100%;
-}
-
-.progress-chart {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.progress-svg {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  min-width: 0;
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-}
-
-.progress-svg--spark {
-  background: transparent;
-}
-
-.progress-axis {
-  fill: var(--text-muted);
-  font: 500 11px var(--font-data);
-}
-
-.progress-axis-line {
-  stroke: var(--line);
-  stroke-width: 1;
-}
-
-.progress-line {
-  fill: none;
-  stroke-width: 2;
-}
-
-.progress-line--you {
-  stroke: var(--molten);
-}
-
-.progress-line--weight {
-  stroke: var(--text-muted);
-  stroke-width: 1.5;
-}
-
-.progress-dot--you {
-  fill: var(--molten);
-}
-
-.progress-legend,
-.progress-readout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-  min-width: 0;
-  max-width: 100%;
-  color: var(--text-muted);
-  font-size: var(--t-sm);
-}
-
-.progress-swatch--you {
-  color: var(--molten);
-}
-
-.progress-swatch--partner {
-  text-decoration: underline dashed;
-  text-underline-offset: 0.3em;
-}
-
-.progress-readout {
-  flex-direction: column;
-  gap: var(--s-4);
-}
-
-.progress-readout ol,
-.progress-lifts {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--s-3);
-  min-width: 0;
-  max-width: 100%;
-  font: 500 var(--t-sm) / 1.4 var(--font-data);
-  color: var(--text);
-}
-
-.progress-lift {
-  display: grid;
-  gap: var(--s-2);
-  min-width: 0;
-  max-width: 100%;
-}
-
-.progress-lift a {
-  display: flex;
-  align-items: center;
-  min-height: 48px;
-  min-width: 0;
-  max-width: 100%;
-  color: inherit;
-  overflow-wrap: anywhere;
-}
-
-.progress-panel {
-  display: grid;
-  gap: var(--s-4);
-  min-width: 0;
-  max-width: 100%;
-}
-
-.progress-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
+/* A contrasting edge preserves the competition colours in both themes. */
+.progress-svg .progress-line-outline { stroke: var(--text); stroke-width: 5; fill: none; }
+.progress-svg circle { stroke: var(--text); stroke-width: 1; }
+/* Tables keep an intrinsic minimum width unless their clipped box is a block. */
+.progress .progress-sr { display: block; max-width: 1px; }
