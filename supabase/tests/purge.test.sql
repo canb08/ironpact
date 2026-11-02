@@ -16,7 +16,7 @@ select md5('purge-exercise-' || i)::uuid, 'Purge lift', 'Purge lift ' || i, 'lif
 insert into public.sessions (id, user_id, kind, started_at, tz, local_date, client_updated_at, deleted_at)
 select md5('purge-session-' || i)::uuid, '50000000-0000-4000-8000-000000000001', 'gym', now(), 'UTC', current_date, now(), deleted_at from ages;
 insert into public.sets (id, user_id, local_date, client_updated_at, deleted_at, session_id, exercise_id, set_index, reps, weight_kg, logged_at)
-select md5('purge-sets-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-session-' || i)::uuid, md5('purge-exercise-' || i)::uuid, 1, 5, 80, now() from ages;
+select md5('purge-sets-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), null, md5('purge-session-' || i)::uuid, md5('purge-exercise-' || i)::uuid, 1, 5, 80, now() from ages;
 insert into public.cardio_entries (id, user_id, local_date, client_updated_at, deleted_at, session_id, distance_m, duration_s, logged_at)
 select md5('purge-cardio_entries-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-session-' || i)::uuid, 1000, 300, now() from ages;
 insert into public.martial_entries (id, user_id, local_date, client_updated_at, deleted_at, session_id, discipline, duration_min, logged_at)
@@ -30,11 +30,13 @@ select md5('purge-exercise_prefs-' || i)::uuid, '50000000-0000-4000-8000-0000000
 insert into public.goals (id, user_id, local_date, client_updated_at, deleted_at, exercise_id, kind, target_value, unit, starts_on)
 select md5('purge-goals-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-exercise-' || i)::uuid, 'e1rm', 100, 'kg', current_date from ages;
 insert into public.pr_events (id, user_id, local_date, client_updated_at, deleted_at, exercise_id, source_id, pr_type, value)
-select md5('purge-pr_events-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-exercise-' || i)::uuid, md5('purge-sets-' || i)::uuid, 'e1rm', 100 from ages;
+select md5('purge-pr_events-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), null, md5('purge-exercise-' || i)::uuid, md5('purge-sets-' || i)::uuid, 'e1rm', 80 * (1 + 5::numeric / 30) from ages;
 insert into public.reactions (id, user_id, local_date, client_updated_at, deleted_at, crew_id, to_user, target_type, target_id, kind)
 select md5('purge-reactions-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, '50000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000001', 'set', md5('purge-sets-' || i)::uuid, 'chalk' from ages;
 insert into public.streak_tokens (id, user_id, local_date, client_updated_at, deleted_at, crew_id, covers_user_id, kind, week_start)
 select md5('purge-streak_tokens-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, '50000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000001', 'spot', current_date - i * 7 from ages;
+update public.sets s set deleted_at = a.deleted_at from ages a
+where s.id = md5('purge-sets-' || a.i)::uuid and a.deleted_at is not null;
 -- An expired parent must not cascade-delete a recent or live child.
 insert into public.sessions (id, user_id, kind, started_at, tz, local_date, client_updated_at, deleted_at)
 values ('50000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000001', 'gym', now(), 'UTC', current_date, now(), now() - interval '31 days');
@@ -74,5 +76,16 @@ select is((select count(*) from public.sessions where id = '50000000-0000-4000-8
 select is((select count(*) from public.sets where id = '50000000-0000-4000-8000-000000000004'), 1::bigint, 'recent child retained');
 select is((select count(*) from public.exercises where id = '50000000-0000-4000-8000-000000000005'), 1::bigint, 'referenced exercise retained');
 select lives_ok('select public.purge_deleted_rows()', 'repeated purge is harmless');
+-- The newly merged P2F claim guard must not block privacy scrubbing when a
+-- partner's historical source is already gone. Direct forged claims still fail.
+insert into auth.users (id) values ('50000000-0000-4000-8000-000000000007');
+update public.pr_events set seen_by = '{50000000-0000-4000-8000-000000000007}'
+  where id = md5('purge-pr_events-4')::uuid;
+delete from public.sets where id = md5('purge-sets-4')::uuid;
+select throws_ok($q$update public.pr_events set value = 999 where id = md5('purge-pr_events-4')::uuid$q$,
+  '23503', 'pr_source_missing', 'direct claim changes still validated');
+select lives_ok($q$delete from auth.users where id = '50000000-0000-4000-8000-000000000007'$q$,
+  'account cleanup may scrub historical PR with missing source');
+select is((select seen_by from public.pr_events where id = md5('purge-pr_events-4')::uuid), '{}'::uuid[], 'viewer removed without deleting partner PR');
 select * from finish();
 rollback;
