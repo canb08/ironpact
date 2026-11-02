@@ -463,5 +463,189 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       expect(await repo.q.setsOfSession(session.id)).toEqual([]);
       expect(await db.outbox.count()).toBe(before);
     });
+
+    it('P2A exerciseHistory is newest-first for that exercise and drops a deleted set', async () => {
+      const { session, exercise } = await gym();
+      const other = unwrap(await repo.w.createExercise({
+        name: 'Other lift', export_label: 'Other lift', kind: 'lift', category: 'isolation', lower_body: false,
+      }));
+      instant += 1000;
+      const first = unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: 60 }));
+      instant += 1000;
+      const second = unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 3, weight_kg: 70 }));
+      unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: other.id, reps: 8, weight_kg: 20 }));
+      unwrap(await repo.w.finishSession(session.id));
+      instant += 1000;
+      const later = unwrap(await repo.w.startSession({ kind: 'gym' }));
+      instant += 1000;
+      const laterSet = unwrap(await repo.w.logSet({ session_id: later.id, exercise_id: exercise.id, reps: 5, weight_kg: 80 }));
+      unwrap(await repo.w.finishSession(later.id));
+      expect((await repo.q.exerciseHistory(exercise.id, 1)).map((row) => row.session.id)).toEqual([later.id]);
+      const history = await repo.q.exerciseHistory(exercise.id, 10);
+      expect(history.map((row) => row.session.id)).toEqual([later.id, session.id]);
+      expect(history[0]!.sets.map((row) => row.id)).toEqual([laterSet.id]);
+      expect(history[1]!.sets.map((row) => row.id)).toEqual([first.id, second.id]);
+      expect(await repo.q.exerciseHistory(other.id, 10)).toHaveLength(1);
+      expect(await repo.q.exerciseHistory(exercise.id, 0)).toEqual([]);
+      unwrap(await repo.w.softDelete('sets', laterSet.id));
+      expect((await repo.q.exerciseHistory(exercise.id, 10)).map((row) => row.session.id)).toEqual([session.id]);
+    });
+
+    it('P2A recentSessionsWithSets is the last finished gym sessions with ordered sets', async () => {
+      const run = unwrap(await repo.w.logRun({ distance_m: 1000, duration_s: 400 }));
+      const { session, exercise } = await gym();
+      instant += 1000;
+      unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: 40 }));
+      instant += 1000;
+      unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: 50 }));
+      expect(await repo.q.recentSessionsWithSets(5)).toEqual([]);
+      unwrap(await repo.w.finishSession(session.id));
+      instant += 1000;
+      const second = unwrap(await repo.w.startSession({ kind: 'gym' }));
+      instant += 1000;
+      const only = unwrap(await repo.w.logSet({ session_id: second.id, exercise_id: exercise.id, reps: 4, weight_kg: 55 }));
+      unwrap(await repo.w.finishSession(second.id));
+      expect((await repo.q.recentSessionsWithSets(1)).map((row) => row.session.id)).toEqual([second.id]);
+      const recent = await repo.q.recentSessionsWithSets(5);
+      expect(recent.map((row) => row.session.id)).toEqual([second.id, session.id]);
+      expect(recent[0]!.sets.map((row) => row.id)).toEqual([only.id]);
+      expect(recent[1]!.sets.map((row) => row.set_index)).toEqual([1, 2]);
+      expect(recent.every((row) => row.session.kind === 'gym' && row.session.ended_at !== null)).toBe(true);
+      expect(recent.some((row) => row.session.id === run.session_id)).toBe(false);
+    });
+
+    it('P2A recordPrEvents is one batch, and deleting the set tombstones those events in one batch', async () => {
+      const { session, exercise } = await gym();
+      instant += 1000;
+      const set = unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: 60 }));
+      const draft = {
+        exercise_id: exercise.id, source_id: set.id, pr_type: 'e1rm' as const, reps: 5, value: 70,
+        previous_value: 60, pct_over_previous: 16.6667, user_id: remote.currentUserId()!, local_date: set.local_date,
+        display: 'takeover', bucket_label: 'ignored',
+      };
+      expect(await repo.w.recordPrEvents([])).toEqual({ ok: true, value: [] });
+      expect(await repo.w.recordPrEvents([{ ...draft, user_id: '00000000-0000-4000-8000-000000000099' }])).toEqual({ ok: false, error: 'world_record' });
+      const before = await db.outbox.count();
+      const recorded = unwrap(await repo.w.recordPrEvents([draft]));
+      expect(recorded).toHaveLength(1);
+      expect(recorded[0]).toMatchObject({ pr_type: 'e1rm', source_id: set.id, seen_by: [], exercise_id: exercise.id });
+      expect(recorded[0]).not.toHaveProperty('display');
+      expect(await db.outbox.count()).toBe(before + 1);
+      const queued = await db.outbox.where('row_id').equals(recorded[0]!.id).toArray();
+      expect(queued).toHaveLength(1);
+      expect(queued[0]!.payload).not.toHaveProperty('display');
+      expect(queued[0]!.payload).not.toHaveProperty('bucket_label');
+      expect(await repo.q.prEvents({})).toEqual([expect.objectContaining({ id: recorded[0]!.id })]);
+      expect(await repo.q.prEvents({ exerciseId: exercise.id, sessionId: session.id, since: set.local_date })).toHaveLength(1);
+      expect(await repo.q.prEvents({ since: '2026-10-26' })).toEqual([]);
+      expect(await repo.q.prEvents({ exerciseId: fixtureId(1) })).toEqual([]);
+      const puts: string[] = [];
+      const put = db.outbox.put.bind(db.outbox);
+      const failure = vi.spyOn(db.outbox, 'put').mockImplementation((entry, key) => {
+        puts.push(entry.table);
+        if (puts.length === 2) throw new DOMException('full', 'QuotaExceededError');
+        return put(entry, key);
+      });
+      expect(await repo.w.softDelete('sets', set.id)).toEqual({ ok: false, error: 'storage_full' });
+      failure.mockRestore();
+      expect(puts).toEqual(['sets', 'pr_events']);
+      expect(await repo.q.prEvents({})).toHaveLength(1);
+      expect(await db.sets.get(set.id)).toMatchObject({ deleted_at: null });
+      unwrap(await repo.w.softDelete('sets', set.id));
+      expect(await repo.q.prEvents({})).toEqual([]);
+      expect(await repo.q.setsOfSession(session.id)).toEqual([]);
+      const tombstones = (await db.outbox.toArray()).filter((entry) => entry.payload.deleted_at && (entry.row_id === set.id || entry.row_id === recorded[0]!.id));
+      expect(tombstones).toHaveLength(2);
+      expect(new Set(tombstones.map((entry) => entry.payload.deleted_at)).size).toBe(1);
+    });
+
+    it('P2A setExercisePref remembers rest seconds on one row and does not write big jumps', async () => {
+      const { exercise } = await gym();
+      expect(await repo.q.exercisePref(exercise.id)).toBeUndefined();
+      expect(await repo.w.setExercisePref(exercise.id, { rest_s: 10 })).toEqual({ ok: false, error: 'world_record' });
+      expect(await repo.w.setExercisePref(fixtureId(2), { rest_s: 90 })).toEqual({ ok: false, error: 'world_record' });
+      const first = unwrap(await repo.w.setExercisePref(exercise.id, { rest_s: 90 }));
+      instant += 1000;
+      const second = unwrap(await repo.w.setExercisePref(exercise.id, { rest_s: 150 }));
+      expect(second.id).toBe(first.id);
+      expect(await repo.q.exercisePref(exercise.id)).toMatchObject({ id: first.id, rest_s: 150, exercise_id: exercise.id });
+      expect(await db.mirror('exercise_prefs').count()).toBe(1);
+      expect((await db.outbox.toArray()).some((entry) => entry.table === 'profiles')).toBe(false);
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      expect(unwrap(await remote.fetchByIds('exercise_prefs', [first.id]))).toEqual([expect.objectContaining({ rest_s: 150 })]);
+    });
+
+    it('P2A moving a session date moves live and tombstoned children without bumping their timestamps', async () => {
+      const { session, exercise } = await gym();
+      instant += 1000;
+      const live = unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: 60 }));
+      instant += 1000;
+      const dead = unwrap(await repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 3, weight_kg: 80 }));
+      unwrap(await repo.w.softDelete('sets', dead.id));
+      const tombstone = await db.sets.get(dead.id);
+      const liveStamp = live.client_updated_at;
+      instant += 60_000;
+      unwrap(await repo.w.updateSession(session.id, { note: 'felt strong', readiness: { sleep: 2, soreness: 2, energy: 3 } }));
+      expect(await db.sets.get(live.id)).toMatchObject({ local_date: live.local_date, client_updated_at: liveStamp });
+      expect(await repo.w.updateSession(session.id, { note: 'x'.repeat(201) })).toEqual({ ok: false, error: 'world_record' });
+      const moved = unwrap(await repo.w.updateSession(session.id, { local_date: '2026-10-24' }));
+      expect(moved).toMatchObject({ local_date: '2026-10-24', note: 'felt strong' });
+      expect(await db.sets.get(live.id)).toMatchObject({ local_date: '2026-10-24', client_updated_at: liveStamp, deleted_at: null });
+      expect(await db.sets.get(dead.id)).toMatchObject({
+        local_date: '2026-10-24', client_updated_at: tombstone!.client_updated_at, deleted_at: tombstone!.deleted_at,
+      });
+      expect((await repo.q.day('2026-10-25')).sets).toEqual([]);
+      expect((await repo.q.day('2026-10-24')).sets.map((row) => row.id)).toEqual([live.id]);
+      expect((await repo.q.day('2026-10-24')).sessions.map((row) => row.id)).toContain(session.id);
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      const serverLive = unwrap(await remote.fetchByIds('sets', [live.id]))[0];
+      const serverDead = unwrap(await remote.fetchByIds('sets', [dead.id]))[0];
+      expect(serverLive).toMatchObject({ local_date: '2026-10-24' });
+      expect(serverDead).toMatchObject({ local_date: '2026-10-24' });
+      expect(Date.parse(String(serverDead?.deleted_at))).toBe(Date.parse(String(tombstone!.deleted_at)));
+    });
+
+    it('P2A updateEntry edits a run, martial, MIN and moves a bodyweight onto its new date', async () => {
+      const run = unwrap(await repo.w.logRun({ distance_m: 2000, duration_s: 600, note: 'easy' }));
+      const martial = unwrap(await repo.w.logMartial({ discipline: 'BJJ', duration_min: 60 }));
+      const min = unwrap(await repo.w.logMin('20m walk'));
+      const weight = unwrap(await repo.w.logBodyweight(80));
+      instant += 1000;
+      expect(await repo.w.updateEntry('cardio_entries', run.id, { distance_m: 50 })).toEqual({ ok: false, error: 'world_record' });
+      const edited = unwrap(await repo.w.updateEntry('cardio_entries', run.id, { distance_m: 2100, local_date: '2026-10-23' }));
+      expect(edited).toMatchObject({ distance_m: 2100, local_date: '2026-10-23' });
+      expect(await repo.q.session(run.session_id)).toMatchObject({ local_date: '2026-10-23' });
+      expect((await repo.q.day('2026-10-25')).cardio).toEqual([]);
+      expect((await repo.q.day('2026-10-23')).cardio.map((row) => row.id)).toEqual([run.id]);
+      expect(unwrap(await repo.w.updateEntry('martial_entries', martial.id, { rounds: 5, note: 'drilled' }))).toMatchObject({ rounds: 5, note: 'drilled' });
+      expect(unwrap(await repo.w.updateEntry('min_entries', min.id, { description: '30m walk' }))).toMatchObject({ description: '30m walk' });
+      const moved = unwrap(await repo.w.updateEntry('bodyweight_entries', weight.id, { local_date: '2026-10-26', weight_kg: 80.5 }));
+      expect(moved.id).toBe(bodyweightId(remote.currentUserId()!, '2026-10-26'));
+      expect(moved.id).not.toBe(weight.id);
+      expect(await db.bodyweight_entries.get(weight.id)).toMatchObject({ deleted_at: expect.any(String) });
+      expect((await repo.q.day('2026-10-25')).bodyweight).toEqual([]);
+      expect((await repo.q.day('2026-10-26')).bodyweight).toEqual([expect.objectContaining({ id: moved.id, weight_kg: 80.5 })]);
+      const day = await repo.q.day('2026-10-25');
+      expect(day.martial.map((row) => row.id)).toEqual([martial.id]);
+      expect(day.min.map((row) => row.id)).toEqual([min.id]);
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      expect(unwrap(await remote.fetchByIds('cardio_entries', [run.id]))[0]).toMatchObject({ distance_m: 2100, local_date: '2026-10-23' });
+      expect(unwrap(await remote.fetchByIds('bodyweight_entries', [moved.id]))[0]).toMatchObject({ weight_kg: 80.5, local_date: '2026-10-26' });
+    });
+
+    it('P2A contract case count on this backend', () => {
+      const methods = [
+        'exerciseHistory', 'recentSessionsWithSets', 'prEvents', 'exercisePref', 'day',
+        'recordPrEvents', 'setExercisePref', 'updateSession', 'updateEntry',
+      ] as const;
+      console.log(`P2A ${remote.kind}: ${methods.length} methods, 6 contract cases`);
+      expect(methods.every((method) => method in repo.q || method in repo.w)).toBe(true);
+    });
   });
 }
