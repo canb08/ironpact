@@ -31,18 +31,36 @@ export function createSupabaseRealtime(client: SupabaseClient, crewId: string, u
   const channels: RealtimeChannel[] = [];
   let cycle = 0;
   let reconnecting = false;
-  // Serialize track/untrack, so a slow track cannot resurrect a finished session.
-  let publishing = Promise.resolve();
+  let lastSent: string | null = null;
+  let sentAt: number[] = [];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // Realtime v2.147.1 permits five client presence events per 30 seconds and
+  // closes the channel on overflow. Keep one slot for immediate untrack; rapid
+  // sets coalesce to the latest payload without delaying database delivery.
+  // https://github.com/supabase/realtime/blob/v2.147.1/lib/realtime_web/channels/realtime_channel/presence_handler.ex
+  const presenceWindow = 30_100;
   const publish = () => {
-    publishing = publishing.then(async () => {
-      if (closed || presence.state !== 'joined') return;
-      if (desired) await presence.track(desired);
-      else await presence.untrack();
-    }).catch(() => {});
+    clearTimeout(timer);
+    if (closed || presence.state !== 'joined') return;
+    const key = desired ? JSON.stringify(desired) : null;
+    if (key === lastSent) return;
+    const now = Date.now();
+    sentAt = sentAt.filter((at) => now - at < presenceWindow);
+    if (sentAt.length >= (desired ? 4 : 5)) {
+      timer = setTimeout(publish, Math.max(1, sentAt[0]! + presenceWindow - now));
+      return;
+    }
+    lastSent = key; sentAt.push(now);
+    const version = cycle;
+    // Websocket sends are ordered. Do not wait for a track acknowledgement to
+    // send finish/untrack: a lost acknowledgement must not prolong presence.
+    void (desired ? presence.track(desired) : presence.untrack()).then((result) => {
+      if (version === cycle && result !== 'ok' && lastSent === key) lastSent = null;
+    }).catch(() => { if (version === cycle && lastSent === key) lastSent = null; });
   };
   const subscribe = (channel: RealtimeChannel, version: number) => channel.subscribe((status) => {
     if (closed || cycle !== version || status !== 'SUBSCRIBED') return;
-    if (channel === presence) publish();
+    if (channel === presence) { lastSent = null; sentAt = []; publish(); }
     callbacks.onChange(); // Close the subscribe/pull gap and recover after socket rejoin.
   });
   function join() {
@@ -68,10 +86,11 @@ export function createSupabaseRealtime(client: SupabaseClient, crewId: string, u
   return {
     setPresence(row) { desired = row; publish(); },
     reconnect() {
-      if (closed || reconnecting || channels.every((channel) => channel.state === 'joined')) return;
+      if (closed || reconnecting) return;
+      if (channels.every((channel) => channel.state === 'joined')) { publish(); return; }
       // Phoenix join is single-use. Remove disconnected subscriptions and build
       // fresh channels; callbacks from the old generation are fenced out.
-      reconnecting = true; cycle++;
+      reconnecting = true; cycle++; clearTimeout(timer);
       callbacks.onPresence([]);
       void Promise.all(channels.splice(0).map((channel) => client.removeChannel(channel)))
         .then(() => { if (!closed) join(); }).catch(() => {})
@@ -79,7 +98,7 @@ export function createSupabaseRealtime(client: SupabaseClient, crewId: string, u
     },
     close() {
       if (closed) return;
-      closed = true; desired = null;
+      closed = true; desired = null; clearTimeout(timer);
       for (const channel of channels) void client.removeChannel(channel).catch(() => {});
     },
   };

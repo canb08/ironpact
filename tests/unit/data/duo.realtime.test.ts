@@ -74,11 +74,30 @@ describe('Supabase realtime transport', () => {
     await vi.waitFor(() => expect(channels[0]!.track).toHaveBeenCalled());
     channels[0]!.untrack.mockClear();
     connection.setPresence(null);
+    expect(channels[0]!.untrack).toHaveBeenCalled();
     blocked.resolve('ok');
     await vi.waitFor(() => expect(channels[0]!.untrack).toHaveBeenCalled());
     connection.close(); connection.close();
     expect(removeChannel).toHaveBeenCalledTimes(13);
     onChange.mockClear(); channels[2]!.fire('postgres_changes');
     expect(onChange).not.toHaveBeenCalled();
+  });
+  it('coalesces bursts within the server budget and reserves an immediate finish event', async () => {
+    vi.useFakeTimers();
+    const { channels, connection } = fixture();
+    try {
+      expect(channels[0]!.untrack).not.toHaveBeenCalled();
+      for (let i = 1; i <= 10; i++) connection.setPresence({ ...payload, set_no: i });
+      expect(channels[0]!.track).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(30_100);
+      expect(channels[0]!.track).toHaveBeenCalledTimes(5);
+      expect(channels[0]!.track).toHaveBeenLastCalledWith({ ...payload, set_no: 10 });
+      for (let i = 11; i <= 20; i++) connection.setPresence({ ...payload, set_no: i });
+      expect(channels[0]!.track).toHaveBeenCalledTimes(8);
+      connection.setPresence(null);
+      expect(channels[0]!.untrack).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(30_100);
+      expect(channels[0]!.track).toHaveBeenCalledTimes(8);
+    } finally { connection.close(); vi.useRealTimers(); }
   });
 });
