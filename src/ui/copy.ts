@@ -337,6 +337,8 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P3B: add this ticket's strings directly below ──
 
   // ── P3C: add this ticket's strings directly below ──
+  ringClosedAll: "CLOSED. All of you. That's the job.",
+  platesLabel: 'PLATES',
 
   // ── P3D: add this ticket's strings directly below ──
 
