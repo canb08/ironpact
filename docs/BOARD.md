@@ -81,6 +81,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
 
 ## Parked / follow-ups
+- **BLOCKER (seen by friend's Claude, 2026-11-02 ~04:55):** GitHub Actions refuses to start jobs: "recent account payments have failed or your spending limit needs to be increased" (P4E #46 run #297, all jobs). No PR can get green CI until Can fixes billing / the Actions spending limit on `canb08` (human-only). Leads keep reviewing + running the full suite locally; nothing merges without CI.
 - **For lane C (seen by friend's Claude, 2026-11-02, mock backend, 375 px wide):** on `/session` after choosing an exercise, the kg and reps inputs overflow the right edge (horizontal scroll). Belongs to the session screen (P2D / S6).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
