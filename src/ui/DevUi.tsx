@@ -18,6 +18,7 @@ import {
   Button,
   Chip,
   HoldButton,
+  Ring,
   Sheet,
   Stepper,
   ToastProvider,
@@ -125,6 +126,75 @@ function Gallery() {
           <Chip>{copy.baselineBuilding}</Chip>
           <Chip>{copy.minQuick}</Chip>
         </div>
+      </section>
+      <section>
+        <h2>{copy.ringDemo}</h2>
+        <Ring
+          members={[
+            {
+              id: 'you',
+              name: copy.ringYou,
+              initial: 'Y',
+              color: 'var(--member-volt)',
+              target: 3,
+              credits: 2,
+              minCount: 0,
+            },
+          ]}
+        />
+        <Ring
+          members={[
+            {
+              id: 'you',
+              name: copy.ringYou,
+              initial: 'Y',
+              color: 'var(--member-volt)',
+              target: 3,
+              credits: 2,
+              minCount: 1,
+            },
+            {
+              id: 'partner',
+              name: copy.ringPartner,
+              initial: 'P',
+              color: 'var(--member-ice)',
+              target: 3,
+              credits: 1,
+              minCount: 0,
+            },
+          ]}
+        />
+        <Ring
+          members={[
+            {
+              id: 'you',
+              name: copy.ringYou,
+              initial: 'Y',
+              color: 'var(--member-volt)',
+              target: 3,
+              credits: 2,
+              minCount: 0,
+            },
+            {
+              id: 'partner',
+              name: copy.ringPartner,
+              initial: 'P',
+              color: 'var(--member-ice)',
+              target: 3,
+              credits: 1,
+              minCount: 0,
+            },
+            {
+              id: 'third',
+              name: copy.ringThird,
+              initial: 'T',
+              color: 'oklch(0.78 0.15 320)',
+              target: 3,
+              credits: 0.5,
+              minCount: 1,
+            },
+          ]}
+        />
       </section>
       <section>
         <h2>{copy.devStepper}</h2>
