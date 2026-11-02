@@ -302,5 +302,8 @@ select ok(has_function_privilege('authenticated', 'public.use_spot(date)', 'EXEC
 select ok(coalesce('search_path=""' = any(p.proconfig), false), p.proname || ': empty SECURITY DEFINER search_path')
 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public' and p.prosecdef;
+select diag('P3A week-close: ' || (67 + count(*)) || ' assertions')
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.prosecdef;
 select * from finish();
 rollback;

@@ -3,10 +3,10 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select no_plan();
 
-select results_eq($q$select tablename::text from pg_publication_tables
-  where pubname = 'supabase_realtime' and schemaname = 'public' order by tablename$q$,
-  $q$select unnest(array['bodyweight_entries','cardio_entries','challenges','crew_weeks',
-    'martial_entries','min_entries','nudges','pr_events','profiles','reactions','sessions','sets'])$q$,
+select is((select jsonb_agg(tablename order by tablename) from pg_publication_tables
+  where pubname = 'supabase_realtime' and schemaname = 'public'),
+  '["bodyweight_entries","cardio_entries","challenges","crew_weeks",
+    "martial_entries","min_entries","nudges","pr_events","profiles","reactions","sessions","sets"]'::jsonb,
   'SPEC 4.5: all twelve source tables are published for Postgres Changes');
 select ok((select relrowsecurity from pg_class where oid = 'realtime.messages'::regclass),
   'Realtime messages have row-level security enabled');
@@ -65,5 +65,6 @@ select is((select count(*) from realtime.messages), 0::bigint, 'Malformed topic 
 select set_config('realtime.topic', '', true);
 select is((select count(*) from realtime.messages), 0::bigint, 'Missing topic denies access');
 reset role;
+select diag('P3A Realtime: 14 assertions');
 select * from finish();
 rollback;
