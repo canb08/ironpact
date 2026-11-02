@@ -308,6 +308,12 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P2B: add this ticket's strings directly below ──
 
   // ── P2C: add this ticket's strings directly below ──
+  restTimerLabel: 'Rest timer',
+  restMinus15: '−15s',
+  restPlus15: '+15s',
+  restTenSeconds: '10 seconds',
+  restOverAnnounce: "Rest over. Bar's loaded.",
+  restOverChip: '+{time} over',
 
   // ── P2D: add this ticket's strings directly below ──
 
