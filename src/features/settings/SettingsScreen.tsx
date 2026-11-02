@@ -21,6 +21,32 @@ import './settings.css';
 type Patch = Partial<Omit<Profile, 'id'>>;
 type SavePatch = Patch | ((current: Profile) => Patch);
 
+/** Same shape as the seeded default profile, so the form does not grow when the row arrives. */
+const SHELL_PROFILE: Profile = {
+  id: '00000000-0000-4000-8000-000000000000',
+  display_name: 'Athlete',
+  initial: 'A',
+  color_hue: 125,
+  tz: 'Europe/Amsterdam',
+  weekly_target: 3,
+  show_bodyweight: false,
+  share_dots: false,
+  sound_on: false,
+  haptics_on: true,
+  reduce_motion: false,
+  battery_saver: false,
+  big_jumps: false,
+  theme: 'dark',
+  quiet_start: '22:00',
+  quiet_end: '08:00',
+  notify: { partner_start: false, partner_pr: true, nudge: true, recap: true, spot: true },
+  min_default_label: '20m walk',
+  gym_treat_url: null,
+  bar_kg: 20,
+  plates_kg: [25, 20, 15, 10, 5, 2.5, 1.25],
+  export_format: 'lines',
+};
+
 export default function SettingsScreen() {
   const repo = useRepo();
   const user = useSyncExternalStore(repo.auth.onChange, repo.auth.userId);
@@ -34,10 +60,9 @@ export default function SettingsScreen() {
 
 function SettingsBody() {
   const repo = useRepo();
-  const profile = useLiveQuery(() => repo.q.me(), [repo]);
   return (
     <>
-      {profile ? <ProfileSettings repo={repo} initial={profile} /> : <p>{copy.loading}</p>}
+      <ProfileSettings repo={repo} initial={SHELL_PROFILE} />
       <VaultExport repo={repo} />
       <SyncPanel repo={repo} />
       <CrewPanel repo={repo} />
