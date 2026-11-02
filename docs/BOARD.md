@@ -68,7 +68,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P4G | Playwright Phase 4 | Grok | **E** (moved from C to balance lanes, 2026-11-02) | todo — after P4C, P4E |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (Can's Codex took it: lane C idle, P5C needs it; Can's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
-| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | running 2026-11-02 (Grok) |
+| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | pr #46 (reviewed: scope ok, reduced-motion + once-only tests, initial JS 116 kB; local 652 tests green) |
 | P5F | Recompute PRs after an edit + edit notices (L13) | Grok | C | pr #44 (db red: rows rejected by 0007 check; fix running) |
 | P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #37 |
 
