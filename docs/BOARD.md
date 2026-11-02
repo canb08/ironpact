@@ -104,7 +104,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | merged #68 (Lead screenshot review; e2e START helper fixed in round 2) |
 | X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — Lead review: 4 changes (current-exercise sets hidden under dock, name looks like a field, row icons, summary header) in PR comment; owner's Codex out until 21:36, resume in the same chat |
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
-| X6 | Day editor: compact rows + edit sheet | Grok | E | PR #71 — screenshots approved; e2e red (axe label mismatch on week strip), sent back to Codex |
+| X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
 | X7 | Crew centred on partner | Grok | E | running — friend's Codex (Sol High) |
 | X8 | Settings grouped sub-pages | Grok | C | queued (after X1+X2) |
 | X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
