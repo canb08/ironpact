@@ -65,7 +65,8 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P4C | PR takeover + partner shockwave hook | Grok | **E** (moved: owner's Grok ~95% weekly; nothing pushed — start fresh from main) | merged #52 (push run fully green; PR-run e2e red only on the diagnosed Pixel 7 Floor flake in p1-demo/p1-flight, see Parked; P4C doesn't touch the Floor) |
 | P5B | S14 completed | Grok | C | merged #38 |
 | P5C | S16 Settings full | Grok | C | merged #42 |
-| P4G | Playwright Phase 4 | Codex Sol | **C** (owner's Codex) | running 2026-11-02 06:35 (P4C #52 + P4E #46 merged) |
+| P4G | Playwright Phase 4 | Codex Sol | **C** (owner's Codex) | pr #53 (CI) |
+| P4H | Wire partner-PR shockwave end to end + `mark_seen` RPC (closes H3 G4, L16) | Codex Astra | C | todo — after P4G merges |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
