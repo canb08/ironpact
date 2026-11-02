@@ -592,6 +592,8 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
 
   // ── H2: add this ticket's strings directly below ──
 
+  // ── H3: security audit; no user-facing strings ──
+
   // ── P5F: add this ticket's strings directly below ──
   prsRecalculated: 'PRs recalculated.',
 } as const;
