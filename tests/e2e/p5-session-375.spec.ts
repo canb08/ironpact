@@ -41,7 +41,7 @@ for (const zoom of [1, 2]) {
     await kg.fill('80');
     await reps.fill('5');
     const log = page.getByRole('button', { name: copy.logSet, exact: true });
-    const rack = page.getByRole('button', { name: copy.finish, exact: true });
+    const rack = page.getByRole('button', { name: copy.rackItName, exact: true });
     await expect(log).toBeVisible();
     await expect(rack).toBeVisible();
     await rack.scrollIntoViewIfNeeded();

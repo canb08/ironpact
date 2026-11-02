@@ -81,7 +81,7 @@ describe('P2D session engine', () => {
 
     const skip = screen.queryByRole('button', { name: copy.skip });
     if (skip) await userEvent.click(skip);
-    const rack = screen.getByRole('button', { name: copy.finish });
+    const rack = screen.getByRole('button', { name: copy.rackItName });
     expect(rack.className).toContain('ui-button--xl');
     expect(screen.getByRole('button', { name: copy.logSet }).className).toContain('ui-button--xl');
     vi.useFakeTimers();

@@ -23,7 +23,7 @@ export function SetList({ sets, pending, freshId, onDeleted }: {
       } } });
     });
   };
-  return <section className="session-sets" aria-label={copy.sessionSets}>
+  return <section className="session-sets" aria-label={copy.sessionSets} tabIndex={0}>
     {sets.length === 0 && <p>{copy.sessionNoSets}</p>}
     <ol>
       {sets.map((row, index) => {

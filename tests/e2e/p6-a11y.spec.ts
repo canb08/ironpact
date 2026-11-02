@@ -13,22 +13,8 @@ import { reachFloor, waitForBench } from './helpers.ts';
 const BENCH_ID = '00000000-0000-4000-8000-000000000010';
 const DAY = '2026-06-01';
 
-/** Real violations outside this ticket's file list. test.fixme below names each one. */
-const KNOWN_FINDINGS = new Set([
-  'H1-SCROLL-S14',
-  'H1-SCROLL-S5',
-  'H1-SCROLL-S6',
-  'H1-SCROLL-S8',
-  'H1-SCROLL-S9',
-  'H1-TAB-S6',
-  'H1-AXE-S5-label-content-name-mismatch',
-  'H1-AXE-S5-scrollable-region-focusable',
-  'H1-AXE-S6-label-content-name-mismatch',
-  'H1-AXE-S8-label-content-name-mismatch',
-  'H1-AXE-S9-label-content-name-mismatch',
-  'H1-AXE-S15-aria-prohibited-attr',
-  'H1-AXE-S16-aria-prohibited-attr',
-]);
+/** Findings fixed in H7. Kept empty so a regression fails the audit below. */
+const KNOWN_FINDINGS = new Set<string>([]);
 
 function findingKey(id: string): string {
   return id.replace(/-(?:Pixel7|iPhone15)-/, '-');
@@ -142,7 +128,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   await expect(page.locator('.rest-timer__controls')).toBeVisible();
   await audit(page, project, 'S8', device, findings);
 
-  const rack = page.getByRole('button', { name: copy.finish });
+  const rack = page.getByRole('button', { name: copy.rackItName });
   await rack.focus();
   await page.keyboard.down('Enter');
   await expect(page.getByRole('region', { name: copy.summaryTitle })).toBeVisible();
@@ -183,48 +169,6 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   const fresh = findings.filter((finding) => !KNOWN_FINDINGS.has(findingKey(finding.id)));
   writeFileSync(`/tmp/h1-findings-${project}.json`, JSON.stringify({ findings, fresh }, null, 2));
   expect(fresh, fresh.map((finding) => `${finding.id} :: ${finding.detail}`).join('\n')).toEqual([]);
-});
-
-test.fixme('H1-SCROLL-S14', () => {
-  // ExerciseDetailScreen.tsx:154 h1 inside main.progress. progress.css:18 font-size --t-lg.
-  // 375px + 200% text: scrollWidth 456. Lead: fix ticket.
-});
-test.fixme('H1-SCROLL-S5', () => {
-  // LoggingCard.tsx:119 .session-steppers while readiness is open. session.css:22-26.
-});
-test.fixme('H1-SCROLL-S6', () => {
-  // Same steppers on the logging screen. session.css:22-26. Board already parked this.
-});
-test.fixme('H1-SCROLL-S8', () => {
-  // Same steppers with the rest timer up. session.css:22-26.
-});
-test.fixme('H1-SCROLL-S9', () => {
-  // Same steppers under the PR card. session.css:22-26.
-});
-test.fixme('H1-TAB-S6', () => {
-  // LoggingCard.tsx:125-132. At 375px / 200% the Warm-up control wraps into the RPE row,
-  // so visual order and tab order disagree.
-});
-test.fixme('H1-AXE-S5-label-content-name-mismatch', () => {
-  // HoldButton.tsx:79 .ui-hold. LoggingCard.tsx:137 aria-label "Hold to rack it." does not contain visible "RACK IT".
-});
-test.fixme('H1-AXE-S6-label-content-name-mismatch', () => {
-  // Same hold button on the logging screen. LoggingCard.tsx:137.
-});
-test.fixme('H1-AXE-S8-label-content-name-mismatch', () => {
-  // Same hold button with the timer up. LoggingCard.tsx:137.
-});
-test.fixme('H1-AXE-S9-label-content-name-mismatch', () => {
-  // Same hold button under the PR card. LoggingCard.tsx:137.
-});
-test.fixme('H1-AXE-S5-scrollable-region-focusable', () => {
-  // SetList.tsx:26 section.session-sets. session.css:14 overflow-y: auto is not keyboard-focusable.
-});
-test.fixme('H1-AXE-S15-aria-prohibited-attr', () => {
-  // DayEditorScreen.tsx:111 span.progress-day.is-current has aria-label (prohibited on a generic span).
-});
-test.fixme('H1-AXE-S16-aria-prohibited-attr', () => {
-  // VaultExport.tsx:145 pre.vault-preview has aria-label (prohibited on a generic pre).
 });
 
 async function audit(
@@ -285,6 +229,7 @@ async function audit(
     });
   }
 
+  await settleMotion(page);
   await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
   await page.setViewportSize(device);
   const results = await new AxeBuilder({ page }).analyze();
@@ -301,6 +246,26 @@ async function audit(
 function slug(value: string): string {
   const cleaned = value.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
   return (cleaned || 'el').slice(0, 80);
+}
+
+/** Axe samples live pixels. Wait out a fade or the PR flash unless reduced motion already killed it. */
+async function settleMotion(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      || document.documentElement.dataset.reducedMotion === 'on';
+    if (reduced) return;
+    const finite = document.getAnimations().filter((animation) => {
+      const timing = animation.effect?.getComputedTiming();
+      if (timing?.iterations === Infinity) return false;
+      const state = animation.playState as string;
+      return state === 'running' || state === 'pending';
+    });
+    const done = Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)));
+    await Promise.race([
+      done,
+      new Promise<void>((resolve) => { window.setTimeout(resolve, 2000); }),
+    ]);
+  });
 }
 
 function measure(labels: { tab: boolean; log: string; undo: string; minus: string; plus: string; skip: string }): Probe {

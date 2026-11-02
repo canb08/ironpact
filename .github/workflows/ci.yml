@@ -52,7 +52,8 @@ jobs:
           assert config['db']['seed']['sql_paths'] == ['./seed.sql']
           assert config['auth']['email']['otp_length'] == 6
           assert config['auth']['email']['otp_expiry'] == 600
-          for name in ('export', 'health', 'push-dispatch', 'rest-alarm', 'delete-account'):
+          assert set(config['functions']) == {'export', 'health', 'delete-account'}
+          for name in ('export', 'health', 'delete-account'):
               assert config['functions'][name]['verify_jwt'] is False, name
           PY
       - name: Start local database
@@ -66,25 +67,14 @@ jobs:
           # Restart from a full stack: db start alone has no Auth or PostgREST.
           supabase stop --no-backup
           umask 077
-          # Source config retains future function JWT settings. The CLI validates
-          # those entrypoints even when edge-runtime is excluded, so use an
-          # isolated CI copy with only implemented function declarations.
+          # Keep an isolated stack directory for CLI runtime state.
           python3 - <<'PY'
           import os
           import pathlib
-          import re
           import shutil
-          import tomllib
 
           root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'a5-stack'
           shutil.copytree('supabase', root / 'supabase', ignore=shutil.ignore_patterns('.temp'))
-          config_path = root / 'supabase/config.toml'
-          source = config_path.read_text()
-          source = re.sub(r'(?ms)^\[functions\.(?!export\]|health\]|delete-account\])[^\n]+\].*?(?=^\[|\Z)', '', source)
-          config = tomllib.loads(source)
-          assert set(config['functions']) == {'export', 'health', 'delete-account'}
-          assert all(not value['verify_jwt'] for value in config['functions'].values())
-          config_path.write_text(source)
           PY
           stack_root="$RUNNER_TEMP/a5-stack"
           supabase --workdir "$stack_root" start --exclude studio,imgproxy,storage-api,postgres-meta,logflare,vector,supavisor,edge-runtime > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { grep -iE "error|fail|denied|invalid|unhealthy" "$RUNNER_TEMP/supabase-start.log" | grep -viE "key|secret|jwt" | head -40; exit 1; }

@@ -21,6 +21,9 @@ async function openDay() {
   expect(run.ok).toBe(true);
   harness.render(`/day/${DAY}`);
   expect(await screen.findByRole('region', { name: copy.run })).toBeTruthy();
+  const current = document.querySelector('.progress-day.is-current');
+  expect(current?.getAttribute('aria-label')).toBeNull();
+  expect(current?.textContent).toContain(DAY);
   return harness;
 }
 

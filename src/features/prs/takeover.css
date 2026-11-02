@@ -7,6 +7,9 @@
   padding: 24px 16px max(24px, env(safe-area-inset-bottom));
   background: rgba(10, 10, 11, 0.92);
   color: var(--text);
+  /* D9 scrim stays this dark in both themes. Theme --text-muted becomes #5A5A60 in light (~2.5:1).
+     Dark muted #8A8A90 is 5.8:1 on #0A0A0B and 4.9:1 on the light-theme blend. */
+  --pr-takeover-muted: oklch(0.6353453166528512 0.008864958230277775 286.1446703761787);
 }
 
 .pr-takeover__stage {
@@ -34,7 +37,7 @@
 }
 
 .pr-takeover__e1rm {
-  color: var(--text-muted);
+  color: var(--pr-takeover-muted);
   font-family: var(--font-data);
 }
 

@@ -182,11 +182,8 @@ verify_jwt = false
 [functions.health]
 verify_jwt = false
 
-[functions.push-dispatch]
-verify_jwt = false
-
-[functions.rest-alarm]
-verify_jwt = false
+# Restore push-dispatch (F24) and rest-alarm with their handlers;
+# each must check X-Dispatch-Secret before verify_jwt = false is enabled.
 
 # P5D: validates the caller with Auth before invoking the admin deletion API.
 [functions.delete-account]
