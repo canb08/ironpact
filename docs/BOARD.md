@@ -72,6 +72,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | running 2026-11-02 (lane E, Grok) |
 
 ## Parked / follow-ups
+- **For lane C (seen by friend's Claude, 2026-11-02, mock backend, 375 px wide):** on `/session` after choosing an exercise, the kg and reps inputs overflow the right edge (horizontal scroll). Belongs to the session screen (P2D / S6).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
 - Size budget: initial JS = entry + modulepreloads; the data layer (Dexie, zod, sync, adapters) is lazy-loaded in `App.tsx` (C5) → initial **100.5 / 170 kB**. Keep screens and backend libraries out of the static import graph.
