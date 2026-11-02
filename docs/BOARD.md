@@ -76,7 +76,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 ## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need the owner)
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr open (13 findings as named fixme, in Parked; PR opened by Lead) |
 | H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
 | H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #48 (pgTAP read in full; gaps G1-G7 in Parked; PR opened by Lead) |
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | merged #45 |
