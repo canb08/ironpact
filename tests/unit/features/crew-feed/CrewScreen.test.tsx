@@ -26,14 +26,21 @@ it('shows partner sets grouped by day and pulls new activity without a refresh b
   expect(feed.textContent).toContain('Bench press');
   expect(screen.queryByRole('button', { name: copy.refresh })).toBeNull();
   expect(screen.queryByRole('img', { name: /You .+Partner/ })).toBeNull();
-  expect(screen.getByRole('img', { name: /of 3$/ }).getAttribute('aria-label')).toMatch(/^Partner /);
+  const hero = document.querySelector('.crew-hero');
+  expect(hero?.querySelector('.ui-plate-bar [data-side="partner"] .ui-plate-bar__plate--partner')).toBeTruthy();
+  expect(hero?.querySelector('.crew-plate')).toBeNull();
+  expect(hero?.textContent).toMatch(/of 3 this week/);
+  expect(screen.getByRole('heading', { name: copy.crewFeedTitle }).textContent).toBe('Recent activity');
+  const invite = screen.getByRole('button', { name: copy.x7Invite });
+  expect(invite.className).toContain('ui-button--secondary');
+  expect(invite.className).not.toContain('ui-button--primary');
   const pull = vi.spyOn(context.repo.sync, 'pullNow');
   await context.remote.simulateCrewmateActivity();
   fireEvent.touchStart(screen.getByRole('main'), { touches: [{ clientY: 0 }] });
   fireEvent.touchEnd(screen.getByRole('main'), { changedTouches: [{ clientY: 100 }] });
   await waitFor(() => expect(pull).toHaveBeenCalledOnce());
   await waitFor(() => expect(feed.querySelectorAll(':scope > li > ul > li')).toHaveLength(2));
-  await waitFor(() => expect(screen.getByRole('button', { name: copy.copyInvite }).hasAttribute('disabled')).toBe(false));
+  await waitFor(() => expect(screen.getByRole('button', { name: copy.x7Invite }).hasAttribute('disabled')).toBe(false));
 });
 
 it('filters unshared bodyweight even if stale rows remain cached, then shows it when sharing is on', async () => {
@@ -56,12 +63,12 @@ it('filters unshared bodyweight even if stale rows remain cached, then shows it 
 it('copies an absolute /join/<CODE> invite from createInvite and reports denied clipboard access', async () => {
   const user = userEvent.setup(); mount();
   const write = vi.spyOn(navigator.clipboard, 'writeText');
-  await user.click(await screen.findByRole('button', { name: copy.copyInvite }));
+  await user.click(await screen.findByRole('button', { name: copy.x7Invite }));
   await waitFor(() => expect(write).toHaveBeenCalledOnce());
   expect(write.mock.calls[0]?.[0]).toMatch(/^http:\/\/localhost(?::\d+)?\/join\/[0-9A-Z]{10}$/);
   write.mockRejectedValue(new Error('Denied'));
-  await waitFor(() => expect(screen.getByRole('button', { name: copy.copyInvite }).hasAttribute('disabled')).toBe(false));
-  await user.click(screen.getByRole('button', { name: copy.copyInvite }));
+  await waitFor(() => expect(screen.getByRole('button', { name: copy.x7Invite }).hasAttribute('disabled')).toBe(false));
+  await user.click(screen.getByRole('button', { name: copy.x7Invite }));
   expect(await screen.findByText(copy.clipboardUnavailable)).toBeTruthy();
   expect(document.querySelector('.crew-link')?.textContent).toContain('/join/');
 });

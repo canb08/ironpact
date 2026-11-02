@@ -13,79 +13,80 @@
 }
 .crew-screen p, .crew-screen h2, .crew-screen h3 { margin: 0; }
 .crew-screen h2 { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.crew-screen h2.crew-name { font-size: 1.75rem; font-weight: 600; line-height: 1.15; }
 .crew-screen h3 { font-size: 17px; font-weight: 600; }
 .crew-muted { color: var(--text-muted); font-size: 15px; }
+.crew-screen h3.crew-kicker,
+.crew-kicker {
+  color: var(--steel);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+[data-theme='light'] .crew-screen h3.crew-kicker,
+[data-theme='light'] .crew-kicker { color: var(--text-muted); }
 .crew-hero { display: grid; gap: var(--s-3); min-width: 0; }
 .crew-name {
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.15;
 }
 .crew-swatch {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex: none;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 35%, transparent);
 }
-.crew-plates {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 3px;
-  min-width: 0;
-}
-.crew-plate {
-  width: 14px;
-  border-radius: 3px;
-  flex: none;
-}
-.crew-plate--full { height: 44px; }
-.crew-plate--min { height: 28px; }
-.crew-plate--empty {
-  height: 44px;
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--steel);
-}
-.crew-plates-count {
-  margin-left: var(--s-2);
-  font: 600 28px/1 var(--font-number);
+.crew-bar { width: 100%; min-width: 0; min-height: 64px; }
+.crew-bar .ui-plate-bar__labels { display: none; }
+.crew-bar .ui-plate-bar svg { width: 100%; height: auto; min-height: 64px; margin-block: 0; }
+.crew-bar [data-side='you'] { display: none; }
+.crew-week {
+  font: 600 2.5rem/1 var(--font-number);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .crew-prs { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-1); }
 .crew-pr { border-inline-start: 4px solid var(--plate-yellow); }
-.crew-month { display: grid; gap: var(--s-3); }
-.crew-month p {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
+.crew-month {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--s-2);
-  min-width: 0;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: var(--s-2);
 }
-.crew-month .ui-number { flex: none; }
-.crew-month .ui-number__unit { margin-left: 0.25em; }
-.crew-month span { min-width: 0; color: var(--text-muted); font-size: 15px; }
+.crew-stat { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.crew-stat .ui-number {
+  font-size: clamp(1.75rem, 10vw, 2.5rem);
+  line-height: 0.9;
+  overflow-wrap: anywhere;
+}
+.crew-stat .ui-number__unit { margin-left: 0.15em; }
 .crew-spot { display: grid; gap: var(--s-3); }
-.crew-actions { display: grid; gap: var(--s-2); }
-.crew-actions .ui-button, .crew-spot .ui-button, .crew-leave { width: 100%; }
+.crew-spot .ui-button, .crew-leave { width: 100%; }
+.crew-invite { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-width: 0; }
+.crew-invite--primary { display: grid; }
+.crew-invite--primary .ui-button--primary { width: 100%; }
+.crew-invite .ui-button { min-height: 48px; }
 .crew-link {
+  flex: 1 1 100%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;
   font-size: 15px;
+}
+.crew-person {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  font-weight: 600;
 }
 .crew-feed, .crew-feed ul { list-style: none; padding: 0; margin: 0; min-width: 0; }
 .crew-feed { display: grid; gap: var(--s-4); }
 .crew-feed > li { display: grid; gap: var(--s-2); }
 .crew-feed ul { display: grid; gap: var(--s-2); }
 .crew-feed li li { color: var(--text); font-size: 15px; }
-.crew-leave { margin-top: var(--s-4); color: var(--text-muted); }
+.crew-leave { margin-top: var(--s-2); color: var(--text-muted); }
 .crew-danger { color: var(--danger); border-color: var(--danger); }
 @media (prefers-reduced-motion: reduce) {
   .crew-screen { scroll-behavior: auto; }

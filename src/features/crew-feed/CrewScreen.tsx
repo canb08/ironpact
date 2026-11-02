@@ -12,6 +12,7 @@ import { Chip } from '../../ui/Chip.tsx';
 import { copy, fill } from '../../ui/copy.ts';
 import { HoldButton } from '../../ui/HoldButton.tsx';
 import { ListRow } from '../../ui/ListRow.tsx';
+import { PlateBar } from '../../ui/PlateBar.tsx';
 import { Sheet } from '../../ui/Sheet.tsx';
 import { copyText } from '../export/export.ts';
 import { useOnline } from '../export/useOnline.ts';
@@ -21,10 +22,10 @@ import { PresenceBanner } from '../duo/PresenceBanner.tsx';
 import { useCrewTick } from '../duo/useCrewTick.ts';
 import { useDebugWeek } from '../duo/useDebugWeek.ts';
 import { usePresence } from '../duo/usePresence.ts';
-import { barTier, formatRawKg, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
+import { barTier, formatRawKg, memberColor, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
 import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { formatEntry, groupFeed, itemsFromHistory, type FeedDay } from './feed.ts';
-import { longestSharedStreak, monthBounds, plateStates, prsThisWeek, sessionsTogether, topSets, volumeKg } from './stats.ts';
+import { longestSharedStreak, monthBounds, prsThisWeek, sessionsTogether, topSets, volumeKg } from './stats.ts';
 import '../duo/duo.css';
 import './crew.css';
 
@@ -182,6 +183,16 @@ function CrewFeed() {
 
   const today = duo?.me.today ?? '';
   const friendly = (date: string) => formatDate(date, today, copy);
+  const inviteBlock = (prominent: boolean) => (
+    <div className={prominent ? 'crew-invite crew-invite--primary' : 'crew-invite crew-invite--quiet'}>
+      {owner ? <>
+        <Button variant={prominent ? 'primary' : 'secondary'} disabled={busy || !online} onClick={() => void publishInvite('copy')}>{copy.x7Invite}</Button>
+        {canShare ? <Button variant={prominent ? 'secondary' : 'quiet'} disabled={busy || !online} onClick={() => void publishInvite('share')}>{copy.x7Share}</Button> : null}
+      </> : <p className="crew-muted">{copy.inviteOwnerOnly}</p>}
+      {invite ? <code className="crew-link">{invite}</code> : null}
+      <p role="status">{message}</p>
+    </div>
+  );
 
   return (
     <main className="crew-screen" onTouchStart={(event) => { touch.current = window.scrollY <= 0 ? event.touches[0]?.clientY ?? null : null; }}
@@ -214,7 +225,10 @@ function CrewFeed() {
       {duo ? <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} /> : null}
       {!online && <p role="status">{copy.offline}</p>}
       {!data ? <p>{copy.loading}</p> : 'error' in data && data.error ? <p role="alert">{copy.networkRetry}</p> : !membership || !duo ? <p>{copy.noCrew}</p> : <>
-        {data.heroes.length === 0 ? <p>{copy.x7NoPartner}</p> : data.heroes.map(({ partner, last, prs }) => {
+        {data.heroes.length === 0 ? <>
+          <p>{copy.x7NoPartner}</p>
+          {inviteBlock(true)}
+        </> : data.heroes.map(({ partner, last, prs }) => {
           const name = shownName(partner.name, copy.x7Partner);
           const status = partnerStatus({ live: liveIds.has(partner.id), lastCredit: partner.lastCredit, today: partner.today });
           const statusText = status.kind === 'live' ? null
@@ -229,13 +243,14 @@ function CrewFeed() {
                 {name}
               </h2>
               {statusText ? <p className="crew-muted">{statusText}</p> : null}
-              <div className="crew-plates" role="img" aria-label={fill(copy.x1PlateLabel, { name, credits: partner.credits, target: partner.target })}>
-                {plateStates(partner.credits, partner.target, partner.minCount).map((state, index) => (
-                  <span key={index} className={`crew-plate crew-plate--${state}`} aria-hidden="true" style={state === 'empty' ? undefined : { background: partner.color }} />
-                ))}
-                <span className="crew-plates-count" aria-hidden="true">{fill(copy.x1PlateCount, { credits: partner.credits, target: partner.target })}</span>
+              <div className="crew-bar" aria-hidden="true">
+                <PlateBar members={[
+                  { credits: 0, target: partner.target },
+                  { name, credits: partner.credits, target: partner.target, minCount: partner.minCount },
+                ]} />
               </div>
-              <h3>{copy.x7Last}</h3>
+              <p className="crew-week">{fill(copy.x7ThisWeek, { credits: formatRawKg(partner.credits), target: partner.target })}</p>
+              <h3 className="crew-kicker">{copy.x7Last}</h3>
               {!last ? <p className="crew-muted">{copy.x7NoWorkout}</p> : tops.length === 0 ? (
                 <ListRow title={kindLabel(last.session.kind)} detail={friendly(last.session.local_date)} />
               ) : tops.map((set) => (
@@ -244,7 +259,7 @@ function CrewFeed() {
                   detail={fill(copy.x7TopSet, { date: friendly(last.session.local_date), reps: set.reps, kg: formatRawKg(set.kg) })} />
               ))}
               {prs.length > 0 ? <>
-                <h3>{copy.x7Prs}</h3>
+                <h3 className="crew-kicker">{copy.x7Prs}</h3>
                 <ul className="crew-prs">
                   {prs.map((event) => {
                     const line = prLine(event, data.exercises);
@@ -262,18 +277,18 @@ function CrewFeed() {
           <section aria-labelledby="crew-month">
             <h2 id="crew-month">{copy.x7Month}</h2>
             <div className="crew-month">
-              <p>
-                <BigNumber value={data.month.sessions} size="xl" />
-                <span>{copy.x7Sessions}</span>
-              </p>
-              <p>
-                <BigNumber value={formatRawKg(data.month.volumeKg)} size="xl" unit={copy.x3Kg} />
-                <span>{copy.x7Volume}</span>
-              </p>
-              <p>
-                <BigNumber value={data.month.streak} size="xl" />
-                <span>{data.month.streak === 1 ? copy.x7StreakOne : copy.x7Streak}</span>
-              </p>
+              <div className="crew-stat">
+                <BigNumber value={data.month.sessions} size="hero" />
+                <span className="crew-kicker">{copy.x7Sessions}</span>
+              </div>
+              <div className="crew-stat">
+                <BigNumber value={formatRawKg(data.month.volumeKg)} size="hero" unit={copy.x3Kg} />
+                <span className="crew-kicker">{copy.x7Volume}</span>
+              </div>
+              <div className="crew-stat">
+                <BigNumber value={data.month.streak} size="hero" />
+                <span className="crew-kicker">{data.month.streak === 1 ? copy.x7StreakOne : copy.x7Streak}</span>
+              </div>
             </div>
           </section>
         ) : null}
@@ -293,25 +308,22 @@ function CrewFeed() {
             </section>
           );
         })}
-        <div className="crew-actions">
-          {owner ? <>
-            <Button disabled={busy || !online} onClick={() => void publishInvite('copy')}>{copy.copyInvite}</Button>
-            {canShare ? <Button variant="secondary" disabled={busy || !online} onClick={() => void publishInvite('share')}>{copy.x7Share}</Button> : null}
-          </> : <p className="crew-muted">{copy.inviteOwnerOnly}</p>}
-          {invite ? <code className="crew-link">{invite}</code> : null}
-        </div>
-        <p role="status">{message}</p>
         <h2>{copy.crewFeedTitle}</h2>
         {data.days.length === 0 && <p className="crew-muted">{copy.crewFeedEmpty}</p>}
         <ol className="crew-feed" aria-label={copy.crewFeedTitle}>
           {data.days.map((day) => <li key={day.date}>
-            <h3><time dateTime={day.date}>{friendly(day.date)}</time></h3>
+            <h3 className="crew-kicker"><time dateTime={day.date}>{friendly(day.date)}</time></h3>
             <ul>
               {day.entries.map((entry) => {
                 const profile = profiles.get(entry.user);
                 const name = shownName(profile?.display_name ?? '', entry.user === meId ? copy.x7You : copy.x7Partner);
+                const hue = profile?.color_hue;
+                const color = entry.user === meId ? duo.me.color : colors.get(entry.user) ?? memberColor(typeof hue === 'number' ? hue : 220);
                 return <li key={entry.id}>
-                  <p>{name}</p>
+                  <p className="crew-person">
+                    <span className="crew-swatch" style={{ background: color }} aria-hidden="true" />
+                    {name}
+                  </p>
                   <ul>{entry.items.map((item) => <li key={item.row.id}>
                     {formatEntry(item)}
                     {item.type === 'set' && item.row.is_warmup ? <small> {copy.x7Warmup}</small> : null}
@@ -322,6 +334,7 @@ function CrewFeed() {
           </li>)}
         </ol>
         {duo.departed.map((partner) => <p key={partner.id} className="crew-muted">{shownName(partner.name, copy.x7Partner)} {copy.archived}</p>)}
+        {data.heroes.length > 0 ? inviteBlock(false) : null}
         <Button variant="secondary" className="crew-leave" disabled={busy || !online} onClick={() => setConfirmLeave(true)}>{copy.leaveCrew}</Button>
       </>}
       <Sheet open={confirmLeave} title={copy.leaveCrew} onClose={() => setConfirmLeave(false)}>
