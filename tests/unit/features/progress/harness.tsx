@@ -27,6 +27,7 @@ export async function progressHarness() {
   await repo.ready;
   return {
     repo,
+    db,
     render(path: string) {
       const router = createMemoryRouter([
         { path: '/day/:date', element: <DayEditorScreen /> },
