@@ -14,6 +14,7 @@ begin
 exception when insufficient_privilege then return true;
 end;
 $$;
+grant execute on function pg_temp.cannot_read(text) to anon, authenticated;
 
 select is((select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public' and c.relkind in ('r','p') and not c.relrowsecurity),

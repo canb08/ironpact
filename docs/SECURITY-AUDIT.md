@@ -1,6 +1,6 @@
 # Security audit (H3)
 
-Audit of the §4 security rules against `main` `5a017ed`. §10 wins over §4 where they disagree. Status is **pass** or **gap**. Evidence is a test name or `file:line`. This ticket does not change migrations or functions.
+Audit of the §4 security rules against `main` `5a017ed`. §10 wins over §4 where they disagree. Status is **pass**, **gap**, or **deferred**. Evidence is a test name or `file:line`. H5 updates below close G4–G7; G1–G3 are deferred to Phase 7 with their feature.
 
 `supabase/tests/security_audit.test.sql` proves the catalogue rules and D-23. pgTAP was not executed in the Grok sandbox (no Docker). CI job `db` is the proof. Assertions that describe a known gap are `todo` so a red assertion does not hide the rest of the file.
 
@@ -18,10 +18,10 @@ Audit of the §4 security rules against `main` `5a017ed`. §10 wins over §4 whe
 | S8 | Crews, members, weeks, streak tokens: member read, no client write | pass | `0002_rls.sql:50-51`, `84-87`, `120`. |
 | S9 | `crew_invites`, `export_tokens`, `push_log`, `invite_attempts`: no client policy or grant | pass | `0002_rls.sql:118-119`. `rls.test.sql` secret-table assertion. `security_audit.test.sql` privilege checks. |
 | S10 | Reactions: parties read; member insert; no client update | pass | `0002_rls.sql:89-95`. No UPDATE grant (stricter than §4.4 `using (false)`). |
-| S11 | Nudges: parties read; inserts only through `send_nudge` | gap | Read path passes (`0002_rls.sql:49`, `96-97`). **H3-G1**: `send_nudge` is not created. No client INSERT grant, so there is no open write. |
-| S12 | Challenges: member read; member may insert `proposed` only | gap | Policies pass (`0002_rls.sql:99-101`). **H3-G2**: `settle_challenge` is not created. No client UPDATE grant, so status cannot be forged. |
+| S11 | Nudges: parties read; inserts only through `send_nudge` | deferred | Read path passes (`0002_rls.sql:49`, `96-97`). **H3-G1**: `send_nudge` is not created. No client INSERT grant, so there is no open write. |
+| S12 | Challenges: member read; member may insert `proposed` only | deferred | Policies pass (`0002_rls.sql:99-101`). **H3-G2**: `settle_challenge` is not created. No client UPDATE grant, so status cannot be forged. |
 | S13 | E4.2: joining a challenge requires membership and `proposed` | pass | `0002_rls.sql:106-110`. `rls.test.sql` E4.2. |
-| S14 | E4.7: push rows are select/delete own; insert/update only via `save_push_subscription` | gap | Policies pass (`0002_rls.sql:112-116`). **H3-G3**: the RPC does not exist, so an endpoint cannot be reassigned. Direct INSERT/UPDATE is denied (`security_audit.test.sql`). |
+| S14 | E4.7: push rows are select/delete own; insert/update only via `save_push_subscription` | deferred | Policies pass (`0002_rls.sql:112-116`). **H3-G3**: the RPC does not exist, so an endpoint cannot be reassigned. Direct INSERT/UPDATE is denied (`security_audit.test.sql`). |
 | S15 | `is_crewmate` / `is_member`: security definer, empty `search_path`, authenticated only | pass | `0002_rls.sql:2-22`. `rls.test.sql` catalogue block. |
 | S16 | Shipped client RPCs: security definer, empty `search_path`, `auth.uid()` check, not granted to `anon` | pass | `0003_rpc.sql:2-172`. `use_spot` (`0005_cron.sql:184-187`) checks `auth.uid()` in `use_spot_at` (`0005_cron.sql:131`). `security_audit.test.sql` calls it with no JWT and expects `unauthenticated`. `server_now` is security invoker on purpose (`0006_sync.sql:2-7`). |
 | S17 | Every security definer function sets `search_path = ''` | pass | Each `security definer` in `0002`, `0003`, `0005`, `0008` sets it. `week_close.test.sql` catalogue query. Repeated in `security_audit.test.sql`. |
@@ -33,50 +33,52 @@ Audit of the §4 security rules against `main` `5a017ed`. §10 wins over §4 whe
 | S23 | `delete_my_account` leaves 0 rows for that user (E4.1 D-23) | pass | No SQL function of that name. Equivalent path: `delete-account` checks the caller JWT and ignores a body user id (`delete-account/handler.ts:21-25`, `index.ts:25-35`), then `delete_account_cleanup` (`0008_purge.sql:19-68`) runs in the auth delete. `delete-account/index.test.ts` counts 0. `security_audit.test.sql` D-23 repeats that count in pgTAP, including a shared exercise, a partner `seen_by`, and `crew_weeks.statuses`. |
 | S24 | E4.1 foreign keys cascade or set null as specified | pass | `0001_schema.sql` (`exercises.owner_id` cascade `:59`, `crews.created_by` set null `:39`, invite columns `:53-55`, nudge/reaction users `:208`, `:221`, challenge creator `:243`, session children `:110`, `:129`, `:143`, `:171`, exercise refs restrict `:111`, `:195`). `schema.test.sql` E4.1. |
 | S25 | Realtime crew topic: members only, for broadcast and presence | pass | `0004_realtime.sql:9-22`. `realtime.test.sql` D-21. Postgres Changes add no extra policy; source-table RLS applies (`0004_realtime.sql:1-7`). |
-| S26 | `public/_headers` CSP is the project origin, plus frame-ancestors, referrer, permissions, nosniff | gap | **H3-G5**. Other directives match §4.7 (`public/_headers:1-5`), including `style-src 'unsafe-inline'`, which §4.7 allows. `sw.js` is `no-cache` (`public/_headers:12-13`). |
+| S26 | `dist/_headers` CSP is the project origin, plus frame-ancestors, referrer, permissions, nosniff | pass | **H3-G5 fixed (H5)**: `public/_headers` is the template; `scripts/gen-headers.mjs` generates project-only HTTPS/WSS origins or self-only for mock. `tests/unit/scripts/gen-headers.test.ts` covers valid, invalid, mock and unresolved-source paths; `tests/unit/headers.test.ts` checks the other headers. |
 | S27 | Service worker does not cache Supabase API, Realtime, or export | pass | `src/sw.ts:9-21` ignores `*.supabase.co` / `*.supabase.in` and `/functions`. No runtime route caches those URLs. The spec's explicit `NetworkOnly` route is not registered; nothing else caches them. |
 | S28 | Browser client has no service-role key | pass | `src/data/supabase.ts:21-25` uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` only. No `service_role` / `eyJ` / `sb_` secret-key prefix under `src/` or `public/`. Edge functions read `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEYS` (`export/index.ts:6-10`, `health/index.ts:5-9`, `delete-account/index.ts:5-9`), E3.3. |
 | S29 | Account deletion is the signed-in user, not a body id | pass | `adapter.supabase.ts:133-138` invokes `delete-account` with `{}`. `delete-account/handler.ts:22-25`. `delete-account/index.test.ts` sends another user's id and still deletes the caller only. |
 | S30 | Pulled tables exclude secret tables | pass | `src/core/types.ts:187-195` (`PULLED_TABLES`) has no `export_tokens`, `crew_invites`, `push_log`, `invite_attempts`, or `push_subscriptions`. |
-| S31 | E3.5 `verify_jwt = false` only where the function checks its own credential | gap | `export`, `health`, and `delete-account` check a credential (`config.toml:179-193`; handlers above). **H3-G6**: `push-dispatch` and `rest-alarm` are `verify_jwt = false` with only a `.gitkeep`. |
-| S32 | Push sender requires `X-Dispatch-Secret` and Vault storage | gap | **H3-G6**. No `push-dispatch` handler, no webhook, no `DISPATCH_SECRET` reader. `weekly-recap` is also only `.gitkeep` and is not in `config.toml`. |
+| S31 | E3.5 `verify_jwt = false` only for implemented functions | pass | **H3-G6 fixed (H5)**: `supabase/config.toml` declares only `export`, `health`, and `delete-account`; `.github/workflows/ci.yml` asserts that exact set without stripping blocks. Export and delete-account validate credentials; health is the intentionally public health probe. |
+| S32 | Push sender requires `X-Dispatch-Secret` and Vault storage | deferred | **H3-G6 deploy exposure fixed (H5)**: no handler-less functions are configured. `supabase/config.toml` requires the F24 / rest-alarm handlers to check `X-Dispatch-Secret` before restoring their declarations. Push, Vault and weekly-recap implementation remain Phase 7 work. |
 | S33 | Purge of `deleted_at` older than 30 days is scheduled and not a client RPC | pass | `0008_purge.sql:70-100`. `purge.test.sql`. |
 | S34 | Week close is scheduled and not a client RPC | pass | `0005_cron.sql:191-214`. Schedule is `5 * * * *` (P3A), not the two lines in the §4.7 table. `week_close.test.sql`. |
 | S35 | Auth OTP length 6 and expiry 600s; profiles store no email | pass | `config.toml` `otp_length` / `otp_expiry` (CI `db` asserts both). `adapter.supabase.ts:109-120` uses `signInWithOtp` / `verifyOtp`. E3.1 SMTP and E3.2 dashboard templates are human steps (`docs/SETUP.md`), not code. |
 | S36 | E3.4 `VAPID_SUBJECT` is an https URL, not a mailbox | pass | Not set in the repo. `docs/SETUP.md` records `https://<app>.pages.dev`. No mailto subject in code. |
-| S37 | `mark_seen` only mutates rows addressed to the caller | gap | **H3-G4**. Owners can still `UPDATE` their own `pr_events`, including `seen_by`, because the training-table policy is general (`0002_rls.sql:40-41`). A crewmate has no UPDATE grant. |
+| S37 | Partner PR receipts only append the caller to eligible rows | pass | **H3-G4 fixed (P4H #54)**: `supabase/migrations/0010_mark_seen.sql` adds `mark_pr_events_seen(uuid[])` and preserves server-owned `seen_by` on owner writes. `supabase/tests/mark_seen.test.sql` proves receipt isolation; `security_audit.test.sql` asserts the shipped RPC exists. See L16. |
 
-## Found (not fixed)
+## Deferred to Phase 7
 
-Migrations, functions, and `public/_headers` are outside this ticket's file list.
+G1–G3 are deferred to Phase 7 with their feature; existing client writes remain closed.
 
-### H3-G1 · `send_nudge` is missing
+### H3-G1 · `send_nudge` — deferred to Phase 7 with its feature (F25)
 
 §4.4 RPC table. `supabase/migrations/` has no `send_nudge`. Clients also have no INSERT on `nudges` (`0002_rls.sql:49`), so the hole is a missing feature, not an open write. `security_audit.test.sql` marks `has_function('public','send_nudge')` as `todo`.
 
-### H3-G2 · `settle_challenge` is missing
+### H3-G2 · `settle_challenge` — deferred to Phase 7 with its feature (challenges)
 
 §4.4 RPC table. No function in `supabase/migrations/`. Clients have no UPDATE on `challenges` (`0002_rls.sql:49` grants SELECT, INSERT only). Same `todo` pattern.
 
-### H3-G3 · `save_push_subscription` is missing
+### H3-G3 · `save_push_subscription` — deferred to Phase 7 with its feature (F24)
 
 E4.7 and `0002_rls.sql:112-116`. Direct insert/update is denied, which is what the comment promises, but the reassign RPC was never added. A second account on the same endpoint still cannot take the row. `todo` on `has_function('public','save_push_subscription')`.
 
-### H3-G4 · `mark_seen` is missing
+## Fixed
 
-§4.4 RPC table and `0002_rls.sql:95`. Recipients cannot mark a reaction, nudge, or partner PR seen. The owner update policy does not limit `pr_events.seen_by` to an append of the caller. `todo` on `has_function('public','mark_seen')`.
+### H3-G4 · Partner PR receipts — fixed by P4H #54
 
-### H3-G5 · CSP `connect-src` is any Supabase project
+`supabase/migrations/0010_mark_seen.sql` ships `mark_pr_events_seen(uuid[])`, not the generic `mark_seen` name. It appends only the caller to live crewmate PRs and prevents ordinary owner writes from forging or erasing receipts. `supabase/tests/mark_seen.test.sql` covers the behavior; `security_audit.test.sql` now asserts the actual RPC without a TODO. L16 defines this PR-receipt scope; reaction/nudge receipts remain with their features.
 
-`public/_headers:2` uses `https://*.supabase.co` and `wss://*.supabase.co`. §4.7 asks for the project `https` and `wss` origins. E3.6 says `scripts/gen-headers.mjs` must write `dist/_headers` from `VITE_SUPABASE_URL` and fail the build if `<ref>` survives. That script is not in the repo, and the placeholder was replaced with a wildcard, so the build cannot fail closed. `frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, `Permissions-Policy`, and `X-Content-Type-Options: nosniff` are present (`public/_headers:3-5`).
+### H3-G5 · Project-specific CSP — fixed by H5
 
-### H3-G6 · `verify_jwt = false` on functions that do not check a secret
+`public/_headers` holds the project placeholders. `scripts/gen-headers.mjs`, run after Vite by `npm run build`, writes `dist/_headers` with only the configured project's HTTPS and WSS origins for Supabase, or `connect-src 'self'` for other backends. Missing/malformed Supabase URLs, surviving `<ref>` and `*.supabase.co` fail the build. `tests/unit/scripts/gen-headers.test.ts` proves these paths. L17 supersedes L3's temporary wildcard.
 
-`supabase/config.toml:185-189` sets `verify_jwt = false` for `push-dispatch` and `rest-alarm`. Both directories contain only `.gitkeep`. §4.7 requires `X-Dispatch-Secret` checked inside the function. CI strips those two blocks before `supabase start` (`.github/workflows/ci.yml`) because the CLI rejects a missing entrypoint, so they are not served in the `db` job. A deploy of this `config.toml` has no handler to refuse an unauthenticated call if an empty function is accepted. `weekly-recap` is also unimplemented.
+### H3-G6 · Handler-less function declarations — fixed by H5
 
-### H3-G7 · Default privileges can re-open a future table
+`supabase/config.toml` contains only the three implemented functions: `export`, `health`, `delete-account`. `.github/workflows/ci.yml` asserts exactly those entries and no longer strips function blocks from the isolated stack config. The config comment requires `push-dispatch` (F24) and `rest-alarm` to return only with handlers checking `X-Dispatch-Secret`. Their implementation, plus `weekly-recap`, remains Phase 7 work.
 
-`0002_rls.sql:29-32` revokes client privileges only for tables that exist at that moment. A stock Supabase database grants `anon` and `authenticated` on future tables and functions in `public`. `security_audit.test.sql` asserts `pg_default_acl` does not name those roles, as `todo`. If CI reports that TODO as an unexpected success, this item is a pass.
+### H3-G7 · Future object privileges — fixed by H5
+
+`supabase/migrations/0011_default_privileges.sql` revokes postgres-owned public-schema defaults on tables, sequences and functions from `anon`, `authenticated` and `PUBLIC`, plus the global function EXECUTE default that schema-local revokes cannot subtract. Existing object grants are unchanged. Later migrations must grant explicitly. `security_audit.test.sql` has a real G7 catalogue assertion and creates a table, sequence and function to prove effective client privileges are absent (including inherited PUBLIC EXECUTE), then removes the probes in its rolled-back transaction.
 
 ## Not a gap
 
