@@ -62,14 +62,14 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | merged #22 (Lead: banner overlay fix) |
 | P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | merged #24 |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Grok | C | merged #40 |
-| P4C | PR takeover + partner shockwave hook | Grok (Codex out of usage) | C | running 2026-11-02 04:24 |
+| P4C | PR takeover + partner shockwave hook | Grok | **E** (moved: owner's Grok ~95% weekly; nothing pushed — start fresh from main) | todo — fire on friend's Grok now |
 | P5B | S14 completed | Grok | C | merged #38 |
 | P5C | S16 Settings full | Grok | C | merged #42 |
 | P4G | Playwright Phase 4 | Grok | **E** (moved from C to balance lanes, 2026-11-02) | todo — after P4C, P4E |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | pr #46 (reviewed: scope ok, reduced-motion + once-only tests, initial JS 116 kB; local 652 tests green) |
-| P5F | Recompute PRs after an edit + edit notices (L13) | Grok | C | pr #44 (db red: rows rejected by 0007 check; fix running) |
+| P5F | Recompute PRs after an edit + edit notices (L13) | Grok | **E** (moved: owner's Grok ~95% weekly) | pr #44 open, db red twice (0007 rejects rows: pr_value_mismatch / pr_source_deleted) — continue on branch P5F-work |
 | P5A | S13 Progress full | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #37 |
 
 ## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need the owner)
@@ -78,7 +78,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
 | H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
 | H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #48 (pgTAP read in full; gaps G1-G7 in Parked; PR opened by Lead) |
-| H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
+| H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | merged #45 |
 
 ## Parked / follow-ups
 - **H3 security gaps (from `docs/SECURITY-AUDIT.md` once H3 merges; none is an open write today):** G1 `send_nudge`, G2 `settle_challenge`, G3 `save_push_subscription`, G4 `mark_seen` RPCs missing (G4: owners can still edit `pr_events.seen_by`); G5 CSP `connect-src` is `*.supabase.co`, `scripts/gen-headers.mjs` (E3.6) never written; G6 `push-dispatch` / `rest-alarm` have `verify_jwt = false` but no handler; G7 default privileges may grant client roles on future tables. **Needs tickets before G1 deploy; migrations/RLS → Codex Astra, not Grok.** Owner: whichever Lead has a free Codex first (friend's Codex is out until ~2026-11-08).

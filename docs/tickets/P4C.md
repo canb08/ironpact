@@ -1,5 +1,5 @@
 # P4C · PR takeover (Tier 1) + partner PR shockwave hook
-**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Codex · GPT-6.1 Sol, High · **Branch:** `P4C-pr` · **Starts after:** P4B merged and P2D merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) — moved from C · **Model:** Codex · GPT-6.1 Sol, High · **Branch:** `P4C-pr` · **Starts after:** P4B merged and P2D merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §3.9.4 (PR takeover), §2 F7, §3.7.2, §6 Phase 4 Tier 1 + Tier 2 (shockwave uses `pr_events.seen_by`), Demo script.
