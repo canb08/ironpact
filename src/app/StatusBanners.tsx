@@ -27,9 +27,16 @@ export function StatusBanners() {
   return (
     <p
       role="status"
+      // Overlay, not layout: it must never shift full-height screens or cover their controls (LOG SET offline).
       style={{
+        position: 'fixed',
+        insetInline: 0,
+        insetBlockStart: 0,
+        zIndex: 50,
+        pointerEvents: 'none',
         margin: 0,
-        padding: 'var(--s-3) var(--gutter)',
+        paddingBlock: 'calc(env(safe-area-inset-top) + var(--s-2)) var(--s-2)',
+        paddingInline: 'var(--gutter)',
         background: 'var(--surface-2)',
         color: 'var(--text)',
         borderBlockEnd: '1px solid var(--line)',
