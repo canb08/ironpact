@@ -74,19 +74,6 @@ it('shows the copy for each quick-log range error and does not save', async () =
     { path: '/log/run', fill: () => { setField(copy.distance, '0'); setField(copy.duration, '30:00'); }, id: 'error-distance', text: copy.outOfRange },
     { path: '/log/run', fill: () => { setField(copy.distance, '5'); setField(copy.duration, '24:00:00'); }, id: 'error-duration', text: copy.outOfRange },
     { path: '/log/run', fill: () => { setField(copy.distance, '5'); setField(copy.duration, '0:00'); }, id: 'error-duration', text: copy.outOfRange },
-    { path: '/log/martial', fill: () => setField(copy.minutes, '481'), id: 'error-minutes', text: copy.outOfRange },
-    { path: '/log/martial', fill: () => setField(copy.minutes, '0'), id: 'error-minutes', text: copy.outOfRange },
-    { path: '/log/martial', fill: () => { setField(copy.minutes, '60'); setField(copy.rounds, '100'); }, id: 'error-rounds', text: copy.outOfRange },
-    {
-      path: '/log/martial',
-      fill: () => {
-        fireEvent.click(screen.getByRole('button', { name: copy.other }));
-        setField(copy.other, 'a'.repeat(17));
-        setField(copy.minutes, '60');
-      },
-      id: 'error-discipline',
-      text: copy.keepTo16,
-    },
     { path: '/log/weight', fill: () => setField(copy.weight, '250.1'), id: 'error-weight', text: copy.outOfRange },
     { path: '/log/weight', fill: () => setField(copy.weight, '29.9'), id: 'error-weight', text: copy.outOfRange },
     { path: '/log/min', fill: () => setField(copy.minLabel, 'a'.repeat(41)), id: 'error-min', text: copy.keepTo40 },
@@ -141,3 +128,74 @@ it('weight twice on the same day keeps one uuidv5 row', async () => {
   });
   expect(await screen.findByText("Replaces today's 79.8.")).toBeTruthy();
 });
+
+it('logs the usual Muay Thai class in one tap, with no discipline picker', async () => {
+  const created = await makeRepo();
+  renderLog('/log/martial');
+  expect((await screen.findByTestId('class-rounds')).textContent).toBe('6 struck · 6 held');
+  expect(screen.getByTestId('class-minutes').textContent).toBe('~60 min');
+  expect(screen.getByTestId('class-body').textContent).toBe('60 push-ups + 60 squats');
+  expect(screen.getByTestId('class-note').textContent).toBe('Pads');
+  expect(screen.queryByRole('textbox')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: copy.y2LogClass }));
+  await waitFor(async () => {
+    const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
+    expect(entries.martial).toHaveLength(1);
+    expect(entries.martial[0]).toMatchObject({
+      discipline: 'Muay Thai',
+      duration_min: 60,
+      rounds: 6,
+      rpe: null,
+      note: 'Pads',
+    });
+  });
+});
+
+it('adjusts to 2 combos per half and stores the combo you remember', async () => {
+  const created = await makeRepo();
+  renderLog('/log/martial');
+  fireEvent.click(await screen.findByRole('button', { name: copy.y2Adjust }));
+  fireEvent.keyDown(screen.getByRole('slider', { name: copy.y2CombosHalf }), { key: 'ArrowDown' });
+  expect(screen.getByTestId('class-rounds').textContent).toBe('4 struck · 4 held');
+  expect(screen.getByTestId('class-body').textContent).toBe('40 push-ups + 40 squats');
+  fireEvent.click(screen.getByRole('button', { name: '1' }));
+  fireEvent.click(screen.getByRole('button', { name: '2' }));
+  fireEvent.click(screen.getByRole('button', { name: 'R kick' }));
+  expect(screen.getByTestId('combo-draft').textContent).toBe('1-2-R kick');
+  fireEvent.click(screen.getByRole('button', { name: fill(copy.y2FeelChip, { n: 3 }) }));
+  fireEvent.click(screen.getByRole('button', { name: copy.y2LogClass }));
+  await waitFor(async () => {
+    const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
+    expect(entries.martial).toHaveLength(1);
+    expect(entries.martial[0]).toMatchObject({
+      discipline: 'Muay Thai',
+      duration_min: 60,
+      rounds: 4,
+      rpe: 8,
+      note: 'Pads · 1-2-R kick',
+    });
+  });
+});
+
+it('copies minutes, rounds and focus from the last class', async () => {
+  const created = await makeRepo();
+  const seeded = await created.w.logMartial({
+    discipline: 'Muay Thai',
+    duration_min: 45,
+    rounds: 4,
+    rpe: 9,
+    note: 'Clinch',
+  });
+  expect(seeded.ok).toBe(true);
+  renderLog('/log/martial');
+  fireEvent.click(await screen.findByRole('button', { name: copy.y2Adjust }));
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: copy.y2Same }).hasAttribute('disabled')).toBe(false);
+  });
+  fireEvent.click(screen.getByRole('button', { name: copy.y2Same }));
+  expect(screen.getByRole('heading', { name: 'Clinch' })).toBeTruthy();
+  expect(screen.getByTestId('class-minutes').textContent).toBe('~45 min');
+  expect(screen.getByTestId('class-rounds').textContent).toBe('4 rounds');
+  expect(screen.getByRole('button', { name: 'Feel 4' }).getAttribute('aria-pressed')).toBe('true');
+});
+

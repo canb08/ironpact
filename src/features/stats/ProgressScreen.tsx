@@ -10,6 +10,7 @@ import { ListRow } from '../../ui/ListRow.tsx';
 import { formatDate } from '../../core/formatDate.ts';
 import { copy, fill } from '../../ui/copy.ts';
 import { useRepoQuery } from '../floor/useRepoQuery.ts';
+import { comboBook } from '../quicklog/muaythai/classNote.ts';
 import {
   disciplinesOf,
   formatPaceLabel,
@@ -322,8 +323,19 @@ function MartialPanel({
     ? []
     : martialInWindow(partnerBundle.martial, partnerBundle.sessions, partner.id, data.window);
   const ready = disciplinesOf(mine);
+  const book = comboBook(data.mine.martial);
   return (
     <div className="progress-panel" role="region" id="progress-panel-martial" aria-label={copy.x5Fight}>
+      {book.length > 0 ? (
+        <section aria-label={copy.y2ComboBook}>
+          <h2>{copy.y2ComboBook}</h2>
+          <ol className="progress-week-list">
+            {book.map((row) => (
+              <li key={row.combo}>{fill(copy.y2Drilled, { combo: row.combo, count: row.count })}</li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
       {ready.length === 0 ? (
         <p className="progress-empty">{copy.x5FightEmpty}</p>
       ) : ready.map((discipline) => {
