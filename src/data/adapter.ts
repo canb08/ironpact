@@ -5,6 +5,7 @@
 //   Repo   — everything the UI may call. UI never imports Dexie tables, the outbox or Supabase.
 // Change only through a "Contract change request" in a PR, approved by the Lead.
 
+import type { CrewRealtime, CrewRealtimeCallbacks, RepoDuo, SpotError } from './duo.contract.ts';
 import type {
   BodyweightEntry,
   CardioEntry,
@@ -53,6 +54,8 @@ export interface KeysetCursor {
 
 export interface Remote {
   readonly kind: 'supabase' | 'mock';
+  useSpot(weekStart: LocalDate): Promise<Result<Uuid, SpotError>>;
+  subscribeCrew(crewId: Uuid, callbacks: CrewRealtimeCallbacks): Promise<CrewRealtime>;
 
   // auth (D4: 6-digit email code is primary)
   currentUserId(): Uuid | null;
@@ -60,6 +63,8 @@ export interface Remote {
   sendCode(email: string): Promise<Result<void, SendCodeError>>;
   verifyCode(email: string, code: string): Promise<Result<Uuid, VerifyCodeError>>;
   signOut(): Promise<void>;
+  /** L11: online-only irreversible deletion; clears authentication on success. */
+  deleteAccount(): Promise<Result<void, 'network'>>;
 
   /** Server clock for the per-launch offset (E5.4). */
   serverNow(): Promise<Instant>;
@@ -331,6 +336,8 @@ export interface RepoAuth {
   sendCode(email: string): Promise<Result<void, SendCodeError>>;
   verifyCode(email: string, code: string): Promise<Result<Uuid, VerifyCodeError>>;
   signOut(): Promise<void>; // also clears the local mirror
+  /** L11: also erases the device mirror/outbox after server-confirmed deletion. */
+  deleteAccount(): Promise<Result<void, 'network'>>;
 }
 
 export interface RepoCrew {
@@ -357,6 +364,7 @@ export interface RepoSync {
 }
 
 export interface Repo {
+  duo: RepoDuo;
   readonly backend: 'supabase' | 'mock';
   auth: RepoAuth;
   q: RepoQueries;

@@ -1,0 +1,11 @@
+.pr-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.pr-card .ui-button { min-height: 64px; min-width: 64px; }
+.pr-card-eyebrow { margin: 0; letter-spacing: 0.04em; }

@@ -8,6 +8,7 @@ import { useRepo } from '../../app/useRepo.ts';
 import { Button, ToastProvider, copy, fill, useToast } from '../../ui';
 import { formatWeekText } from './formatWeekText.ts';
 import { useRepoQuery } from './useRepoQuery.ts';
+import { InstallChip } from './InstallChip.tsx';
 import './floor.css';
 
 interface PartnerLine {
@@ -107,10 +108,17 @@ function FloorBody() {
     }
   }
 
-  if (data === undefined) return <main className="floor" aria-busy="true" />;
+  if (data === undefined) {
+    return (
+      <main className="floor" aria-busy="true">
+        <InstallChip />
+      </main>
+    );
+  }
   if (data === null) {
     return (
       <main className="floor">
+        <InstallChip />
         <h1>{copy.floor}</h1>
         <p className="floor-empty">{copy.emptyFloor}</p>
       </main>
@@ -121,6 +129,7 @@ function FloorBody() {
 
   return (
     <main className="floor">
+      <InstallChip />
       <h1>{copy.floor}</h1>
       <section className="floor-card" aria-labelledby="my-week-heading">
         <h2 id="my-week-heading">{copy.myWeek}</h2>

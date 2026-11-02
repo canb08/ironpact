@@ -187,3 +187,7 @@ verify_jwt = false
 
 [functions.rest-alarm]
 verify_jwt = false
+
+# P5D: validates the caller with Auth before invoking the admin deletion API.
+[functions.delete-account]
+verify_jwt = false

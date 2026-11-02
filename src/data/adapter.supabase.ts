@@ -4,6 +4,8 @@ import type { RedeemError, Remote, RemoteRow, RemoteWriteError } from './adapter
 import { rowKey, SNAPSHOT_TABLES, SNAPSHOT_TIMESTAMP } from './db.ts';
 import { compareInstant } from './clock.ts';
 import { getSupabaseClient } from './supabase.ts';
+import { SPOT_ERRORS } from './duo.contract.ts';
+import { createSupabaseRealtime } from './realtime.ts';
 
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 const network = { ok: false, error: 'network' } as const;
@@ -95,6 +97,13 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
   }
 
   return {
+    useSpot: (weekStart) => rpc('use_spot', { week_start: weekStart }, SPOT_ERRORS),
+    async subscribeCrew(crewId, callbacks) {
+      const actor = userId;
+      const client = await ready;
+      if (!actor || actor !== userId) throw new Error('Realtime requires the current user');
+      return createSupabaseRealtime(client, crewId, actor, callbacks);
+    },
     kind: 'supabase', currentUserId: () => userId,
     onAuthChange(cb) { listeners.add(cb); return () => { listeners.delete(cb); }; },
     async sendCode(email) {
@@ -120,6 +129,22 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
       const { error } = await (await ready).auth.signOut();
       if (error) throw new Error('Sign-out failed');
       publish(null);
+    },
+    async deleteAccount() {
+      try {
+        const client = await ready;
+        const actor = userId;
+        if (!actor) return network;
+        const { data, error } = await client.functions.invoke('delete-account', { body: {} });
+        if (error || data?.deleted !== true) return network;
+        // A new account may have signed in while the request was in flight.
+        if (userId === actor) {
+          const { error: signOutError } = await client.auth.signOut({ scope: 'local' });
+          if (signOutError) return network;
+          publish(null);
+        }
+        return ok(undefined);
+      } catch { return network; }
     },
     async serverNow() {
       const result = await rpc<string, never>('server_now', {}, []);

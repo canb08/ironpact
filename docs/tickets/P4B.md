@@ -1,5 +1,5 @@
 # P4B · Motion foundation + Tier-3 micro + moment queue
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Codex · GPT-6.1 Sol, High · **Branch:** `P4B-motion` · **Starts after:** P4A and P2D merged
+**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build (Codex busy) · **Branch:** `P4B-motion` · **Starts after:** P4A and P2D merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §3.7 (motion tokens, moment hierarchy, reduced motion), §3.9.9, §3.10.1 ("Locked in."), §6 Phase 4 (Tier 3, "one Tier-1 per screen open, 400 ms gap, PR first"). R1 item 8 (`LazyMotion`, `motion/react-m`).

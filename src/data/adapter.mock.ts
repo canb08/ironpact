@@ -6,6 +6,7 @@ import { defaultProfile } from './defaults.ts';
 import { newId } from './ids.ts';
 import { compareInstant, localDateIn } from './clock.ts';
 import { compareCursor, cursorFor } from './pull.ts';
+import { createMockRealtime, mockUseSpot } from './realtime.mock.ts';
 
 export const MOCK_USER_IDS = { alice: '00000000-0000-4000-8000-000000000001', bob: '00000000-0000-4000-8000-000000000002' } as const;
 export const MOCK_EXERCISE_ID = '00000000-0000-4000-8000-000000000010';
@@ -109,6 +110,17 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
     return null;
   }
   const remote: MockRemote = {
+    async useSpot(weekStart) {
+      const actor = userId; await pause();
+      if (actor !== userId) return { ok: false, error: 'network' };
+      return mockUseSpot(actor, weekStart, instant(), rows, seed);
+    },
+    async subscribeCrew(crewId, callbacks) {
+      const actor = userId;
+      if (!actor || !member(actor, crewId)) throw new Error('Realtime requires crew membership');
+      return createMockRealtime(tables, crewId, callbacks, () => JSON.stringify(
+        PULLED_TABLES.map((table) => rows(table).filter((row) => actor === userId && visible(table, row, actor)))));
+    },
     kind: 'mock', currentUserId: () => userId,
     onAuthChange(cb) { authListeners.add(cb); return () => { authListeners.delete(cb); }; },
     async sendCode(email) { await pause(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? success(undefined) : { ok: false, error: 'invalid_email' }; },
@@ -120,6 +132,47 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
       userId = id; for (const cb of authListeners) cb(userId); return success(userId);
     },
     async signOut() { userId = null; for (const cb of authListeners) cb(null); },
+    async deleteAccount() {
+      const actor = userId; await pause();
+      if (!actor || actor !== userId) return { ok: false, error: 'network' };
+      const ownedCrews = new Set(rows('crews').filter((row) => row.created_by === actor).map((row) => row.id));
+      const exercises = new Set(rows('exercises').filter((row) => row.owner_id === actor).map((row) => row.id));
+      const challenges = new Set(rows('challenges').filter((row) => row.created_by === actor).map((row) => row.id));
+      for (const [table, records] of tables) for (const [key, row] of records) {
+        if (row.user_id === actor || row.to_user === actor || row.from_user === actor
+            || row.covers_user_id === actor || (table === 'profiles' && row.id === actor)
+            || (table === 'challenges' && row.created_by === actor)
+            || (table === 'challenge_participants' && challenges.has(String(row.challenge_id)))
+            || (table === 'exercise_muscles' && exercises.has(String(row.exercise_id)))) {
+          records.delete(key); continue;
+        }
+        if (table === 'crews' && row.created_by === actor) row.created_by = null;
+        if (row.winner_user_id === actor) row.winner_user_id = null;
+        if (Array.isArray(row.seen_by)) row.seen_by = row.seen_by.filter((id) => id !== actor);
+        if (table === 'crew_weeks' && row.statuses && typeof row.statuses === 'object') {
+          const statuses = row.statuses as Record<string, { spotted_by?: string | null }>;
+          delete statuses[actor];
+          for (const status of Object.values(statuses)) if (status.spotted_by === actor) status.spotted_by = null;
+        }
+      }
+      for (const id of exercises) {
+        const referenced = ['sets', 'pr_events', 'exercise_prefs', 'goals', 'challenges'].some((table) =>
+          rows(table as PulledTable).some((row) => row.exercise_id === id));
+        if (!referenced) map('exercises').delete(String(id));
+        else {
+          const row = map('exercises').get(String(id))!;
+          Object.assign(row, { owner_id: null, name: 'Deleted exercise', export_label: 'Deleted exercise',
+            aliases: [], equipment: null, deleted_at: instant(), updated_at: instant() });
+        }
+      }
+      for (const [code, invitation] of invitations) if (ownedCrews.has(invitation.crew)) invitations.delete(code);
+      for (const [id, token] of tokens) if (token.user === actor) tokens.delete(id);
+      for (const [email, id] of emails) if (id === actor) emails.delete(email);
+      attempts.delete(actor);
+      userId = null;
+      for (const cb of authListeners) cb(null);
+      return success(undefined);
+    },
     async serverNow() { await pause(); return instant(); },
     async upsert(table, input) {
       const actor = userId; await pause();

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-libra
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SessionScreen from '../../../../src/features/session/SessionScreen.tsx';
+import { skipRest } from '../../../../src/features/timer/useRestTimer.ts';
 import { copy, fill } from '../../../../src/ui';
 import { deferred, unwrap } from '../../data/harness.ts';
 import { sessionHarness } from './harness.tsx';
@@ -14,8 +15,8 @@ HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); 
 
 describe('S6 with the A6 mock Repo', () => {
   let harness: Awaited<ReturnType<typeof sessionHarness>>;
-  beforeEach(async () => { harness = await sessionHarness(); });
-  afterEach(async () => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); await harness.close(); });
+  beforeEach(async () => { localStorage.clear(); skipRest(); harness = await sessionHarness(); });
+  afterEach(async () => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); skipRest(); localStorage.clear(); await harness.close(); });
 
   async function start() {
     await harness.exercise();

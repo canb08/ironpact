@@ -81,6 +81,7 @@ export function mockRepo(partial: {
       return () => listeners.delete(cb);
     },
     sendCode: async () => ({ ok: true, value: undefined }),
+    deleteAccount: async () => ({ ok: true, value: undefined }),
     verifyCode: async () => {
       notify('user-1');
       return { ok: true, value: 'user-1' };
@@ -158,5 +159,13 @@ export function mockRepo(partial: {
     retryDead: async () => {},
     discardDead: async () => {},
   };
-  return { backend: 'mock', auth, q, w, crew, exportTokens, sync };
+  const duo: Repo['duo'] = {
+    weeks: async () => [],
+    spots: async () => [],
+    bar: async () => ({ value: 0, history: [] }),
+    useSpot: async () => ({ ok: false, error: 'network' }),
+    presence: { onChange: () => () => {} },
+    onCrewChange: () => () => {},
+  };
+  return { backend: 'mock', auth, q, w, crew, exportTokens, sync, duo };
 }
