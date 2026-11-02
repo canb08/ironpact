@@ -498,6 +498,15 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   progressPartnerQuietLine: 'No line for {partner} in these 12 weeks.',
 
   // ── P5B: add this ticket's strings directly below ──
+  repMaxHeading: 'Rep-max table',
+  repMaxCaption: 'Best working weight at each rep count. The derived column is that best e1RM turned back into a weight.',
+  repMaxActual: 'Best kg',
+  repMaxDerived: 'From best e1RM',
+  prListHeading: 'PR list',
+  prListEmpty: 'No PRs on this lift yet.',
+  editSet: 'Edit set {index}',
+  chartTableCaption: 'Best e1RM by session',
+  chartTableKg: 'e1RM kg',
 
   // ── P5C: add this ticket's strings directly below ──
 
