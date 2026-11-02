@@ -1,0 +1,45 @@
+{
+  "name": "a soft-deleted run entry earns 0",
+  "week_start": "2026-10-19",
+  "target": 3,
+  "sessions": [
+    {
+      "id": "21000000-0000-4000-8000-000000000039",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-20",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "kind": "run",
+      "mode": "full",
+      "started_at": "2026-10-20T08:00:00.000Z",
+      "ended_at": null,
+      "tz": "Europe/Amsterdam",
+      "readiness": null,
+      "together_id": null,
+      "note": null
+    }
+  ],
+  "min_entries": [],
+  "sets": [],
+  "cardio_entries": [
+    {
+      "id": "41000000-0000-4000-8000-000000000040",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-20",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": "2026-10-20T09:00:00.000Z",
+      "session_id": "21000000-0000-4000-8000-000000000039",
+      "activity": "Run",
+      "distance_m": 5000,
+      "duration_s": 1500,
+      "rpe": null,
+      "note": null,
+      "logged_at": "2026-10-20T08:00:00.000Z"
+    }
+  ],
+  "martial_entries": [],
+  "expected": {
+    "credits": 0,
+    "status": "REST"
+  }
+}

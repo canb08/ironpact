@@ -1,0 +1,42 @@
+{
+  "name": "2027-03-28 local date counts in the week of Monday 2027-03-22",
+  "week_start": "2027-03-22",
+  "target": 3,
+  "sessions": [
+    {
+      "id": "21000000-0000-4000-8000-000000000047",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2027-03-28",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "kind": "min",
+      "mode": "full",
+      "started_at": "2027-03-28T21:30:00.000Z",
+      "ended_at": null,
+      "tz": "Europe/Amsterdam",
+      "readiness": null,
+      "together_id": null,
+      "note": null
+    }
+  ],
+  "min_entries": [
+    {
+      "id": "61000000-0000-4000-8000-000000000048",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2027-03-28",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "session_id": "21000000-0000-4000-8000-000000000047",
+      "description": "20m walk",
+      "duration_min": null,
+      "logged_at": "2027-03-28T21:30:00.000Z"
+    }
+  ],
+  "sets": [],
+  "cardio_entries": [],
+  "martial_entries": [],
+  "expected": {
+    "credits": 0.5,
+    "status": "HELD"
+  }
+}

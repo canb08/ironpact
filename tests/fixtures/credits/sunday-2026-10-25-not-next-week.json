@@ -1,0 +1,47 @@
+{
+  "name": "Sunday 25 Oct 2026 local_date does not count in the week of Monday 26 Oct",
+  "week_start": "2026-10-26",
+  "target": 3,
+  "sessions": [
+    {
+      "id": "21000000-0000-4000-8000-000000000045",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-25",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "kind": "gym",
+      "mode": "full",
+      "started_at": "2026-10-25T22:30:00.000Z",
+      "ended_at": null,
+      "tz": "Europe/Amsterdam",
+      "readiness": null,
+      "together_id": null,
+      "note": null
+    }
+  ],
+  "min_entries": [],
+  "sets": [
+    {
+      "id": "31000000-0000-4000-8000-000000000046",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-26",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "session_id": "21000000-0000-4000-8000-000000000045",
+      "exercise_id": "00000000-0000-4000-8000-000000000001",
+      "set_index": 1,
+      "reps": 5,
+      "weight_kg": 60,
+      "rpe": null,
+      "is_warmup": false,
+      "note": null,
+      "logged_at": "2026-10-25T22:30:00.000Z"
+    }
+  ],
+  "cardio_entries": [],
+  "martial_entries": [],
+  "expected": {
+    "credits": 0,
+    "status": "REST"
+  }
+}
