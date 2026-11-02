@@ -306,6 +306,17 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P2A: add this ticket's strings directly below ──
 
   // ── P2B: add this ticket's strings directly below ──
+  progressionNoRpe: 'All reps hit. Add 2.5.',
+  progressionBig: 'All reps at RPE 8. Add 5.',
+  progressionBigNoRpe: 'All reps hit. Add 5.',
+  progressionAdd: 'All reps at RPE 8. Add {increment}.',
+  progressionAddNoRpe: 'All reps hit. Add {increment}.',
+  nudgeChipValue: '+{increment} → {next}',
+  prE1rm: 'e1RM PR',
+  prRepMax: '{reps}-REP PR',
+  prVolume: 'VOLUME PR',
+  prLongestRun: 'LONGEST RUN',
+  prFastest: 'FASTEST {bucket}',
 
   // ── P2C: add this ticket's strings directly below ──
   restTimerLabel: 'Rest timer',
