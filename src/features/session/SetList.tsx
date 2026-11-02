@@ -5,14 +5,20 @@ import { Button, copy, fill, useToast } from '../../ui';
 import { useSessionWrite } from './useSessionWrite.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
-export function SetList({ sets, pending }: { sets: SetRow[]; pending: Map<string, boolean> }) {
+export function SetList({ sets, pending, freshId, onDeleted }: {
+  sets: SetRow[];
+  pending: Map<string, boolean>;
+  freshId?: string | null;
+  onDeleted?: (row: SetRow) => void;
+}) {
   const repo = useRepo();
   const { showToast } = useToast();
   const write = useSessionWrite();
   const gesture = useRef<{ id: string; pointer: number; x: number; y: number } | null>(null);
   const remove = (row: SetRow) => {
     void write.run(() => repo.w.softDelete('sets', row.id), () => {
-      showToast({ message: copy.sessionDeleted, timeoutMs: 8000, action: { label: copy.undo, onClick: () => {
+      onDeleted?.(row);
+      showToast({ message: copy.undone, timeoutMs: 5000, action: { label: copy.undo, onClick: () => {
         void write.run(() => repo.w.restore('sets', row.id), () => {});
       } } });
     });
@@ -44,6 +50,8 @@ export function SetList({ sets, pending }: { sets: SetRow[]; pending: Map<string
           </span>
           <span className={onPhone ? 'session-tick session-tick--pending' : 'session-tick'}
             aria-label={onPhone ? copy.sessionSaved : copy.sessionSynced} title={onPhone ? copy.sessionSaved : copy.sessionSynced}>✓</span>
+          {freshId === row.id && <Button className="session-undo" size="xl" variant="secondary" disabled={write.busy}
+            onClick={() => remove(row)}>{copy.undo}</Button>}
           <Button variant="ghost" size="xl" disabled={write.busy}
             aria-label={fill(copy.sessionDelete, { index: index + 1 })} onClick={() => remove(row)}>×</Button>
         </li>;
