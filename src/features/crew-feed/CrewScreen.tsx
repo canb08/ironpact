@@ -12,13 +12,14 @@ import { Sheet } from '../../ui/Sheet.tsx';
 import { copyText } from '../export/export.ts';
 import { useOnline } from '../export/useOnline.ts';
 import { BarStrip } from '../duo/BarStrip.tsx';
+import { DuoMoments } from '../duo/DuoMoments.tsx';
 import { FairList } from '../duo/FairList.tsx';
 import { loadDuo, type DuoSnapshot } from '../duo/load.ts';
 import { PresenceBanner } from '../duo/PresenceBanner.tsx';
 import { useCrewTick } from '../duo/useCrewTick.ts';
 import { useDebugWeek } from '../duo/useDebugWeek.ts';
 import { usePresence } from '../duo/usePresence.ts';
-import { formatTonnes, partnerStatus } from '../duo/view.ts';
+import { barTier, formatTonnes, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
 import { groupFeed } from './feed.ts';
 import '../duo/duo.css';
 import './crew.css';
@@ -102,6 +103,29 @@ function CrewFeed() {
         if (online && start !== null && (e.changedTouches[0]?.clientY ?? start) - start >= 80) void refresh();
       }}>
       <h1>{data?.membership?.crew.name ?? duo?.crewName ?? copy.crewTitle}</h1>
+      {duo ? (
+        <DuoMoments
+          screen="crew"
+          crewId={duo.crewId}
+          weekStart={duo.me.weekStart}
+          members={[
+            {
+              id: duo.me.id, name: duo.me.name, initial: duo.me.initial, color: duo.me.color,
+              target: duo.me.target, credits: duo.me.credits, minCount: duo.me.minCount,
+            },
+            ...duo.partners.map((partner) => ({
+              id: partner.id, name: partner.name, initial: partner.initial, color: partner.color,
+              target: partner.target, credits: partner.credits, minCount: partner.minCount,
+            })),
+          ]}
+          weekFull={duo.weekFull}
+          plates={debugClose ? platesAfterDebugClose(duo.plates) : duo.plates}
+          tier={barTier(debugClose ? platesAfterDebugClose(duo.plates) : duo.plates)}
+          reduced={duo.reduceMotion}
+          archived={duo.archived}
+          inSession={duo.openSession}
+        />
+      ) : null}
       {duo ? <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} /> : null}
       {!online && <p role="status">{copy.offline}</p>}
       <div className="crew-actions">
@@ -127,7 +151,7 @@ function CrewFeed() {
             <section className={`crew-card${duo.archived ? ' is-archived' : ''}`} key={partner.id} aria-label={partner.name}>
               <h2>{partner.name}</h2>
               {duo.archived ? <p className="crew-status">{copy.archived}</p> : (
-                <Ring size="personal" members={[{
+                <Ring size="personal" reduced={duo.reduceMotion} members={[{
                   id: partner.id, name: partner.name, initial: partner.initial, color: partner.color,
                   target: partner.target, credits: partner.credits, minCount: partner.minCount,
                 }]} />
@@ -148,6 +172,8 @@ function CrewFeed() {
             adjusted={duo.adjusted && !hideAdjusted}
             debugClose={debugClose}
             onDismissAdjusted={() => setHideAdjusted(true)}
+            reduced={duo.reduceMotion}
+            batterySaver={duo.batterySaver}
           />
         </section>
         {duo.departed.map((partner) => <p key={partner.id} className="is-archived">{partner.name} · {copy.archived}</p>)}
