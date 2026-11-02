@@ -117,7 +117,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Ticket | What | Model | Lane | Status |
 |---|---|---|---|---|
 | Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | merged #70 (iOS haptic on-device check still open: WebKit may ignore the switch trick) |
-| Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | Grok Build | E | **running** — friend's Grok, rescoped 22:50 (no in-class phone use) |
+| Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | Grok Build | E | merged #75 (Lead ran it on mock: 2 taps → bar 1 of 3, combo book; Lead merged main for the Y6 copy/test conflict; one p7-shell Pixel 7 flake, passed on re-run) |
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
