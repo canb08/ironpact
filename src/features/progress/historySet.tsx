@@ -1,17 +1,19 @@
 import { useId, useState, type FormEvent } from 'react';
 import { useRepo } from '../../app/useRepo.ts';
 import type { Exercise, SetRow } from '../../core/types.ts';
+import type { EditNotice } from '../../data/adapter.ts';
 import { Button, Chip, copy, fill } from '../../ui';
 import { parseSet, writeErrorCopy, type SetDraft } from './form.ts';
 import { Field, NoteField, RpePicker, SaveRow } from './widgets.tsx';
 
 export function HistorySet({
-  set, exercise, onRefresh, onDelete,
+  set, exercise, onRefresh, onDelete, onNotice,
 }: {
   set: SetRow;
   exercise: Exercise;
   onRefresh: () => void;
   onDelete: (id: string) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const label = fill(copy.sessionSet, { index: set.set_index });
@@ -35,9 +37,10 @@ export function HistorySet({
           <SetForm
             set={set}
             kind={exercise.kind === 'bw_lift' ? 'bw_lift' : 'lift'}
-            onSaved={() => {
+            onSaved={(notice) => {
               setEditing(false);
               onRefresh();
+              onNotice(notice);
             }}
           />
         ) : null}
@@ -51,7 +54,7 @@ function SetForm({
 }: {
   set: SetRow;
   kind: 'lift' | 'bw_lift';
-  onSaved: () => void;
+  onSaved: (notice: EditNotice) => void;
 }) {
   const repo = useRepo();
   const rpeId = useId();
@@ -79,7 +82,7 @@ function SetForm({
         setServer(writeErrorCopy(result.error));
         return;
       }
-      onSaved();
+      onSaved(result.notice ?? { prsChanged: false, barAdjusted: false });
     } finally {
       setSaving(false);
     }

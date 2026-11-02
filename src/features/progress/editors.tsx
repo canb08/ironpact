@@ -1,13 +1,17 @@
 import { useId, useState, type FormEvent } from 'react';
 import { useRepo } from '../../app/useRepo.ts';
 import type { BodyweightEntry, CardioEntry, Exercise, MartialEntry, MinEntry, Session, SetRow } from '../../core/types.ts';
+import type { EditNotice } from '../../data/adapter.ts';
 import { Button, HoldButton, copy, fill } from '../../ui';
 import {
   parseMartial, parseMin, parseRun, parseSession, parseSet, parseWeight, writeErrorCopy,
   type MartialDraft, type MinDraft, type RunDraft, type SessionDraft, type SetDraft,
 } from './form.ts';
 import { formatDuration } from './parse.ts';
+import { mergeNotice } from './notices.ts';
 import { Field, NoteField, RpePicker, SaveRow } from './widgets.tsx';
+
+const QUIET: EditNotice = { prsChanged: false, barAdjusted: false };
 
 export interface TrashItem {
   table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries';
@@ -58,7 +62,7 @@ function useServer() {
 }
 
 export function RunSession({
-  session, rows, routeDate, onMoved, onRefresh, onTrash,
+  session, rows, routeDate, onMoved, onRefresh, onTrash, onNotice,
 }: {
   session: Session;
   rows: CardioEntry[];
@@ -66,6 +70,7 @@ export function RunSession({
   onMoved: (date: string) => void;
   onRefresh: () => void;
   onTrash: (items: TrashItem[]) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const repo = useRepo();
   const rpeId = useId();
@@ -87,6 +92,7 @@ export function RunSession({
     if (!sessionParsed.patch || parsedRows.some((item) => item.parsed.value === null)) return;
     const patch = sessionParsed.patch;
     status.setSaving(true);
+    let notice = QUIET;
     try {
       for (const item of parsedRows) {
         if (!item.parsed.value) return;
@@ -95,12 +101,15 @@ export function RunSession({
           status.setServer(writeErrorCopy(result.error));
           return;
         }
+        notice = mergeNotice(notice, result.notice);
       }
       const saved = await repo.w.updateSession(session.id, patch);
       if (!saved.ok) {
         status.setServer(writeErrorCopy(saved.error));
         return;
       }
+      notice = mergeNotice(notice, saved.notice);
+      onNotice(notice);
       if (patch.local_date !== routeDate) onMoved(patch.local_date);
       else onRefresh();
     } finally {
@@ -148,7 +157,7 @@ function entryTrash(session: Session, table: TrashItem['table'], id: string, sib
 }
 
 export function MartialSession({
-  session, rows, routeDate, onMoved, onRefresh, onTrash,
+  session, rows, routeDate, onMoved, onRefresh, onTrash, onNotice,
 }: {
   session: Session;
   rows: MartialEntry[];
@@ -156,6 +165,7 @@ export function MartialSession({
   onMoved: (date: string) => void;
   onRefresh: () => void;
   onTrash: (items: TrashItem[]) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const repo = useRepo();
   const rpeId = useId();
@@ -178,6 +188,7 @@ export function MartialSession({
     if (!sessionParsed.patch || parsedRows.some((item) => item.parsed.value === null)) return;
     const patch = sessionParsed.patch;
     status.setSaving(true);
+    let notice = QUIET;
     try {
       for (const item of parsedRows) {
         if (!item.parsed.value) return;
@@ -186,12 +197,14 @@ export function MartialSession({
           status.setServer(writeErrorCopy(result.error));
           return;
         }
+        notice = mergeNotice(notice, result.notice);
       }
       const saved = await repo.w.updateSession(session.id, patch);
       if (!saved.ok) {
         status.setServer(writeErrorCopy(saved.error));
         return;
       }
+      onNotice(mergeNotice(notice, saved.notice));
       if (patch.local_date !== routeDate) onMoved(patch.local_date);
       else onRefresh();
     } finally {
@@ -232,7 +245,7 @@ export function MartialSession({
 }
 
 export function MinSession({
-  session, rows, routeDate, onMoved, onRefresh, onTrash,
+  session, rows, routeDate, onMoved, onRefresh, onTrash, onNotice,
 }: {
   session: Session;
   rows: MinEntry[];
@@ -240,6 +253,7 @@ export function MinSession({
   onMoved: (date: string) => void;
   onRefresh: () => void;
   onTrash: (items: TrashItem[]) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const repo = useRepo();
   const status = useServer();
@@ -258,6 +272,7 @@ export function MinSession({
     if (!sessionParsed.patch || parsedRows.some((item) => item.parsed.value === null)) return;
     const patch = sessionParsed.patch;
     status.setSaving(true);
+    let notice = QUIET;
     try {
       for (const item of parsedRows) {
         if (!item.parsed.value) return;
@@ -266,12 +281,14 @@ export function MinSession({
           status.setServer(writeErrorCopy(result.error));
           return;
         }
+        notice = mergeNotice(notice, result.notice);
       }
       const saved = await repo.w.updateSession(session.id, patch);
       if (!saved.ok) {
         status.setServer(writeErrorCopy(saved.error));
         return;
       }
+      onNotice(mergeNotice(notice, saved.notice));
       if (patch.local_date !== routeDate) onMoved(patch.local_date);
       else onRefresh();
     } finally {
@@ -309,7 +326,7 @@ export function MinSession({
 }
 
 export function GymSession({
-  session, sets, exercises, routeDate, onMoved, onRefresh, onTrash, label = copy.gym,
+  session, sets, exercises, routeDate, onMoved, onRefresh, onTrash, onNotice, label = copy.gym,
 }: {
   session: Session;
   sets: SetRow[];
@@ -318,6 +335,7 @@ export function GymSession({
   onMoved: (date: string) => void;
   onRefresh: () => void;
   onTrash: (items: TrashItem[]) => void;
+  onNotice: (notice: EditNotice) => void;
   label?: string;
 }) {
   const repo = useRepo();
@@ -337,6 +355,7 @@ export function GymSession({
         status.setServer(writeErrorCopy(saved.error));
         return;
       }
+      onNotice(mergeNotice(QUIET, saved.notice));
       if (parsed.patch.local_date !== routeDate) onMoved(parsed.patch.local_date);
       else onRefresh();
     } finally {
@@ -353,7 +372,7 @@ export function GymSession({
         <SaveRow saving={status.saving} />
       </form>
       {sets.map((set) => (
-        <SetEditor key={`${set.id}:${set.client_updated_at}`} set={set} exercise={exercises.find((exercise) => exercise.id === set.exercise_id)} onRefresh={onRefresh} onTrash={onTrash} />
+        <SetEditor key={`${set.id}:${set.client_updated_at}`} set={set} exercise={exercises.find((exercise) => exercise.id === set.exercise_id)} onRefresh={onRefresh} onTrash={onTrash} onNotice={onNotice} />
       ))}
       <SessionHold session={session} sets={sets} cardio={[]} martial={[]} min={[]} onTrash={onTrash} />
     </section>
@@ -361,12 +380,13 @@ export function GymSession({
 }
 
 function SetEditor({
-  set, exercise, onRefresh, onTrash,
+  set, exercise, onRefresh, onTrash, onNotice,
 }: {
   set: SetRow;
   exercise: Exercise | undefined;
   onRefresh: () => void;
   onTrash: (items: TrashItem[]) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const repo = useRepo();
   const rpeId = useId();
@@ -393,6 +413,7 @@ function SetEditor({
         status.setServer(writeErrorCopy(result.error));
         return;
       }
+      onNotice(mergeNotice(QUIET, result.notice));
       onRefresh();
     } finally {
       status.setSaving(false);
@@ -443,13 +464,14 @@ function SessionHold({
 }
 
 export function WeightCard({
-  row, routeDate, onMoved, onRefresh, onTrash,
+  row, routeDate, onMoved, onRefresh, onTrash, onNotice,
 }: {
   row: BodyweightEntry;
   routeDate: string;
   onMoved: (date: string) => void;
   onRefresh: () => void;
   onTrash: (items: TrashItem[]) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const repo = useRepo();
   const status = useServer();
@@ -470,6 +492,7 @@ export function WeightCard({
         status.setServer(writeErrorCopy(result.error));
         return;
       }
+      onNotice(mergeNotice(QUIET, result.notice));
       if (parsed.value.local_date !== routeDate) onMoved(parsed.value.local_date);
       else onRefresh();
     } finally {

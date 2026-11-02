@@ -2,6 +2,8 @@
 import './harness.tsx';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+import { weekStartOf } from '../../../../src/core/weeks.ts';
+import { MOCK_CREW_ID } from '../../../../src/data/adapter.mock.ts';
 import { copy, fill } from '../../../../src/ui/copy.ts';
 import { DAY, progressHarness } from './harness.tsx';
 
@@ -53,6 +55,8 @@ it('moves a run to another day and shows it only there', async () => {
   expect(moved.cardio[0]?.distance_m).toBe(5200);
   expect(left.cardio).toHaveLength(0);
   expect(left.sessions).toHaveLength(0);
+  expect(screen.queryByText(copy.prsRecalculated)).toBeNull();
+  expect(screen.queryByText(copy.barAdjusted)).toBeNull();
 });
 
 it('shows the copy-bank error for an out-of-range edit and does not save', async () => {
@@ -105,4 +109,46 @@ it('soft-deletes a run and restores it on the same day', async () => {
   expect(await screen.findByRole('region', { name: copy.run })).toBeTruthy();
   expect((await opened.repo.q.day(DAY)).cardio).toHaveLength(1);
   expect((await opened.repo.q.day(DAY)).sessions).toHaveLength(1);
+});
+
+it('shows the closed-week notice without a PR notice, and a run edit only when the PR changed', async () => {
+  const opened = await openDay();
+  await opened.repo.sync.pullNow();
+  await opened.db.table('crew_weeks').put({
+    crew_id: MOCK_CREW_ID,
+    week_start: weekStartOf(DAY),
+    statuses: {},
+    plate_delta: 0,
+    plates_after: 1,
+    adjusted_after_edit: false,
+    computed_at: '2026-10-26T00:05:00.000Z',
+  });
+  const run = within(screen.getByRole('region', { name: copy.run }));
+  fireEvent.change(run.getByLabelText(copy.note), { target: { value: 'easy' } });
+  fireEvent.click(run.getByRole('button', { name: copy.save }));
+  expect(await screen.findByText(copy.barAdjusted)).toBeTruthy();
+  expect(screen.queryByText(copy.prsRecalculated)).toBeNull();
+
+  cleanup();
+  await opened.close();
+  const next = await progressHarness();
+  harness = next;
+  const early = await next.repo.w.logRun({ distance_m: 5000, duration_s: 1500 });
+  expect(early.ok).toBe(true);
+  if (!early.ok) return;
+  await next.repo.w.updateSession(early.value.session_id, { started_at: '2026-10-20T08:00:00.000Z' });
+  const longer = await next.repo.w.logRun({ distance_m: 8000, duration_s: 2400 });
+  expect(longer.ok).toBe(true);
+  if (!longer.ok) return;
+  expect((await next.repo.w.recomputePrs(null)).ok).toBe(true);
+  next.render(`/day/${DAY}`);
+  const cards = await screen.findAllByRole('region', { name: copy.run });
+  const longerCard = cards.find((node) => (within(node).getByLabelText(copy.distance) as HTMLInputElement).value === '8');
+  if (!longerCard) throw new Error('missing 8 km run');
+  const card = within(longerCard);
+  expect(screen.queryByText(copy.prsRecalculated)).toBeNull();
+  fireEvent.change(card.getByLabelText(copy.distance), { target: { value: '4' } });
+  fireEvent.click(card.getByRole('button', { name: copy.save }));
+  expect(await screen.findByText(copy.prsRecalculated)).toBeTruthy();
+  expect(screen.queryByText(copy.barAdjusted)).toBeNull();
 });
