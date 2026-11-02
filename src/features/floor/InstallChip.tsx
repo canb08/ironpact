@@ -1,16 +1,24 @@
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router';
-import { isStandalone, subscribeInstall } from '../../platform/install.ts';
+import { X } from 'lucide-react';
+import { getInstallBrowser, isStandalone, subscribeInstall } from '../../platform/install.ts';
 import { installDismissed } from '../auth/joinCode.ts';
-import { Chip, copy } from '../../ui';
+import { copy } from '../../ui';
 
-/** Floor row 1. Stays up after Skip until the app is actually installed. */
+const DISMISSED = 'ironpact.today-install-dismissed';
+function readDismissed() {
+  try { return localStorage.getItem(DISMISSED) === '1'; } catch { return false; }
+}
+
 export function InstallChip() {
   const standalone = useSyncExternalStore(subscribeInstall, isStandalone, () => false);
-  if (standalone || !installDismissed()) return null;
-  return (
-    <Link className="floor-install" to="/install">
-      <Chip>{copy.install}</Chip>
-    </Link>
-  );
+  const [dismissed, setDismissed] = useState(readDismissed);
+  if (standalone || getInstallBrowser() === 'other' || dismissed || !installDismissed()) return null;
+  return <aside className="floor-install" aria-label={copy.x3Install}>
+    <Link to="/install">{copy.x3Install}</Link>
+    <button type="button" aria-label={copy.x3DismissInstall} onClick={() => {
+      setDismissed(true);
+      try { localStorage.setItem(DISMISSED, '1'); } catch { /* Dismiss for this visit. */ }
+    }}><X size={20} aria-hidden="true" /></button>
+  </aside>;
 }

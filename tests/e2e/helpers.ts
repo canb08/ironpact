@@ -49,10 +49,10 @@ export async function reachFloor(page: Page): Promise<void> {
     if (await install.isVisible()) await install.click();
     const path = new URL(page.url()).pathname;
     if (path === '/crew/new' || path === '/sign-in') await page.goto('/');
-    return page.getByTestId('my-week').isVisible();
+    return page.getByTestId('shared-bar').isVisible();
   }, { timeout: 20_000 }).toBe(true);
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
 }
 
 /** Pull finishes after the profile that paints the floor. Bench has to be local before airplane mode. */
@@ -77,21 +77,26 @@ export async function waitForBench(page: Page): Promise<void> {
 
 /** Lazy routes 404 while offline, so visit them once while the dev server is reachable. */
 export async function warmLazyRoutes(page: Page): Promise<void> {
-  await page.getByRole('link', { name: copy.weight, exact: true }).click();
-  await expect(page.getByRole('dialog', { name: copy.weight })).toBeVisible();
+  await page.getByRole('link', { name: copy.x3WeighIn, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: copy.x3WeighIn })).toBeVisible();
   await page.goBack();
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
+
+  await page.getByRole('link', { name: copy.x3Min, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: copy.x3Min })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
 
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
   await expect(page.getByRole('heading', { name: copy.settingsTitle })).toBeVisible();
   await page.getByRole('button', { name: copy.x1Back, exact: true }).click();
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
 
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
   await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
   await expect(page.getByRole('button', { name: copy.start, exact: true })).toBeVisible();
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
 }
 
 export async function logBench(page: Page, sets: number): Promise<void> {

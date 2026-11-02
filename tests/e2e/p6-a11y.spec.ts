@@ -42,10 +42,10 @@ test.beforeEach(async ({ page }) => {
 test('S2 and S3 create leave the screen when a crew is already signed in', async ({ page }) => {
   await reachFloor(page);
   await page.goto('/sign-in');
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await page.goto('/crew/new');
-  await expect(page.getByTestId('my-week')).toBeVisible();
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
 });
 
@@ -64,7 +64,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   };
 
   await visit('S4', '/', async () => {
-    await expect(page.getByTestId('my-week')).toBeVisible();
+    await expect(page.getByTestId('shared-bar')).toBeVisible();
   });
   await visit('S1', '/install', async () => {
     await expect(page.getByRole('heading', { name: copy.installTitle })).toBeVisible();
@@ -80,10 +80,10 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
     await expect(page.getByRole('dialog', { name: copy.run })).toBeVisible();
   });
   await visit('S11-martial', '/log/martial', async () => {
-    await expect(page.getByRole('dialog', { name: copy.martialArts })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: copy.x3Fight })).toBeVisible();
   });
   await visit('S11-weight', '/log/weight', async () => {
-    await expect(page.getByRole('dialog', { name: copy.weight })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: copy.x3WeighIn })).toBeVisible();
   });
   await visit('S11-min', '/log/min', async () => {
     await expect(page.getByRole('dialog', { name: copy.min })).toBeVisible();

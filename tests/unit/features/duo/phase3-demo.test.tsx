@@ -62,8 +62,8 @@ it('runs the phase 3 demo on the mock backend', async () => {
   ], { initialEntries: ['/'] });
   render(<RepoProvider repo={created}><RouterProvider router={router} /></RepoProvider>);
 
-  expect((await screen.findByTestId('bar-plates')).textContent).toContain('0');
-  expect(document.querySelector(`[data-member="${MOCK_USER_IDS.bob}"][data-state="full"]`)).toBeNull();
+  expect((await screen.findByTestId('shared-bar')).querySelector('[role="img"]')?.getAttribute('aria-label')).toContain('Crewmate 0 of 3');
+  expect(screen.queryByTestId('week-streak')).toBeNull();
 
   const peer = await remote.subscribeCrew(MOCK_CREW_ID, { onPresence() {}, onChange() {} });
   peerClose = () => peer.close();
@@ -96,12 +96,11 @@ it('runs the phase 3 demo on the mock backend', async () => {
   await waitFor(() => expect(feed.children.length).toBeGreaterThan(0), { timeout: 4000 });
   expect(feed.textContent).toContain('Bench press');
   await waitFor(() => {
-    expect(document.querySelector(`[data-member="${MOCK_USER_IDS.bob}"][data-state="full"]`)).toBeTruthy();
+    expect(screen.getByTestId('shared-bar').querySelector('[role="img"]')?.getAttribute('aria-label')).toContain('Crewmate 1 of 3');
   }, { timeout: 4000 });
 
   window.history.pushState({}, '', '/?debug=week');
   window.dispatchEvent(new PopStateEvent('popstate'));
-  expect((await screen.findByTestId('bar-plates')).textContent).toContain('1');
-  expect(screen.getByTestId('debug-week').textContent).toBe(copy.plateAdded);
-  expect(screen.getByTestId('bar-tier').textContent).toBe('Iron');
+  expect((await screen.findByTestId('week-streak')).textContent).toBe('1-week streak');
+  expect(screen.getByTestId('debug-week').textContent).toBe(copy.x3DebugWeek);
 });

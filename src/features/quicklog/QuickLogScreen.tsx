@@ -7,10 +7,10 @@ import { WeightForm } from './WeightForm.tsx';
 import './quicklog.css';
 
 const TITLES = {
-  run: copy.run,
-  martial: copy.martialArts,
-  weight: copy.weight,
-  min: copy.min,
+  run: copy.x3Run,
+  martial: copy.x3Fight,
+  weight: copy.x3WeighIn,
+  min: copy.x3Min,
 } as const;
 
 type Kind = keyof typeof TITLES;
@@ -26,7 +26,7 @@ export default function QuickLogScreen() {
     return (
       <main className="ql-missing">
         <p>{copy.unknownKind}</p>
-        <Link className="ui-button ui-button--secondary" to="/">{copy.floor}</Link>
+        <Link className="ui-button ui-button--secondary" to="/">{copy.x3Today}</Link>
       </main>
     );
   }
