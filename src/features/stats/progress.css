@@ -43,7 +43,7 @@
 .progress-lift { display: grid; gap: var(--s-2); padding-block: var(--s-3); border-bottom: 1px solid var(--line); min-width: 0; max-width: 100%; }
 .progress-lift-link { display: block; color: inherit; text-decoration: none; min-height: 44px; }
 .progress-lift .ui-list-row { padding-inline: 0; border: 0; }
-.progress-lift .ui-list-row__trailing { font-family: var(--font-display); font-size: 28px; }
+.progress-lift .ui-list-row__trailing { font-family: var(--font-number); font-size: 28px; }
 .progress-lift .progress-svg--spark + figcaption { display: none; }
 .progress-panel, .progress-panel > section { display: grid; gap: var(--s-4); min-width: 0; max-width: 100%; }
 .progress-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -60,3 +60,5 @@
 .progress-svg circle { stroke: var(--text); stroke-width: 1; }
 /* Tables keep an intrinsic minimum width unless their clipped box is a block. */
 .progress .progress-sr { display: block; max-width: 1px; }
+
+.progress-lift-unit { font: 400 15px var(--font-body); }

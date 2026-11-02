@@ -116,7 +116,7 @@ function LiftsPanel({
               <Link to={`/exercise/${row.exercise.id}`} className="progress-lift-link">
                 <ListRow title={row.exercise.name}
                   detail={fill(copy.x5Last, { date: formatDate(row.mine.at(-1)?.localDate ?? data.window.to, data.window.to, copy) })}
-                  trailing={<span className="progress-lift-best"><small>{copy.x5BestLabel}</small><span>{formatTrendNumber(Math.max(...row.mine.map((point) => point.e1rm)))} {copy.kg}</span></span>}
+                  trailing={<span className="progress-lift-best"><small>{copy.x5BestLabel}</small><span>{formatTrendNumber(Math.max(...row.mine.map((point) => point.e1rm)))}<span className="progress-lift-unit"> {copy.kg}</span></span></span>}
                   chevron />
               </Link>
               {row.mine.length >= 2 && (
