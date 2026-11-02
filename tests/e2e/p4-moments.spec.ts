@@ -132,6 +132,7 @@ test('PR takeover has one impact pulse; Back to work preserves the timer deadlin
   await watchFlashes(page, '[data-flash]');
   await log(page, '100');
   await expect(card(page)).toHaveAttribute('data-motion', 'live');
+  await expect(page.locator('.app-shell__tabs')).toBeHidden();
   await expect(card(page)).toHaveAttribute('data-phase', 'play');
   await assertSinglePulse(page, card(page).locator('[data-flash]'));
   await expect(chip(page)).toHaveText('2:00');
@@ -139,6 +140,7 @@ test('PR takeover has one impact pulse; Back to work preserves the timer deadlin
   await expect(chip(page)).toHaveText('1:50');
   await card(page).getByRole('button', { name: copy.backToWork }).click();
   await expect(card(page)).toHaveCount(0);
+  await expect(page.locator('.app-shell__tabs')).toBeVisible();
   await expect(chip(page)).toHaveText('1:50');
   await page.clock.setFixedTime(CLOCK + 135_000);
   await expect(chip(page)).toHaveText('1:45');

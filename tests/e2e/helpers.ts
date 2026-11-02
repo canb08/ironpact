@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy, fill } from '../../src/ui/copy.ts';
 
 export interface MirrorCounts {
@@ -40,7 +41,9 @@ export async function mirrorCounts(page: Page): Promise<MirrorCounts> {
 }
 
 export async function reachFloor(page: Page): Promise<void> {
-  await page.goto('/');
+  const today = page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true });
+  if (await today.isVisible()) await today.click();
+  else await page.goto('/');
   await expect.poll(async () => {
     const install = page.getByRole('link', { name: copy.installContinue });
     if (await install.isVisible()) await install.click();
@@ -48,6 +51,8 @@ export async function reachFloor(page: Page): Promise<void> {
     if (path === '/crew/new' || path === '/sign-in') await page.goto('/');
     return page.getByTestId('my-week').isVisible();
   }, { timeout: 20_000 }).toBe(true);
+  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await expect(page.getByTestId('my-week')).toBeVisible();
 }
 
 /** Pull finishes after the profile that paints the floor. Bench has to be local before airplane mode. */
@@ -77,22 +82,22 @@ export async function warmLazyRoutes(page: Page): Promise<void> {
   await page.goBack();
   await expect(page.getByTestId('my-week')).toBeVisible();
 
-  await page.getByRole('link', { name: copy.settings, exact: true }).click();
+  await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
   await expect(page.getByRole('heading', { name: copy.settingsTitle })).toBeVisible();
-  await page.goBack();
+  await page.getByRole('button', { name: copy.x1Back, exact: true }).click();
   await expect(page.getByTestId('my-week')).toBeVisible();
 
-  await page.getByRole('button', { name: copy.start, exact: true }).click();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
   await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
   await expect(page.getByRole('button', { name: copy.start, exact: true })).toBeVisible();
-  await page.goBack();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
   await expect(page.getByTestId('my-week')).toBeVisible();
 }
 
 export async function logBench(page: Page, sets: number): Promise<void> {
-  // Floor's START only opens S6. The session screen has its own START.
+  // Enter through the tab bar; the session screen starts the workout.
   if (!page.url().includes('/session')) {
-    await page.getByRole('button', { name: copy.start, exact: true }).click();
+    await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
   }
   await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
   const begin = page.getByRole('button', { name: copy.start, exact: true });
