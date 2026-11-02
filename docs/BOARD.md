@@ -49,10 +49,11 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | merged #28 |
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
-| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | running 2026-11-02 |
+| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | pr #34 draft (data read in full; Lead approved adding `tests/unit/features/auth/mockRepo.ts` for Repo.duo; CI p90 353 ms; Codex fixing presence on the receiving client) |
 | P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
-| P3F | Progress S13: trend chart | Grok | E | running 2026-11-02 |
+| P3F | Progress S13: trend chart | Grok | E | merged #33 |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
+| P3H | Shared credit fixtures: SQL `week_credits` ↔ TS `credits.ts` parity (E5.7, L12) — **new ticket, test-only, no `src/**` or migrations** | Grok | E | running 2026-11-02 |
 
 ## Phase 4–5 queue (fire order in `docs/LANES.md`)
 | ID | What | Engine | Lane | Status |
@@ -71,7 +72,6 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5A | S13 Progress full | Grok | E | todo — after P3F |
 
 ## Parked / follow-ups
-- P3H (lane E, test-only, after P3A + P3C): E5.7 shared credit fixtures, pgTAP + Vitest (L12).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
 - Size budget: initial JS = entry + modulepreloads; the data layer (Dexie, zod, sync, adapters) is lazy-loaded in `App.tsx` (C5) → initial **100.5 / 170 kB**. Keep screens and backend libraries out of the static import graph.
