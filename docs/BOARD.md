@@ -50,7 +50,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
 | P3B | Duo data layer + realtime client (L10) | Codex Astra | E | merged #34 (Lead approved mockRepo.ts scope; CI p90 353 ms) |
-| P3E | Crew full + presence + Bar + comeback | Grok (friend's Codex out of usage) | E | running 2026-11-02 (Grok) |
+| P3E | Crew full + presence + Bar + comeback | Grok (friend's Codex out of usage) | E | pr #39 (reviewed: scope ok, ?debug=week gated per E5.11, raw kg one tap deep; local 634 tests green, 113.7 kB) |
 | P3F | Progress S13: trend chart | Grok | E | merged #33 |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
 | P3H | Shared credit fixtures: SQL `week_credits` ↔ TS `credits.ts` parity (E5.7, L12) — **new ticket, test-only, no `src/**` or migrations** | Grok | E | merged #36 (24 fixtures, Vitest + pgTAP; PR-run db red = port-in-use flake, push-run db green) |
