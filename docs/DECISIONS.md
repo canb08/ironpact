@@ -180,3 +180,8 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 - Supersedes L3's temporary Supabase wildcard. `public/_headers` is a template; `npm run build` runs `scripts/gen-headers.mjs` after Vite to write `dist/_headers`.
 - With `VITE_BACKEND=supabase`, `VITE_SUPABASE_URL` must be `https://<project-ref>.supabase.co` (an optional root slash is accepted). Only that HTTPS origin and its WSS twin are allowed. Missing or malformed URLs fail the build; credentials, ports, paths, queries and fragments are rejected without echoing the value.
 - Other backends, including mock and unset CI builds, get `connect-src 'self'`. Any surviving `<ref>` or `*.supabase.co` fails the build. All other headers stay unchanged. Set the build environment variables in both Cloudflare Production and Preview as in `docs/DEPLOY.md`; its earlier static/wildcard header description is superseded by this decision.
+
+## L18 · Login email through the owner's Gmail (G1, 2026-11-02)
+
+- Supersedes L6's "Supabase built-in email". Hosted Supabase only lets you edit email templates once custom SMTP is set, and the default template has a link but no code. The app signs in by 6-digit code (an iOS home-screen app can't take a magic link), so the owner chose Gmail SMTP: `smtp.gmail.com:465`, sender "SPOTTER", Google app password (entered by the owner in the dashboard only).
+- Hosted Auth: email OTP length 6, expiry 600 s (it defaulted to 8 digits, matching `config.toml`'s `otp_length = 6`). "Magic link or OTP" and "Confirm sign up" templates both carry `Your code: {{ .Token }}` with the link as a fallback.
