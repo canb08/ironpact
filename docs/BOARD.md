@@ -39,12 +39,12 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
 | C6 | Router + copy anchors for Phase 2–3 | Claude | C | merged (direct) |
-| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Grok (Codex hit usage limit) | C | running 2026-11-02 01:50 |
+| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Grok | C | merged #25 |
 | P2F | Server re-check of PR events (0007) | Grok (Codex hit usage limit) | C | running 2026-11-02 01:50 |
 | P2B | Core: PRs, progression, readiness, prefill | Grok | C | merged #21 |
 | P2C | Rest timer engine + Wake Lock + haptics | Grok | C | merged #20 |
-| P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Codex Sol | C | todo — after P2A, P2B, P2C |
-| P2E | S14 exercise detail + S15 day editor | Grok | C | todo — after P2A |
+| P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Grok (Codex out of usage) | C | running 2026-11-02 02:10 |
+| P2E | S14 exercise detail + S15 day editor | Grok | C | running 2026-11-02 02:10 |
 | P2G | Playwright Phase 2 | Grok | C | todo — after P2D, P2E |
 | P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | running 2026-11-02 |
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | running 2026-11-02 |
@@ -59,7 +59,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 |---|---|---|---|---|
 | P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | merged #23 |
 | P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | merged #22 (Lead: banner overlay fix) |
-| P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | running 2026-11-02 01:22 |
+| P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | pr #24 (Lead merged main; CI) |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Codex Sol | C | todo — after P4A, P2D |
 | P4C | PR takeover + partner shockwave hook | Codex Sol | C | todo — after P4B, P2D |
 | P5B | S14 completed | Grok | C | todo — after P2E |
