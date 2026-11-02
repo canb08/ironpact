@@ -5,7 +5,7 @@ Two lanes run in parallel. Each lane = **one Claude Lead (overseer only) + one C
 | Lane | Human | Lead | Coders | Owns (Phase) | Tickets in order |
 |---|---|---|---|---|---|
 | **C** | Can (`canb08`) | Can's Claude | Can's Codex, Can's Grok | Phase 2 · workout engine | P2A, P2F, P2B, P2C → P2D, P2E → P2G |
-| **E** | Eytan (`jfork967-spec`) | Eytan's Claude | Eytan's Codex, Eytan's Grok | Phase 3 · duo layer | P3A, P3C, P3D → P3B → P3E, P3F → P3G |
+| **E** | Eytan (`jfork967-spec`) | Eytan's Claude | Eytan's Codex, Eytan's Grok | Phase 3 · duo layer | P3A, P3C, P3D → P3B → P3E, P3F, **P3H** → P3G |
 
 ## Fire order (who starts what, right now)
 | Engine | Lane C | Lane E |
@@ -50,3 +50,8 @@ Never idle: when an engine finishes, fire the first ticket in its row whose "Sta
 
 ## Not in this round
 G1 deploy (needs Can: Supabase project + Cloudflare Pages, `docs/DEPLOY.md`), Phase 6 hardening + device test, Phase 7 v1 features, C4 exercise muscles (L7). Don't start them without the humans.
+
+## Added during the round
+- **P3H** (lane E, Grok, 2026-11-02): shared credit fixtures, `docs/tickets/P3H.md`, from P3A's contract change request (L12). Test-only: `tests/fixtures/credits/**`, two Vitest files, `scripts/credit-fixtures.mjs`, generated `supabase/tests/credits_fixtures.test.sql`. Touches no shared file, so it can't collide with lane C. If lane C changes `credits.ts` or `week_credits`, the fixtures must still pass.
+- **Lane E engine switch** (2026-11-02): friend's Codex weekly limit is used up (resets ~2026-11-08). P3B was finished on Codex before it ran out. Remaining lane E Codex tickets move to **Grok** (several parallel Grok sessions): **P3E** (UI only) and, if still out, **P4E**. Lane E never puts `supabase/**` or `src/data/**` work on Grok; if one appears, it waits for the reset.
+- **P5A** (lane E, Grok) fired 2026-11-02 alongside P3H; it touches only `src/features/stats/**`, so no overlap with P3E or lane C.

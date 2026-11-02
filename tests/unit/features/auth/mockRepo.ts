@@ -81,6 +81,7 @@ export function mockRepo(partial: {
       return () => listeners.delete(cb);
     },
     sendCode: async () => ({ ok: true, value: undefined }),
+    deleteAccount: async () => ({ ok: true, value: undefined }),
     verifyCode: async () => {
       notify('user-1');
       return { ok: true, value: 'user-1' };
