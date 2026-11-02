@@ -85,7 +85,8 @@ test('only set-input focus hides the tabs; they return after blur and workout co
   await expect(page.getByTestId('session-live')).toHaveCount(0);
   await tabs(page).getByRole('link', { name: shellCopy.today, exact: true }).click();
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
-  await page.getByRole('textbox').first().focus();
+  await page.getByRole('button', { name: new RegExp(`^${copy.settingsProfile}`) }).click();
+  await page.getByRole('textbox', { name: copy.displayName }).focus();
   await expect(tabs(page)).toBeVisible();
 });
 

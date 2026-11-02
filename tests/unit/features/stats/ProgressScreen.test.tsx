@@ -158,3 +158,24 @@ it('shows a first run and a first fight session, with real weekly rounds', () =>
   expect(screen.getByText('Today: 40 min, 8 rounds')).toBeTruthy();
   expect(screen.queryByText(copy.x5FightEmpty)).toBeNull();
 });
+
+it('keeps a stored Boxing row and lists Muay Thai combos newest first', () => {
+  renderProgress(data({ mine: { ...emptyBundle(),
+    sessions: [
+      { ...session, id: id(30), user_id: profile.id, local_date: '2026-11-01' },
+      { ...session, id: id(31), user_id: profile.id, local_date: '2026-11-02' },
+    ],
+    martial: [
+      { ...martial, id: id(70), user_id: profile.id, session_id: id(30), local_date: '2026-11-01', discipline: 'Boxing', duration_min: 40, rounds: 8, note: 'drilled guard', logged_at: '2026-11-01T18:00:00.000Z' },
+      { ...martial, id: id(71), user_id: profile.id, session_id: id(31), local_date: '2026-11-02', discipline: 'Muay Thai', duration_min: 38, rounds: 6, note: 'Pads · 1-2 / Teep', logged_at: '2026-11-02T18:00:00.000Z' },
+      { ...martial, id: id(72), user_id: profile.id, session_id: id(31), local_date: '2026-11-02', discipline: 'Muay Thai', duration_min: 18, rounds: 6, note: 'Pads · 1-2', logged_at: '2026-11-02T12:00:00.000Z' },
+    ],
+  } }));
+  fireEvent.click(screen.getByRole('radio', { name: copy.x5Fight }));
+  expect(screen.getByRole('heading', { name: 'Boxing' })).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Muay Thai' })).toBeTruthy();
+  const book = screen.getByRole('region', { name: copy.y2ComboBook });
+  const items = [...book.querySelectorAll('li')].map((item) => item.textContent);
+  expect(items).toEqual(['1-2, drilled 2', 'Teep, drilled 1']);
+  expect(book.textContent).not.toContain('drilled guard');
+});

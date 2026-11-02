@@ -7,6 +7,7 @@ import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { copy } from '../../ui/copy.ts';
 import { canGoBack, isDetail, parentTab } from './routes.ts';
 import { shellCopy } from './copy.ts';
+import { settingsSections } from '../../features/settings/sections.ts';
 import { useOpenSession } from './useOpenSession.ts';
 import './shell.css';
 
@@ -23,7 +24,7 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const outlet = useOutlet();
-  const { id, date } = useParams();
+  const { id, date, section } = useParams();
   const repo = useRepo();
   const quickLog = location.pathname.startsWith('/log/');
   const [background, setBackground] = useState<{ pathname: string; outlet: ReactNode }>(() => ({
@@ -43,7 +44,7 @@ export default function AppLayout() {
   const title = pathname === '/session' ? copy.sessionTitle
     : pathname.startsWith('/exercise/') ? exercise?.name ?? copy.progressExercise
     : pathname.startsWith('/day/') ? date ?? copy.recentDays
-      : pathname.startsWith('/settings') ? copy.settingsTitle
+      : pathname.startsWith('/settings') ? settingsSections.find((item) => item.id === section)?.title ?? copy.settingsTitle
         : tabs.find((tab) => tab.to === currentTab)?.label ?? shellCopy.today;
   const back = () => {
     if (canGoBack(window.history.state)) void navigate(-1);
