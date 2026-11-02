@@ -121,6 +121,22 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
       if (error) throw new Error('Sign-out failed');
       publish(null);
     },
+    async deleteAccount() {
+      try {
+        const client = await ready;
+        const actor = userId;
+        if (!actor) return network;
+        const { data, error } = await client.functions.invoke('delete-account', { body: {} });
+        if (error || data?.deleted !== true) return network;
+        // A new account may have signed in while the request was in flight.
+        if (userId === actor) {
+          const { error: signOutError } = await client.auth.signOut({ scope: 'local' });
+          if (signOutError) return network;
+          publish(null);
+        }
+        return ok(undefined);
+      } catch { return network; }
+    },
     async serverNow() {
       const result = await rpc<string, never>('server_now', {}, []);
       if (!result.ok || !Number.isFinite(Date.parse(result.value))) throw new Error('Server clock unavailable');

@@ -38,7 +38,7 @@ jobs:
         with:
           deno-version: 2.9.8
       - name: Check Edge Functions
-        run: deno check --no-config --no-lock supabase/functions/export/index.ts supabase/functions/health/index.ts
+        run: deno check --no-config --no-lock supabase/functions/export/index.ts supabase/functions/health/index.ts supabase/functions/delete-account/index.ts
       - name: Verify database and function configuration
         run: |
           python3 - <<'PY'
@@ -52,7 +52,7 @@ jobs:
           assert config['db']['seed']['sql_paths'] == ['./seed.sql']
           assert config['auth']['email']['otp_length'] == 6
           assert config['auth']['email']['otp_expiry'] == 600
-          for name in ('export', 'health', 'push-dispatch', 'rest-alarm'):
+          for name in ('export', 'health', 'push-dispatch', 'rest-alarm', 'delete-account'):
               assert config['functions'][name]['verify_jwt'] is False, name
           PY
       - name: Start local database
@@ -68,7 +68,7 @@ jobs:
           umask 077
           # Source config retains future function JWT settings. The CLI validates
           # those entrypoints even when edge-runtime is excluded, so use an
-          # isolated CI copy with only A5's implemented function declarations.
+          # isolated CI copy with only implemented function declarations.
           python3 - <<'PY'
           import os
           import pathlib
@@ -80,9 +80,9 @@ jobs:
           shutil.copytree('supabase', root / 'supabase', ignore=shutil.ignore_patterns('.temp'))
           config_path = root / 'supabase/config.toml'
           source = config_path.read_text()
-          source = re.sub(r'(?ms)^\[functions\.(?!export\]|health\])[^\n]+\].*?(?=^\[|\Z)', '', source)
+          source = re.sub(r'(?ms)^\[functions\.(?!export\]|health\]|delete-account\])[^\n]+\].*?(?=^\[|\Z)', '', source)
           config = tomllib.loads(source)
-          assert set(config['functions']) == {'export', 'health'}
+          assert set(config['functions']) == {'export', 'health', 'delete-account'}
           assert all(not value['verify_jwt'] for value in config['functions'].values())
           config_path.write_text(source)
           PY
@@ -118,6 +118,7 @@ jobs:
             exit 1
           fi
           deno test --no-config --no-lock --allow-env --allow-net --allow-read=tests/fixtures/export supabase/functions/export/index.test.ts
+          deno test --no-config --no-lock --allow-env --allow-net --allow-run=psql supabase/functions/delete-account/index.test.ts
       - name: Run mock and Supabase Repo contracts and 20-set flight test
         run: |
           set -a
