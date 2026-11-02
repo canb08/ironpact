@@ -1,5 +1,5 @@
 # P5F · Recompute PRs after an edit + edit notices
-**Lane:** E (the friend's Claude · the friend's Codex + Grok) — moved from C · **Model:** Grok · Build · **Branch:** `P5F-work` · **Starts after:** nothing (P2A, P2B, P5B merged)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P5F-work` · **Starts after:** nothing (P2A, P2B, P5B merged)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S14 + S15 (edit notices), §2 F7 + §10 E7.2 (PR tiers), §2.2 (week credits). `src/core/prs.ts` (P2B), `src/data/repo.ts` (`updateSet`, `updateEntry`, `softDelete`, `recordPrEvents`), `supabase/migrations/0007_pr_check.sql` (server re-check: a PR row must match its source).
