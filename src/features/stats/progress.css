@@ -1,0 +1,130 @@
+.progress,
+.progress * {
+  box-sizing: border-box;
+}
+
+.progress {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--s-4);
+  padding-bottom: max(var(--s-4), env(safe-area-inset-bottom));
+  background: var(--bg);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.progress h1,
+.progress h2,
+.progress p {
+  margin: 0;
+}
+
+.progress h1 {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.progress h2 {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.progress-field {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.progress-field > span {
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.progress-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  padding: var(--s-3);
+  font: inherit;
+}
+
+.progress-caption,
+.progress-empty {
+  color: var(--text-muted);
+}
+
+.progress-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+.progress-axis {
+  fill: var(--text-muted);
+  font: 500 11px var(--font-data);
+}
+
+.progress-axis-line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.progress-line {
+  fill: none;
+  stroke-width: 2;
+}
+
+.progress-line--you {
+  stroke: var(--molten);
+}
+
+.progress-dot--you {
+  fill: var(--molten);
+}
+
+.progress-legend,
+.progress-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.progress-swatch--you {
+  color: var(--molten);
+}
+
+.progress-swatch--partner {
+  text-decoration: underline dashed;
+  text-underline-offset: 0.3em;
+}
+
+.progress-readout {
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.progress-readout ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+  font: 500 var(--t-sm) / 1.4 var(--font-data);
+  color: var(--text);
+}
