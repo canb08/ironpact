@@ -1,5 +1,5 @@
 # P5B · S14 completed: rep-max table, PR list, per-set edit
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P5B-s14` · **Starts after:** P2E merged
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P5B-s14` · **Starts after:** P2E merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S14, §6 Phase 5 S14 bullet. P2E's `ExerciseDetailScreen.tsx`, P2A queries.

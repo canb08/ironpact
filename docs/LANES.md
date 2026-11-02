@@ -4,8 +4,8 @@ Two lanes run in parallel. Each lane = **one Claude Lead (overseer only) + one C
 
 | Lane | Human | Lead | Coders | Owns (Phase) | Tickets in order |
 |---|---|---|---|---|---|
-| **C** | Can (`canb08`) | Can's Claude | Can's Codex, Can's Grok | Phase 2 · workout engine | P2A, P2F, P2B, P2C → P2D, P2E → P2G |
-| **E** | Eytan (`jfork967-spec`) | Eytan's Claude | Eytan's Codex, Eytan's Grok | Phase 3 · duo layer | P3A, P3C, P3D → P3B → P3E, P3F, **P3H** → P3G |
+| **C** | the owner (`canb08`) | the owner's Claude | the owner's Codex, the owner's Grok | Phase 2 · workout engine | P2A, P2F, P2B, P2C → P2D, P2E → P2G |
+| **E** | the friend (`jfork967-spec`) | the friend's Claude | the friend's Codex, the friend's Grok | Phase 3 · duo layer | P3A, P3C, P3D → P3B → P3E, P3F, **P3H** → P3G |
 
 ## Fire order (who starts what, right now)
 | Engine | Lane C | Lane E |
@@ -49,7 +49,7 @@ Lane E: P4F and P4E both touch `src/features/floor/` — run them one after the 
 Never idle: when an engine finishes, fire the first ticket in its row whose "Starts after" is met.
 
 ## Not in this round
-G1 deploy (needs Can: Supabase project + Cloudflare Pages, `docs/DEPLOY.md`), Phase 6 hardening + device test, Phase 7 v1 features, C4 exercise muscles (L7). Don't start them without the humans.
+G1 deploy (needs the owner: Supabase project + Cloudflare Pages, `docs/DEPLOY.md`), Phase 6 hardening + device test, Phase 7 v1 features, C4 exercise muscles (L7). Don't start them without the humans.
 
 ## Added during the round
 - **P3H** (lane E, Grok, 2026-11-02): shared credit fixtures, `docs/tickets/P3H.md`, from P3A's contract change request (L12). Test-only: `tests/fixtures/credits/**`, two Vitest files, `scripts/credit-fixtures.mjs`, generated `supabase/tests/credits_fixtures.test.sql`. Touches no shared file, so it can't collide with lane C. If lane C changes `credits.ts` or `week_credits`, the fixtures must still pass.

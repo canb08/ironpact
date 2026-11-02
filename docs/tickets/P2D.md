@@ -1,5 +1,5 @@
 # P2D · Session engine: prefill, nudge, timer, PRs, RACK IT, summary, readiness
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build (moved from Codex: usage limit) · **Branch:** `P2D-session` · **Starts after:** P2A, P2B, P2C merged
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build (moved from Codex: usage limit) · **Branch:** `P2D-session` · **Starts after:** P2A, P2B, P2C merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2 F4, F5, F7, F8, F10, F11, F13; §2.4 S5, S6, S9 (static PR card), S10; §3.10.2 readiness rows; §6 Phase 2 + Demo script; §10 E7.x. The APIs from P2A (`exerciseHistory`, `recordPrEvents`, `exercisePref`), P2B (`core/prs`, `progression`, `readiness`, `prefill`), P2C (`useRestTimer`, `RestTimerOverlay`, `wakeLock`).

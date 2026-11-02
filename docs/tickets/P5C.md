@@ -1,5 +1,5 @@
 # P5C · S16 Settings full
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build (Codex out of usage) · **Branch:** `P5C-s16` · **Starts after:** P2A and P5D merged
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build (Codex out of usage) · **Branch:** `P5C-s16` · **Starts after:** P2A and P5D merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S16, §6 Phase 5 Settings bullets, §3.11. B6's `SettingsScreen.tsx` + Vault export (keep it unchanged).

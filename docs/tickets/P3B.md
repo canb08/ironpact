@@ -1,5 +1,5 @@
 # P3B · Duo data layer + realtime client
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P3B-duo` · **Starts after:** P3A merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P3B-duo` · **Starts after:** P3A merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §4.5, §2 F15, §6 Phase 3, §10 E7.7. `src/data/adapter.ts`, `repo.ts`, `adapter.supabase.ts`, `adapter.mock.ts`, P3A's RPCs.

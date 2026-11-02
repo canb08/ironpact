@@ -1,5 +1,5 @@
 # P2B · Core: PRs, progression, readiness, prefill
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2B-core` · **Starts after:** nothing (fire first)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2B-core` · **Starts after:** nothing (fire first)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2 F4 (prefill + next-exercise guess, ties), F5 + §1.6 D10 (progression), F7 + §10 E7.2 (PR tiers), F13 + D9 + §10 E2.2 (readiness), §7.1 (unit test list), §6 Phase 2 Definition of done. Existing `src/core/e1rm.ts`, `volume.ts`, `types.ts`.

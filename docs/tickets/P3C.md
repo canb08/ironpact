@@ -1,5 +1,5 @@
 # P3C · Core: the Bar, spots, fair comparison, comeback
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3C-core` · **Starts after:** nothing (fire first)
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3C-core` · **Starts after:** nothing (fire first)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.2, §10 E2.1, §1.6 D5–D8, §2.8 (duo mechanics, fair comparison), §2 F16 (comeback), §7.1, §6 Phase 3 unit list. Existing `src/core/weeks.ts`, `credits.ts`.

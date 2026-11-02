@@ -1,5 +1,5 @@
 # P5A · S13 Progress full: lifts, run, martial arts, body
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P5A-s13` · **Starts after:** P3F merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P5A-s13` · **Starts after:** P3F merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S13, §6 Phase 5 (S13 + empty states), §2 F18. P3F's `ProgressScreen.tsx` + chart.

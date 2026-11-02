@@ -1,5 +1,5 @@
 # P3A · Realtime channel + week-close cron (database)
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P3A-realtime` · **Starts after:** nothing (fire first)
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P3A-realtime` · **Starts after:** nothing (fire first)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §4.5 (Realtime), §2.2 + §10 E2.1 (credits, the Bar), §1.6 D5–D8 (credits cap, Bar, spots), §6 Phase 3, §7.2, §10 E7.7 (presence payload). Existing migrations 0001–0003, 0006.

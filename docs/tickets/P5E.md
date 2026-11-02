@@ -1,5 +1,5 @@
 # P5E · App shell: offline + server-asleep banners, SW update chip
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P5E-app` · **Starts after:** nothing (fire when a lane C Grok is free)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P5E-app` · **Starts after:** nothing (fire when a lane C Grok is free)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §6 Phase 5 (banners, SW update chip), §3.10.1 strings, §4.7 (SW update flow, `SKIP_WAITING`). `repo.sync.status()` (`offline`, `server_asleep`).

@@ -1,5 +1,5 @@
 # P3H · Shared credit fixtures (SQL ↔ TypeScript parity)
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3H-work` · **Starts after:** P3A (#28) + P3C (#27), both merged · **Why:** `docs/DECISIONS.md` L12 (P3A's contract change request)
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3H-work` · **Starts after:** P3A (#28) + P3C (#27), both merged · **Why:** `docs/DECISIONS.md` L12 (P3A's contract change request)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §10 E5.5, E5.6, **E5.7** (one credit rule, tested against the same `tests/fixtures/credits/*.json` from pgTAP **and** Vitest so SQL and TS can't drift), §1.6 D5. Existing `src/core/credits.ts` + `tests/unit/core/credits.test.ts`, `supabase/migrations/0005_cron.sql` (`public.week_credits`) + `supabase/tests/week_close.test.sql` (setup pattern for users, sessions and entries).

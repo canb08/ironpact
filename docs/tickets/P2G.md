@@ -1,5 +1,5 @@
 # P2G · Playwright Phase 2 end-to-end
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2G-playwright` · **Starts after:** P2D, P2E merged (and B8)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2G-playwright` · **Starts after:** P2D, P2E merged (and B8)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §6 Phase 2 Definition of done + Demo script, §7.4. B8's `playwright.config.ts`.

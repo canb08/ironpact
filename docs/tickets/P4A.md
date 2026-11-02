@@ -1,5 +1,5 @@
 # P4A · Design foundation: tokens, fonts, contrast, textures
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P4A-design` · **Starts after:** nothing (fire when a lane C Grok is free)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P4A-design` · **Starts after:** nothing (fire when a lane C Grok is free)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §3.0–§3.6, §3.12, §1.6 D17, §10 E7.x, `docs/DECISIONS.md` **L1** (light-theme contrast fix belongs here). `docs/research/R1-platform.md` item 8 (`@fontsource-variable/big-shoulders@5.3.0` has `opsz`). B1's `tokens.css` + `tests/unit/ui/tokens.contrast.test.tsx` (5 `it.fails` cases document L1).

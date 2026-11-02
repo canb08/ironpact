@@ -1,5 +1,5 @@
 # P2E · S14 exercise detail + S15 day editor
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2E-s14` · **Starts after:** P2A merged
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2E-s14` · **Starts after:** P2A merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S14, S15, §2.7 (validation), §2 F8 (delete/restore). P2A's `exerciseHistory`, `day`, `updateSession`, `updateEntry`, `setExercisePref`.
