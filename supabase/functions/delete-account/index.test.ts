@@ -76,8 +76,8 @@ if (import.meta.vitest) {
           ('${setA}', ${sync}, '${sessionA}', '${exercise}', 1, 5, 80, now()),
           ('${setB}', '${b.id}', current_date, now(), '${sessionB}', '${exercise}', 1, 5, 80, now());
         insert into public.pr_events (id, user_id, local_date, client_updated_at, exercise_id, source_id, pr_type, value, seen_by) values
-          (gen_random_uuid(), ${sync}, '${exercise}', '${setA}', 'e1rm', 100, '{}'),
-          (gen_random_uuid(), '${b.id}', current_date, now(), '${exercise}', '${setB}', 'e1rm', 100, '{${a.id}}');
+          (gen_random_uuid(), ${sync}, '${exercise}', '${setA}', 'e1rm', 80 * (1 + 5::numeric / 30), '{}'),
+          (gen_random_uuid(), '${b.id}', current_date, now(), '${exercise}', '${setB}', 'e1rm', 80 * (1 + 5::numeric / 30), '{${a.id}}');
         insert into public.cardio_entries (id, user_id, local_date, client_updated_at, session_id, distance_m, duration_s, logged_at)
           values (gen_random_uuid(), ${sync}, '${sessionA}', 1000, 300, now());
         insert into public.martial_entries (id, user_id, local_date, client_updated_at, session_id, discipline, duration_min, logged_at)
@@ -89,7 +89,7 @@ if (import.meta.vitest) {
         insert into public.exercise_prefs (id, user_id, local_date, client_updated_at, exercise_id, rest_s)
           values (gen_random_uuid(), ${sync}, '${exercise}', 90);
         insert into public.goals (id, user_id, local_date, client_updated_at, exercise_id, kind, target_value, unit, starts_on)
-          values (gen_random_uuid(), ${sync}, '${exercise}', 'e1rm', 100, 'kg', current_date);
+          values (gen_random_uuid(), ${sync}, '${exercise}', 'e1rm', 80 * (1 + 5::numeric / 30), 'kg', current_date);
         insert into public.reactions (id, user_id, local_date, client_updated_at, crew_id, to_user, target_type, target_id, kind)
           values (gen_random_uuid(), '${b.id}', current_date, now(), '${crew}', '${a.id}', 'set', '${setA}', 'chalk');
         insert into public.nudges (id, crew_id, from_user, to_user, sent_on)

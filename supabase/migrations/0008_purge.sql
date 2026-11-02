@@ -1,3 +1,19 @@
+-- P2F checks claims even on metadata updates. Account cleanup must be able to
+-- remove a viewer from historical PRs whose source was purged/edited. Only a
+-- nested trigger's removal-only seen_by change may skip claim revalidation;
+-- every direct client update and every changed claim still runs P2F's guard.
+drop trigger c_check_pr_event on public.pr_events;
+create trigger c_check_pr_event before insert on public.pr_events
+for each row execute function public.check_pr_event();
+create trigger c_check_pr_event_update before update on public.pr_events
+for each row when (
+  pg_trigger_depth() = 0 or not (
+    old.seen_by @> new.seen_by and
+    (to_jsonb(old) - array['seen_by', 'updated_at', 'received_at']) =
+    (to_jsonb(new) - array['seen_by', 'updated_at', 'received_at'])
+  )
+) execute function public.check_pr_event();
+
 -- P5D: cleanup is part of Auth's hard-delete transaction, so failure rolls back
 -- the whole account deletion. No client-callable service-role cleanup RPC.
 create function public.delete_account_cleanup() returns trigger
