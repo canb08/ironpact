@@ -11,7 +11,7 @@ async function openBench(page: Page): Promise<void> {
   if (!page.url().includes('/session')) await page.goto('/session');
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect.poll(async () => await picker.isVisible()
-    || await page.getByRole('button', { name: 'Bench press', exact: true }).isVisible()).toBe(true);
+    || await page.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true }).isVisible()).toBe(true);
   if (await picker.isVisible()) await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
   const readiness = page.getByRole('region', { name: copy.readinessTitle });
   if (await readiness.isVisible()) await readiness.getByRole('button', { name: copy.skip, exact: true }).click();

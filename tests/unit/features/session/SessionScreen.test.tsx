@@ -221,11 +221,16 @@ describe('S6 with the A6 mock Repo', () => {
     await userEvent.click(await within(picker).findByRole('button', { name: squat.name }));
     await screen.findByRole('form', { name: squat.name });
     await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
-    await waitFor(() => expect(rows()).toHaveLength(4));
+    await waitFor(() => expect(within(document.querySelector('[data-current-exercise]')!).getAllByRole('listitem')).toHaveLength(1));
     const list = screen.getByRole('region', { name: copy.sessionSets });
-    expect(within(list).getByRole('heading', { name: 'Bench press' })).toBeTruthy();
+    const earlier = within(list).getByText(fill(copy.x4EarlierExercise, { exercise: 'Bench press', sets: '3 sets', kg: 0, reps: 5 }));
+    expect(earlier.closest('details')?.open).toBe(false);
+    await userEvent.click(earlier);
+    expect(rows()).toHaveLength(4);
     expect(within(list).getByRole('heading', { name: squat.name })).toBeTruthy();
     await userEvent.click(within(rows()[0]!).getByRole('button', { name: fill(copy.x4SetOptions, { index: 1 }) }));
+    const menu = await screen.findByRole('dialog', { name: copy.x4SetMenu });
+    await userEvent.click(within(menu).getByRole('button', { name: copy.x4Edit }));
     const edit = await screen.findByRole('dialog', { name: copy.x4EditTitle });
     fireEvent.change(within(edit).getByRole('spinbutton', { name: copy.kg }), { target: { value: '82.5' } });
     await userEvent.click(within(edit).getByRole('button', { name: copy.x4SaveSet }));

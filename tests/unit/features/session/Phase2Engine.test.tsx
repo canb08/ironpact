@@ -45,7 +45,8 @@ describe('P2D session engine', () => {
     const open = await harness.repo.q.openSession();
     expect(open?.readiness).toBeNull();
     expect(open?.mode).toBe('full');
-    expect(screen.getByRole('button', { name: exercise.name })).toBeTruthy();
+    expect(screen.getAllByRole('heading', { name: exercise.name })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: copy.x4Change })).toBeTruthy();
     expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('80');
     expect((screen.getByRole('spinbutton', { name: copy.reps }) as HTMLInputElement).value).toBe('5');
 

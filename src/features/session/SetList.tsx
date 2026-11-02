@@ -1,25 +1,47 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
 import type { Exercise, SetRow } from '../../core/types.ts';
 import { Button, Sheet, Stepper, copy, fill, useToast } from '../../ui';
 import { uiSchemas } from '../../core/validate.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
+import { revealLatestSet } from './sessionViewport.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
-export function SetList({ sets, exercises, pending, freshId, onDeleted }: {
+export function SetList({ sets, exercises, currentExerciseId, onChangeExercise, pending, onDeleted }: {
   sets: SetRow[];
   exercises: Exercise[];
   pending: Map<string, boolean>;
-  freshId?: string | null;
+  currentExerciseId: string;
+  onChangeExercise: () => void;
   onDeleted?: (row: SetRow) => void;
 }) {
   const repo = useRepo();
   const [editing, setEditing] = useState<SetRow | null>(null);
   const [invalid, setInvalid] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const list = useRef<HTMLElement>(null);
+  const newestId = sets.filter((row) => row.exercise_id === currentExerciseId).at(-1)?.id;
+  useEffect(() => {
+    if (typeof requestAnimationFrame !== 'function') return;
+    let frame = 0;
+    const main = list.current?.closest('main');
+    const reveal = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          if (main && !main.querySelector('.session-earlier[open]')) revealLatestSet(main);
+        });
+      });
+    };
+    reveal();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(reveal);
+    if (main) observer?.observe(main);
+    return () => { cancelAnimationFrame(frame); observer?.disconnect(); };
+  }, [currentExerciseId, newestId]);
   const sessionId = sets[0]?.session_id;
   const prs = useLiveQuery(() => sessionId ? repo.q.prEvents({ sessionId }) : [], [repo, sessionId]);
-  const groups = [...new Set(sets.map((row) => row.exercise_id))];
+  const groups = [...new Set(sets.map((row) => row.exercise_id))].filter((id) => id !== currentExerciseId);
   const { showToast } = useToast();
   const write = useSessionWrite();
   const gesture = useRef<{ id: string; pointer: number; x: number; y: number } | null>(null);
@@ -32,11 +54,7 @@ export function SetList({ sets, exercises, pending, freshId, onDeleted }: {
       } } });
     });
   };
-  return <><section className="session-sets" aria-label={copy.sessionSets} tabIndex={0}>
-    {sets.length === 0 && <p>{copy.sessionNoSets}</p>}
-    {groups.map((exerciseId) => <section className="session-set-group" key={exerciseId}>
-      <h2>{exercises.find((exercise) => exercise.id === exerciseId)?.name}</h2>
-      <ol>{sets.filter((row) => row.exercise_id === exerciseId).map((row, index) => {
+  const renderRows = (exerciseId: string) => <ol>{sets.filter((row) => row.exercise_id === exerciseId).map((row, index) => {
         const onPhone = pending.get(row.id) !== false || !row.updated_at;
         return <li className="session-set-row" key={row.id} aria-label={fill(copy.sessionSet, { index: index + 1 })}
           onPointerDown={(event) => {
@@ -55,24 +73,41 @@ export function SetList({ sets, exercises, pending, freshId, onDeleted }: {
             if (dx >= 64 && dx > dy * 1.5) remove(row);
           }}>
           <span className="session-set-value"><span className="session-set-index">{index + 1}</span> {row.weight_kg} {copy.kg} × {row.reps}
-            {row.rpe !== null && <small>{fill(copy.sessionRpeValue, { value: row.rpe })}</small>}
+            {row.rpe !== null && <span className="session-set-rpe">{fill(copy.sessionRpeValue, { value: row.rpe })}</span>}
             {prs?.some((event) => event.source_id === row.id) && <span className="session-pr">{copy.x4Pr}</span>}
             {row.is_warmup && <span className="ui-chip">{copy.sessionWarmup}</span>}
           </span>
-          <span className={onPhone ? 'session-tick session-tick--pending' : 'session-tick'}
-            aria-label={onPhone ? copy.sessionSaved : copy.sessionSynced} title={onPhone ? copy.sessionSaved : copy.sessionSynced}>✓</span>
-          {freshId === row.id && <Button className="session-undo" size="xl" variant="secondary" disabled={write.busy}
-            onClick={() => remove(row)}>{copy.undo}</Button>}
-          <Button variant="ghost" aria-label={fill(copy.x4SetOptions, { index: index + 1 })} onClick={() => { setEditing(row); setInvalid(false); }}>⋯</Button>
-          <Button className="session-delete" variant="ghost" disabled={write.busy}
-            aria-label={fill(copy.sessionDelete, { index: index + 1 })} onClick={() => remove(row)}>×</Button>
+          <span className="session-sync-status" aria-label={onPhone ? copy.sessionSaved : copy.sessionSynced}>{onPhone ? copy.sessionSaved : copy.sessionSynced}</span>
+          <Button variant="ghost" aria-label={fill(copy.x4SetOptions, { index: index + 1 })} onClick={() => { setEditing(row); setEditOpen(false); setInvalid(false); }}>⋯</Button>
         </li>;
       })}
-    </ol></section>)}
+    </ol>;
+  return <><section ref={list} className="session-sets" aria-label={copy.sessionSets} tabIndex={0}>
+    {groups.map((exerciseId) => {
+      const rows = sets.filter((row) => row.exercise_id === exerciseId);
+      const best = [...rows].filter((row) => !row.is_warmup).sort((a, b) => b.weight_kg * (1 + b.reps / 30) - a.weight_kg * (1 + a.reps / 30))[0];
+      const exercise = exercises.find((row) => row.id === exerciseId)?.name ?? copy.sessionPickExercise;
+      const count = rows.length === 1 ? copy.x4SetOne : fill(copy.x4SetCount, { count: rows.length });
+      return <details className="session-earlier" key={exerciseId}>
+        <summary>{best ? fill(copy.x4EarlierExercise, { exercise, sets: count, kg: best.weight_kg, reps: best.reps }) : fill(copy.x4EarlierExerciseNoBest, { exercise, sets: count })}</summary>
+        {renderRows(exerciseId)}
+      </details>;
+    })}
+    <section className="session-set-group" data-current-exercise={currentExerciseId}>
+      <div className="session-exercise">
+        <h2>{exercises.find((row) => row.id === currentExerciseId)?.name ?? copy.sessionPickExercise}</h2>
+        <Button className="session-change" variant="secondary" onClick={onChangeExercise}>{copy.x4Change}</Button>
+      </div>
+      {newestId ? renderRows(currentExerciseId) : <p>{copy.sessionNoSets}</p>}
+    </section>
     <WriteFeedback error={write.error} retry={write.retry} />
   </section>
-    <Sheet open={editing !== null} title={copy.x4EditTitle} onClose={() => setEditing(null)}>
-      {editing && <form className="session-edit" noValidate onSubmit={(event) => {
+    <Sheet open={editing !== null} title={editOpen ? copy.x4EditTitle : copy.x4SetMenu} onClose={() => setEditing(null)}>
+      {editing && !editOpen && <div className="session-set-menu">
+        <Button variant="secondary" onClick={() => setEditOpen(true)}>{copy.x4Edit}</Button>
+        <Button variant="secondary" disabled={write.busy} aria-label={fill(copy.sessionDelete, { index: sets.filter((row) => row.exercise_id === editing.exercise_id).findIndex((row) => row.id === editing.id) + 1 })} onClick={() => remove(editing)}>{copy.x4Delete}</Button>
+      </div>}
+      {editing && editOpen && <form className="session-edit" noValidate onSubmit={(event) => {
         event.preventDefault();
         const kind = exercises.find((exercise) => exercise.id === editing.exercise_id)?.kind;
         const valid = (kind === 'bw_lift' ? uiSchemas.added_kg : uiSchemas.lift_kg).safeParse(editing.weight_kg).success
@@ -92,7 +127,7 @@ export function SetList({ sets, exercises, pending, freshId, onDeleted }: {
         {invalid && <p role="alert">{copy.outOfRange}</p>}
         <WriteFeedback error={write.error} retry={write.retry} />
         <Button type="submit" disabled={write.busy}>{copy.x4SaveSet}</Button>
-        <Button variant="secondary" disabled={write.busy} onClick={() => remove(editing)}>{fill(copy.sessionDelete, { index: sets.filter((row) => row.exercise_id === editing.exercise_id).findIndex((row) => row.id === editing.id) + 1 })}</Button>
+
       </form>}
     </Sheet>
   </>;

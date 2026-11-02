@@ -5,9 +5,10 @@ import { formatNudgeChip, nudgeCopyKey } from '../../core/progression.ts';
 import type { Exercise, Session, SetRow } from '../../core/types.ts';
 import { uiSchemas } from '../../core/validate.ts';
 import { haptic } from '../../platform/haptics.ts';
-import { Button, Stepper, copy, fill } from '../../ui';
+import { Button, Stepper, copy, fill, useToast } from '../../ui';
 import { RestTimerOverlay } from '../timer/RestTimerOverlay.tsx';
 import { skipRest, startRest, useRestTimer } from '../timer/useRestTimer.ts';
+import { revealLatestSet } from './sessionViewport.ts';
 import { SetList } from './SetList.tsx';
 import { FRESH_UNDO_MS, prefillAt, roundKg } from './sessionModel.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
@@ -30,6 +31,7 @@ interface LoggingCardProps {
   restSeconds: number;
   nudge: Nudge | null;
   onNext: () => void;
+  onChangeExercise: () => void;
   onLogged: (row: SetRow) => void;
 }
 
@@ -39,10 +41,11 @@ function nudgeSentence(nudge: Nudge): string {
   return copy[key];
 }
 
-export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJumps, finishing, reduceMotion, onBusyChange, prefillSets, pending, restSeconds, nudge, onNext, onLogged }: LoggingCardProps) {
+export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJumps, finishing, reduceMotion, onBusyChange, prefillSets, pending, restSeconds, nudge, onNext, onChangeExercise, onLogged }: LoggingCardProps) {
   const repo = useRepo();
   const write = useSessionWrite();
   const logged = useSetLoggedMicro();
+  const { showToast } = useToast();
   const busy = write.busy || finishing;
   useEffect(() => { onBusyChange(write.busy); }, [write.busy, onBusyChange]);
   const rest = useRestTimer();
@@ -52,8 +55,12 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
     const element = dock.current;
     if (!element || typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(() => {
-      element.closest('main')?.style.setProperty('--session-dock-height', `${element.offsetHeight + 24}px`);
+      const main = element.closest('main');
+      main?.style.setProperty('--session-dock-height', `${element.offsetHeight}px`);
+      const previous = element.dataset.height;
       element.classList.toggle('session-controls--flow', element.getBoundingClientRect().height > window.innerHeight * .55);
+      element.dataset.height = String(element.offsetHeight);
+      if (main && (previous === undefined || element.offsetHeight > Number(previous))) revealLatestSet(main);
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -96,7 +103,7 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
   }, [rest.state.endsAt, rest.state.startedAt, rest.state.exerciseId, exercise.id, restSeconds, repo]);
 
   return <>
-    <SetList sets={allSets} exercises={exercises} pending={pending} freshId={freshId} onDeleted={(row) => {
+    <SetList sets={allSets} exercises={exercises} currentExerciseId={exercise.id} onChangeExercise={onChangeExercise} pending={pending} onDeleted={(row) => {
       if (row.id === freshId || row.id === sets.at(-1)?.id) skipRest();
       if (row.id === freshId) setFreshId(null);
     }} />
@@ -150,7 +157,18 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
       <Button className="session-log" type="submit" size="xl" disabled={busy} aria-describedby={`${id}-error`}>
         {copy.x4Log}
       </Button>
-      {logged.visible && <p role="status">{copy.x4Saved}</p>}
+      {freshId && allSets.some((row) => row.id === freshId) && <div className="session-fresh">
+        <p role="status">{copy.x4Saved}</p>
+        <Button size="xl" variant="secondary" disabled={busy} onClick={() => {
+          const id = freshId;
+          void write.run(() => repo.w.softDelete('sets', id), () => {
+            setFreshId(null); skipRest();
+            showToast({ message: copy.undone, timeoutMs: 5000, action: { label: copy.undo, onClick: () => {
+              void write.run(() => repo.w.restore('sets', id), () => {});
+            } } });
+          });
+        }}>{copy.undo}</Button>
+      </div>}
     </form>
   </>;
 }

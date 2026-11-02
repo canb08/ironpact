@@ -672,6 +672,14 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   x4EditTitle: 'Edit set',
   x4SaveSet: 'Save set',
   x4Pr: 'PR',
+  x4Change: 'Change',
+  x4EarlierExercise: '{exercise} · {sets} · best {kg} kg × {reps}',
+  x4EarlierExerciseNoBest: '{exercise} · {sets}',
+  x4SetMenu: 'Set options',
+  x4Edit: 'Edit',
+  x4Delete: 'Delete',
+  x4DurationMinutes: '{minutes} min',
+  x4DurationHours: '{hours} h {minutes} min',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`

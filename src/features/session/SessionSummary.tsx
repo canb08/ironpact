@@ -6,7 +6,7 @@ import { Button, copy, fill } from '../../ui';
 import { prEyebrow } from '../prs/label.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
-import { formatSessionClock, sessionSeconds, workingKg } from './sessionModel.ts';
+import { formatSessionDuration, sessionSeconds, workingKg } from './sessionModel.ts';
 
 export function SessionSummary({ session, onDone }: { session: Session; onDone: () => void }) {
   const repo = useRepo();
@@ -31,11 +31,11 @@ export function SessionSummary({ session, onDone }: { session: Session; onDone: 
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
   return <section className="session-summary" aria-label={copy.summaryTitle}>
-    <h2>{copy.x4Summary}</h2>
+    <h1>{copy.x4Summary}</h1>
     {working.length === 0 ? <p>{copy.summaryDropped}</p> : <>
       <dl>
         <dt>{copy.summaryDuration}</dt>
-        <dd>{formatSessionClock(sessionSeconds(session.started_at, session.ended_at))}</dd>
+        <dd>{formatSessionDuration(sessionSeconds(session.started_at, session.ended_at))}</dd>
         <dt>{copy.x4Volume}</dt>
         <dd>{fill(copy.x4KgMoved, { kg })}</dd>
         <dt>{copy.summarySets}</dt>

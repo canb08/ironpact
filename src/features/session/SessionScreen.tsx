@@ -49,8 +49,8 @@ function SessionContent() {
   return (
     <MotionProvider reduced={profile?.reduce_motion === true}>
       <MomentHost screen="entry" />
-      <main className="session-entry">
-    <h1>{copy.sessionTitle}</h1>
+      <main className={`session-entry${summary ? ' session-entry--summary' : ''}`}>
+    {!summary && <h1>{copy.sessionTitle}</h1>}
     {!snapshot ? <p role="status">{copy.sessionLoading}</p> : open ? <>
       {open.kind === 'gym' && <p>{fill(copy.sessionResume, {
         minutes: Math.max(0, Math.floor((openedAt - Date.parse(open.started_at)) / 60000)),

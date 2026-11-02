@@ -2,7 +2,7 @@
 .session-entry { display: grid; gap: 24px; padding-bottom: 32px; }
 /* The document owns workout scrolling; the shell's old session scrollport is removed. */
 .app-shell__content main.session-active, main.session-active { height: auto; min-height: calc(100dvh - 152px); overflow: visible; padding-bottom: var(--session-dock-height, 360px); }
-.session-header { position: sticky; top: var(--shell-header-height, 0px); z-index: 19; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--bg); padding-block: 8px; }
+.session-header { position: sticky; top: var(--shell-header-height, 0px); z-index: 19; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--bg); padding-block: 0; }
 .session-header h1 { font-size: 1.375rem; }
 .session-header time { font: 600 1.75rem/1 var(--font-number); font-variant-numeric: tabular-nums; }
 .session-header > span { color: var(--text-muted); font-size: .9375rem; }
@@ -76,3 +76,23 @@
 /* Large text keeps every dock control reachable in the document. */
 .session-controls--flow { position: static; margin-inline: -16px; }
 .app-shell__content main.session-active:has(.session-controls--flow), main.session-active:has(.session-controls--flow) { padding-bottom: 16px; }
+/* X4 Lead review: keep the current lift immediately above the measured dock. */
+.app-shell__content:has(.session-active) { padding-bottom: 0; }
+.app-shell__content main.session-active, main.session-active { padding-bottom: calc(var(--session-dock-height, 360px) + var(--shell-tabs-height, 0px)); }
+.session-exercise { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-block: 8px 16px; }
+.session-exercise h2 { margin: 0; min-width: 0; font: 600 1.375rem/1.25 var(--font-body); }
+.session-change { flex-shrink: 0; min-height: 44px; min-width: 44px; border-radius: 8px; padding: 8px 12px; font-size: .9375rem; }
+.session-earlier { margin-bottom: 12px; }
+.session-earlier > summary { box-sizing: border-box; min-height: 44px; padding-block: 8px; cursor: pointer; font-size: .9375rem; color: var(--text-muted); border-bottom: 1px solid var(--line); }
+.session-set-group { margin-bottom: 0; }
+.session-set-value .session-set-rpe { display: inline; margin-left: 8px; font-size: .8125rem; color: var(--text-muted); }
+.session-sync-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.session-fresh { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.session-fresh p { margin: 0; font-size: .8125rem; }
+.session-set-menu { display: grid; gap: 12px; }
+.app-shell:has(.session-entry--summary) > .app-shell__header { display: none; }
+.session-summary h1 { font-size: 1.75rem; margin: 0; }
+.app-shell__content main.session-active:has(.session-controls--flow), main.session-active:has(.session-controls--flow) { padding-bottom: var(--shell-tabs-height, 16px); }
+@media (max-width: 339px), (max-height: 600px) {
+  .app-shell__content main.session-active, main.session-active { padding-bottom: var(--shell-tabs-height, 16px); }
+}

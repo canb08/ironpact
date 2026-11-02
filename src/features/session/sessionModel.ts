@@ -1,5 +1,6 @@
 import type { PrEventDraft } from '../../core/prs.ts';
 import type { Exercise, SetRow } from '../../core/types.ts';
+import { copy, fill } from '../../ui/copy.ts';
 import { volume } from '../../core/volume.ts';
 import type { PrEventDraftRow } from '../../data/adapter.ts';
 
@@ -76,4 +77,10 @@ export function workingKg(sets: readonly SetRow[], exercises: readonly Exercise[
 
 export function workingTonnes(sets: readonly SetRow[], exercises: readonly Exercise[], bodyweightKg: number | null): number {
   return Math.round(workingKg(sets, exercises, bodyweightKg) / 100) / 10;
+}
+
+export function formatSessionDuration(totalSeconds: number): string {
+  const minutes = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds / 60)) : 0;
+  if (minutes < 60) return fill(copy.x4DurationMinutes, { minutes });
+  return fill(copy.x4DurationHours, { hours: Math.floor(minutes / 60), minutes: String(minutes % 60).padStart(2, '0') });
 }

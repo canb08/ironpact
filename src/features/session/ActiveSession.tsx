@@ -8,7 +8,7 @@ import { doMinPlan } from '../../core/readiness.ts';
 import type { Exercise, Session, SetRow } from '../../core/types.ts';
 import { haptic, setHapticsOn } from '../../platform/haptics.ts';
 import { keepAwake, releaseKeepAwake } from '../../platform/wakeLock.ts';
-import { Button, HoldButton, copy, fill, useToast } from '../../ui';
+import { HoldButton, copy, fill, useToast } from '../../ui';
 import { PrCard } from '../prs/PrCard.tsx';
 import { prEyebrow } from '../prs/label.ts';
 import { defaultRestSeconds } from '../timer/restTimer.ts';
@@ -177,16 +177,13 @@ export function ActiveSession({ session, onFinish, initialExercise }: {
       </HoldButton>
 
     </header>
-    <Button className="session-exercise" size="xl" variant="secondary" onClick={() => setPickerOpen(true)}>
-      {focus?.name ?? copy.sessionPickExercise}
-    </Button>
     {baseline && <p className="session-baseline" role="status">{copy.x4Baseline}</p>}
     <WriteFeedback error={write.error} retry={write.retry} />
     {shown && <PrCard event={shown} onClose={() => setCard(null)} />}
     {focus ? <LoggingCard key={focus.id} session={session} exercise={focus} sets={snapshot.sets.filter((row) => row.exercise_id === focus.id)}
       reduceMotion={snapshot.profile?.reduce_motion} allSets={snapshot.sets} exercises={snapshot.exercises} bigJumps={snapshot.profile?.big_jumps ?? false}
       prefillSets={prefillSets} pending={snapshot.pending} restSeconds={restSeconds} nudge={nudge}
-      onNext={goNext} onLogged={noteSet} finishing={write.busy} onBusyChange={setLoggingBusy} />
+      onNext={goNext} onChangeExercise={() => setPickerOpen(true)} onLogged={noteSet} finishing={write.busy} onBusyChange={setLoggingBusy} />
       : <div className="session-empty"><p>{copy.sessionNoSets}</p></div>}
     <ExercisePicker open={pickerOpen ?? !focus} onClose={() => setPickerOpen(false)}
       onSelect={(row) => { setSelection(row); setPickerOpen(false); }} />

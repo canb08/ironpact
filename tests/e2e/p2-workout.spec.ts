@@ -30,21 +30,21 @@ async function ensureBench(page: Page): Promise<void> {
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect.poll(async () => {
     if (await picker.isVisible()) return 'picker';
-    if (await page.getByRole('button', { name: 'Bench press', exact: true }).isVisible()) return 'ready';
+    if (await page.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true }).isVisible()) return 'ready';
     return '';
   }).not.toBe('');
   if (await picker.isVisible()) {
     await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
     await expect(picker).toBeHidden();
   }
-  await expect(page.getByRole('button', { name: 'Bench press', exact: true })).toBeVisible();
+  await expect(page.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true })).toBeVisible();
   await skipReadiness(page);
 }
 
 async function pressStartUntilOpen(page: Page): Promise<void> {
   const start = page.getByRole('button', { name: copy.start, exact: true });
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
-  const bench = page.getByRole('button', { name: 'Bench press', exact: true });
+  const bench = page.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true });
   const install = page.getByRole('link', { name: copy.installContinue });
   // Floor START and the session START share a name. The install gate can cover the floor
   // for a moment after it has already painted, so leave that gate before tapping START.
@@ -178,7 +178,8 @@ test('a heavier set shows a PR card and deleting that set removes the PR', async
   await expect(card).toBeVisible();
   await expect.poll(() => livePrCount(page)).toBeGreaterThan(0);
 
-  // The PR card covers the row, so a pointer click never reaches ×. Fire the button itself.
+  // Keep the PR visible while operating its set's menu, proving deletion removes the card.
+  await page.getByRole('button', { name: fill(copy.x4SetOptions, { index: 1 }), exact: true }).evaluate((element) => { (element as HTMLButtonElement).click(); });
   const remove = page.getByRole('button', { name: fill(copy.sessionDelete, { index: 1 }), exact: true });
   await remove.evaluate((element) => { (element as HTMLButtonElement).click(); });
   await expect(card).toBeHidden();
