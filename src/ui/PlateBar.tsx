@@ -1,7 +1,7 @@
 import { copy, fill } from './copy';
 
 export interface PlateBarMember {
-  name: string;
+  name?: string | null;
   credits: number;
   target: number;
   minCount?: number;
@@ -28,35 +28,43 @@ function plateStates(member: PlateBarMember): Array<'full' | 'min' | 'empty'> {
 
 /** Owner colour, side, thickness and a text alternative all carry the same information. */
 export function PlateBar({ members, className = '' }: PlateBarProps) {
-  const label = members.map((member) => fill(copy.x1PlateLabel, {
+  const namedMembers = members.map((member, index) => ({
+    ...member,
+    name: member.name?.trim() || (index === 0 ? copy.x1You : copy.x1Partner),
+  }));
+  const label = namedMembers.map((member) => fill(copy.x1PlateLabel, {
     name: member.name, credits: member.credits, target: member.target,
   })).join(copy.x1PlateSeparator);
   return <div className={`ui-plate-bar ${className}`} role="img" aria-label={label}>
     <div className="ui-plate-bar__labels" aria-hidden="true">
-      {members.map((member, index) => <span key={index}>{member.name}</span>)}
+      {namedMembers.map((member, index) => <span key={index}>{member.name}</span>)}
     </div>
-    <svg viewBox="0 0 320 80" aria-hidden="true" focusable="false">
-      <path d="M 8 40 H 312" className="ui-plate-bar__shaft" />
-      <path d="M 136 36 V 44 M 144 36 V 44 M 176 36 V 44 M 184 36 V 44" className="ui-plate-bar__grip" />
-      {members.map((member, side) => {
+    <svg viewBox="0 0 343 112" aria-hidden="true" focusable="false">
+      <path d="M 3 56 H 340" className="ui-plate-bar__shaft" />
+      <path d="M 155 53 V 59 M 163 53 V 59 M 180 53 V 59 M 188 53 V 59" className="ui-plate-bar__grip" />
+      <rect x={140} y={38} width={8} height={36} rx={3} className="ui-plate-bar__collar" />
+      <rect x={195} y={38} width={8} height={36} rx={3} className="ui-plate-bar__collar" />
+      {namedMembers.map((member, side) => {
         const states = plateStates(member);
-        const gap = Math.min(15, 105 / Math.max(1, states.length));
+        // Keep the 3px gaps; exceptionally dense MIN weeks narrow the plates to fit.
+        const pitch = Math.min(17, 119 / states.length);
+        const width = pitch - 3;
         return <g key={side} data-side={side === 0 ? 'you' : 'partner'}>
           {states.map((state, index) => <rect
             key={index}
             data-plate={state}
-            x={side === 0 ? 119 - index * gap : 193 + index * gap}
-            y={state === 'min' ? 15 : 8}
-            width={state === 'min' ? 4 : 8}
-            height={state === 'min' ? 50 : 64}
-            rx={2}
+            x={side === 0 ? 137 - width - index * pitch : 206 + index * pitch}
+            y={state === 'min' ? 28 : 12}
+            width={width}
+            height={state === 'min' ? 56 : 88}
+            rx={3}
             className={`ui-plate-bar__plate ui-plate-bar__plate--${side === 0 ? 'you' : 'partner'} ui-plate-bar__plate--${state}`}
           />)}
         </g>;
       })}
     </svg>
     <div className="ui-plate-bar__labels ui-plate-bar__counts" aria-hidden="true">
-      {members.map((member, index) => <span key={index}>{fill(copy.x1PlateCount, {
+      {namedMembers.map((member, index) => <span key={index}>{fill(copy.x1PlateCount, {
         credits: member.credits, target: member.target,
       })}</span>)}
     </div>

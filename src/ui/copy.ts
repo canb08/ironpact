@@ -607,6 +607,8 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── H7: add this ticket's strings directly below ──
   rackItName: 'RACK IT, hold to rack it.',
   // ── X1: R2 foundation ──
+  x1You: 'You',
+  x1Partner: 'Partner',
   x1ThisWeek: 'This week',
   x1WeekComplete: 'Week complete',
   x1RingRow: '{credits} of {target}, {mins} MIN',
@@ -616,7 +618,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   x1PlateLabel: '{name} {credits} of {target}',
   x1PlateSeparator: ', ',
   x1PlateCount: '{credits} of {target}',
-  x1ThinPlate: 'Thin plates count a MIN: half a session.',
+  x1ThinPlate: 'Short plates count a MIN: half a session.',
   x1Step: 'Step ±{step}',
   x1Back: 'Go back',
   x1Header: 'Screen header',

@@ -67,7 +67,8 @@
   --tier-obsidian: oklch(0.9402239586391736 0.007022164057397624 88.64413485918463); /* #EDEBE6 */
   --member-volt: oklch(0.5630527479724862 0.2053247616878064 21.795252933919564); /* #D3263A */
   --member-ice: oklch(0.5192939090997349 0.17119692918151216 260.03077639819065); /* #2563C9 */
-  --on-primary: oklch(1.0000000000000002 0 none); /* #FFFFFF */
+  --primary: oklch(0.9402239586391736 0.007022164057397624 88.64413485918463); /* #EDEBE6 */
+  --on-primary: oklch(0.2394745547998525 0.00589853968303904 271.1652166555608); /* #1E1F22 */
   --success-text: oklch(0.7628298368810807 0.012240676052095105 264.4946479982736); /* #AEB2BA */
   --partner-text: oklch(0.7983648394771569 0.07741450019739547 265.0484933004751); /* #A5BDF0 */
   /* Legacy semantic names keep the screen tickets compatible. Plate colours never change. */
@@ -106,6 +107,8 @@
 
 [data-theme='light'] {
   color-scheme: light;
+  --primary: oklch(0.2394745547998525 0.00589853968303904 271.1652166555608); /* #1E1F22 */
+  --on-primary: oklch(0.9402239586391736 0.007022164057397624 88.64413485918463); /* #EDEBE6 */
   --bg: oklch(0.9402239586391736 0.007022164057397624 88.64413485918463); /* #EDEBE6 */
   --surface-1: oklch(0.9645790630658888 0.00573603145712292 84.56628541195676); /* #F5F3EF */
   --surface-2: oklch(0.9645790630658888 0.00573603145712292 84.56628541195676); /* #F5F3EF */
@@ -212,7 +215,7 @@
     box-shadow: var(--elev-highlight);
   }
   .ui-button--primary {
-    background: var(--plate-red);
+    background: var(--primary);
     color: var(--on-primary);
   }
   .ui-button--secondary {
@@ -234,7 +237,7 @@
     outline-offset: -4px;
   }
   .ui-button:disabled {
-    opacity: 0.45;
+    opacity: 0.4;
     cursor: default;
   }
   .ui-stepper {
@@ -580,16 +583,17 @@
   .ui-segmented :disabled { opacity: 0.45; cursor: default; }
   .ui-plate-bar { min-width: 0; }
   .ui-plate-bar svg { display: block; width: 100%; height: auto; margin-block: var(--s-3); }
-  .ui-plate-bar__labels { display: flex; justify-content: space-between; gap: var(--s-4); }
+  .ui-plate-bar__labels { display: flex; justify-content: space-between; gap: var(--s-4); font-weight: 600; }
   .ui-plate-bar__labels > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .ui-plate-bar__labels > span:last-child { text-align: end; }
-  .ui-plate-bar__counts { color: var(--text-muted); font-size: var(--t-sm); }
-  .ui-plate-bar__shaft { stroke: var(--steel); stroke-width: 5; stroke-linecap: round; }
+  .ui-plate-bar__counts { color: var(--text); font: 600 var(--t-xl)/1.15 var(--font-number); font-variant-numeric: tabular-nums; }
+  .ui-plate-bar__shaft { stroke: var(--steel); stroke-width: 6; stroke-linecap: round; }
   .ui-plate-bar__grip { stroke: var(--text); stroke-width: 1; }
+  .ui-plate-bar__collar { fill: var(--steel); stroke: var(--text-muted); stroke-width: 1; }
   .ui-plate-bar__plate { stroke: var(--text-muted); stroke-width: 1; }
   .ui-plate-bar__plate--you { fill: var(--plate-red); }
   .ui-plate-bar__plate--partner { fill: var(--plate-blue); }
-  .ui-plate-bar__plate--empty { fill: var(--bg); stroke-dasharray: 3 3; }
+  .ui-plate-bar__plate--empty { fill: var(--bg); stroke: var(--steel); stroke-opacity: 0.45; }
   .ui-ring svg { max-width: 100%; height: auto; }
   .ui-gallery { gap: var(--s-5); }
   .ui-gallery > header p { margin: var(--s-3) 0 0; color: var(--text-muted); font-size: var(--t-sm); }

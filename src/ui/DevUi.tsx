@@ -23,8 +23,8 @@ function Gallery() {
     action: { label: copy.undo, onClick: () => { showToast({ message: copy.undone }); } },
   });
   const members = [
-    { name: copy.ringYou, credits: 2, target: 3 },
-    { name: copy.ringPartner, credits: 1, target: 3 },
+    { name: copy.x1You, credits: 2, target: 3 },
+    { name: copy.x1Partner, credits: 1, target: 3 },
   ] as const;
   const ringMembers = members.map((member, index) => ({
     ...member, id: String(index), initial: member.name.slice(0, 1).toUpperCase(),

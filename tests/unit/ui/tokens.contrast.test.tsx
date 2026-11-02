@@ -29,6 +29,10 @@ it('preserves the R2 palette in both themes', () => {
   expect(formatHex(colour(light, 'text'))).toBe(palette.rubber);
   expect(formatHex(colour(light, 'bg'))).toBe(palette.chalk);
   expect(formatHex(colour(dark, 'text'))).toBe(palette.chalk);
+  expect(formatHex(colour(dark, 'primary'))).toBe(palette.chalk);
+  expect(formatHex(colour(dark, 'on-primary'))).toBe(palette.rubber);
+  expect(formatHex(colour(light, 'primary'))).toBe(palette.rubber);
+  expect(formatHex(colour(light, 'on-primary'))).toBe(palette.chalk);
 });
 
 // Fixed plate colours are decorative fills. Text uses AA ink or a contrasting label.
@@ -40,7 +44,7 @@ for (const [name, theme] of Object.entries({ dark, light })) {
       for (const background of ['bg', 'surface-1', 'surface-2', 'surface-3']) pairs.push([ink, background, 4.5]);
     }
     pairs.push(
-      ['on-primary', 'plate-red', 4.5], ['rubber', 'plate-yellow', 4.5],
+      ['on-primary', 'primary', 4.5], ['rubber', 'plate-yellow', 4.5],
       ['on-molten', 'molten', 4.5], ['bg', 'text', 4.5],
       ['line', 'bg', 3], ['line', 'surface-2', 3],
     );
