@@ -357,6 +357,17 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P3E: add this ticket's strings directly below ──
 
   // ── P3F: add this ticket's strings directly below ──
+  progressTitle: 'Progress',
+  progressExercise: 'Exercise',
+  progressShowPartner: 'Show {partner}',
+  progressYou: 'You',
+  progressChartKg: 'Best e1RM over 12 weeks, kilograms.',
+  progressChartPercent: 'Best e1RM over 12 weeks. Both lines are a percent of each person\'s own first value. {partner} is dashed.',
+  progressPointKg: '{date} · {kg} kg',
+  progressPointOwn: '{date} · {percent}% · {kg} kg',
+  progressPointPartner: '{date} · {percent}%',
+  progressPartnerQuiet: 'No comparable e1RM for {partner} in these 12 weeks.',
+
   // ── P4A: add this ticket's strings directly below ──
   devFoundation: 'Self-hosted type, grain and steel.',
   devGlyphs: 'Glyphs',
