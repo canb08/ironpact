@@ -13,6 +13,7 @@ import { createDataRepo } from '../../../../src/data/repo.ts';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
 import QuickLogScreen from '../../../../src/features/quicklog/QuickLogScreen.tsx';
 import { copy, fill } from '../../../../src/ui/copy.ts';
+import * as feelModule from '../../../../src/ui/feel/feel.ts';
 import { ManualEnvironment } from '../../data/harness.ts';
 
 let repo: ReturnType<typeof createDataRepo> | undefined;
@@ -67,13 +68,20 @@ function setField(label: string, value: string) {
   fireEvent.change(screen.getByRole('textbox', { name: label }), { target: { value } });
 }
 
+function fillRun(distance: string, duration: string) {
+  fireEvent.click(screen.getByRole('button', { name: copy.y6TypeDistance }));
+  fireEvent.change(screen.getByRole('textbox', { name: copy.y6DistanceKm }), { target: { value: distance } });
+  fireEvent.click(screen.getByRole('button', { name: copy.y6TypeDuration }));
+  fireEvent.change(screen.getByRole('textbox', { name: copy.y6DurationClock }), { target: { value: duration } });
+}
+
 it('shows the copy for each quick-log range error and does not save', async () => {
   const created = await makeRepo();
   const cases: { path: string; fill: () => void; id: string; text: string }[] = [
-    { path: '/log/run', fill: () => { setField(copy.distance, '101'); setField(copy.duration, '30:00'); }, id: 'error-distance', text: copy.outOfRange },
-    { path: '/log/run', fill: () => { setField(copy.distance, '0'); setField(copy.duration, '30:00'); }, id: 'error-distance', text: copy.outOfRange },
-    { path: '/log/run', fill: () => { setField(copy.distance, '5'); setField(copy.duration, '24:00:00'); }, id: 'error-duration', text: copy.outOfRange },
-    { path: '/log/run', fill: () => { setField(copy.distance, '5'); setField(copy.duration, '0:00'); }, id: 'error-duration', text: copy.outOfRange },
+    { path: '/log/run', fill: () => fillRun('101', '30:00'), id: 'error-distance', text: copy.outOfRange },
+    { path: '/log/run', fill: () => fillRun('0', '30:00'), id: 'error-distance', text: copy.outOfRange },
+    { path: '/log/run', fill: () => fillRun('5', '24:00:00'), id: 'error-duration', text: copy.outOfRange },
+    { path: '/log/run', fill: () => fillRun('5', '0:00'), id: 'error-duration', text: copy.outOfRange },
     { path: '/log/martial', fill: () => setField(copy.minutes, '481'), id: 'error-minutes', text: copy.outOfRange },
     { path: '/log/martial', fill: () => setField(copy.minutes, '0'), id: 'error-minutes', text: copy.outOfRange },
     { path: '/log/martial', fill: () => { setField(copy.minutes, '60'); setField(copy.rounds, '100'); }, id: 'error-rounds', text: copy.outOfRange },
@@ -115,12 +123,62 @@ it('shows the copy for each quick-log range error and does not save', async () =
   expect(entries.bodyweight).toHaveLength(0);
 });
 
-it('shows live pace for a valid run', async () => {
+it('shows live pace for a valid run and keeps the keyboard off the hot path', async () => {
   await makeRepo();
   renderLog('/log/run');
-  setField(copy.distance, '5.2');
-  setField(copy.duration, '27:40');
+  expect(screen.queryByRole('textbox')).toBeNull();
+  const distance = await screen.findByRole('slider', { name: copy.distance });
+  fireEvent.keyDown(distance, { key: 'ArrowUp' });
+  expect(screen.getByTestId('pace').textContent).toBe(fill(copy.paceLine, { time: '5:53' }));
+  fillRun('5.2', '27:40');
   expect(screen.getByTestId('pace').textContent).toBe(fill(copy.paceLine, { time: '5:19' }));
+});
+
+it('same as last run is two taps and lands with a plate feel', async () => {
+  const created = await makeRepo();
+  const feelSpy = vi.spyOn(feelModule, 'feel');
+  const first = await created.w.logRun({ distance_m: 5200, duration_s: 1660, rpe: 7, note: 'easy' });
+  if (!first.ok) throw new Error('seed run failed');
+  renderLog('/log/run');
+  expect(screen.queryByRole('textbox')).toBeNull();
+  fireEvent.click(await screen.findByRole('button', { name: copy.y6SameAsLast }));
+  expect(screen.getByRole('slider', { name: copy.distance }).getAttribute('aria-valuenow')).toBe('5.2');
+  expect(screen.getByRole('slider', { name: copy.duration }).getAttribute('aria-valuenow')).toBe('1660');
+  expect(screen.getByTestId('pace').textContent).toBe(fill(copy.paceLine, { time: '5:19' }));
+  fireEvent.click(screen.getByRole('button', { name: copy.save }));
+  await waitFor(async () => {
+    const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
+    expect(entries.cardio).toHaveLength(2);
+  });
+  const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
+  const saved = entries.cardio.find((row) => row.id !== first.value.id);
+  expect(saved).toMatchObject({ distance_m: 5200, duration_s: 1660, rpe: 7, note: 'easy' });
+  expect(feelSpy).toHaveBeenCalledWith('plate');
+  feelSpy.mockRestore();
+});
+
+it('hides same as last run until a run exists', async () => {
+  await makeRepo();
+  renderLog('/log/run');
+  await waitFor(() => {
+    expect(screen.getByTestId('run-form').getAttribute('data-last')).toBe('no');
+  });
+  expect(screen.queryByRole('button', { name: copy.y6SameAsLast })).toBeNull();
+  expect(screen.queryByRole('textbox')).toBeNull();
+});
+
+it('live run stop fills the duration and focuses distance', async () => {
+  await makeRepo();
+  renderLog('/log/run');
+  fireEvent.click(await screen.findByRole('button', { name: copy.y6LiveRun }));
+  fireEvent.click(await screen.findByRole('button', { name: copy.y6StartRun }));
+  expect(screen.getByText(copy.y6NoGps)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: copy.y6StopRun }));
+  await waitFor(() => {
+    expect(screen.getByRole('slider', { name: copy.duration }).getAttribute('aria-valuenow')).toBe('1');
+  });
+  expect(document.activeElement).toBe(screen.getByRole('slider', { name: copy.distance }));
+  expect(screen.queryByRole('textbox')).toBeNull();
 });
 
 it('weight twice on the same day keeps one uuidv5 row', async () => {

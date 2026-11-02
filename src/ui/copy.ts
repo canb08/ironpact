@@ -788,6 +788,21 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   x3DebugWeek: 'Week closed for preview.',
   x3Install: 'Install SPOTTER for quick access',
   x3DismissInstall: 'Dismiss install reminder',
+
+  // ── Y6
+  y6SameAsLast: 'Same as last run',
+  y6LiveRun: 'Live run',
+  y6StartRun: 'Start run',
+  y6StopRun: 'Stop run',
+  y6CancelRun: 'Cancel live run',
+  y6NoGps: 'No location. The timer fills the duration.',
+  y6Elapsed: 'Elapsed',
+  y6TypeDistance: 'Type distance',
+  y6TypeDuration: 'Type duration',
+  y6DistanceKm: 'Kilometres',
+  y6DurationClock: 'Duration as mm:ss',
+  y6More: 'Add RPE and a note',
+  y6MinSec: 'min:sec',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
