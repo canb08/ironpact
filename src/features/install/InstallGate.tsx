@@ -188,7 +188,7 @@ export default function InstallGate() {
             <Button variant="secondary" onClick={() => setReplay((value) => value + 1)}>{copy.installAgain}</Button>
           </>
         ) : null}
-        <Link className="install-skip" to="/" replace onClick={() => dismissInstallGate()}>{copy.installSkip}</Link>
+        <Link className="install-skip" to="/" replace onClick={() => dismissInstallGate()}>{copy.installContinue}</Link>
       </div>
     </main>
   );

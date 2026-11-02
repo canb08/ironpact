@@ -51,7 +51,7 @@ describe('S1 installation gate', () => {
     expect(screen.getByText(instruction)).toBeTruthy();
     expect(screen.queryByRole('button', { name: copy.installButton })).toBeNull();
     expect(platform.persistStorageAfterInstall).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('link', { name: copy.installSkip }));
+    fireEvent.click(screen.getByRole('link', { name: copy.installContinue }));
     expect(localStorage.getItem('ironpact.install-dismissed')).toBe('1');
     expect(screen.getByText('Floor destination')).toBeTruthy();
   });
@@ -115,7 +115,7 @@ describe('S1 installation gate', () => {
     fireEvent.click(screen.getByRole('button', { name: copy.installButton }));
     await waitFor(() => expect(screen.getByRole('status').textContent).toBe(copy.installPromptUnavailable));
     expect(screen.getByText(copy.installAndroidMenu)).toBeTruthy();
-    expect(screen.getByRole('link', { name: copy.installSkip })).toBeTruthy();
+    expect(screen.getByRole('link', { name: copy.installContinue })).toBeTruthy();
   });
 
   it('loops the iOS walkthrough and restarts it from Share', () => {
