@@ -105,7 +105,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — review fixes look right; 3 e2e failures (p7-shell focus, p3-demo flow, 200% wrap) sent back |
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
-| X7 | Crew centred on partner | Grok | E | running — friend's Codex (Sol High) |
+| X7 | Crew centred on partner | Grok | E | **running** — friend's Grok (re-fired 23:00: the Codex send didn't go through and Codex is at 10% until 00:43) |
 | X8 | Settings grouped sub-pages | Codex Sol High | C | PR #73 — Lead review: section headers + switches instead of checkboxes |
 | X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
