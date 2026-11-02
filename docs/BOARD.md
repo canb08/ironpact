@@ -64,7 +64,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P4B | Motion foundation + Tier-3 micro + moment queue | Grok | C | merged #40 |
 | P4C | PR takeover + partner shockwave hook | Grok (Codex out of usage) | C | running 2026-11-02 04:24 |
 | P5B | S14 completed | Grok | C | merged #38 |
-| P5C | S16 Settings full | Grok (Codex out of usage) | C | running 2026-11-02 03:42 |
+| P5C | S16 Settings full | Grok | C | merged #42 |
 | P4G | Playwright Phase 4 | Grok | **E** (moved from C to balance lanes, 2026-11-02) | todo — after P4C, P4E |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (Can's Codex took it: lane C idle, P5C needs it; Can's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
