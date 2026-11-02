@@ -101,11 +101,11 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 |---|---|---|---|---|
 | X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | merged #65 (Lead review round 2: chunkier PlateBar, chalk primary) |
 | X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | merged #66 (shell copy in src/app/shell/copy.ts → fold into copy.ts in X10) |
-| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | PR #68 — screenshots approved; e2e red (p2-workout START helper), sent back to Codex |
+| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | merged #68 (Lead screenshot review; e2e START helper fixed in round 2) |
 | X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — Lead review: 4 changes (current-exercise sets hidden under dock, name looks like a field, row icons, summary header) in PR comment; owner's Codex out until 21:36, resume in the same chat |
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
-| X6 | Day editor: compact rows + edit sheet | Grok | E | running — friend's Codex (Sol High), fired after X5 merged |
-| X7 | Crew centred on partner | Grok | E | ready — fires when X3 merges (friend's Codex, 2 at a time) |
+| X6 | Day editor: compact rows + edit sheet | Grok | E | PR #71 — screenshots approved, CI running |
+| X7 | Crew centred on partner | Grok | E | running — friend's Codex (Sol High) |
 | X8 | Settings grouped sub-pages | Grok | C | queued (after X1+X2) |
 | X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
@@ -116,8 +116,8 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 
 | Ticket | What | Model | Lane | Status |
 |---|---|---|---|---|
-| Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | **running** — friend's Grok |
-| Y2 | Muay Thai pad class mode (the real class structure), bag timer, quick log, combo book | Grok Build | E | queued (after X3, Y1) |
+| Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | PR #70 — reviewed, CI running (iOS haptic check on device pending) |
+| Y2 | Muay Thai pad class mode (the real class structure), bag timer, quick log, combo book | Grok Build | E | queued (X3 done; after Y1) |
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
