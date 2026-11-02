@@ -32,7 +32,10 @@ it('moves a run to another day and shows it only there', async () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('2026-10-25');
   });
   expect(await screen.findByRole('region', { name: copy.run })).toBeTruthy();
-  expect(screen.queryByText(copy.emptyDay)).toBeNull();
+  // The moved day re-reads live data; the empty state can flash before the run lands.
+  await waitFor(() => {
+    expect(screen.queryByText(copy.emptyDay)).toBeNull();
+  });
 
   fireEvent.click(screen.getByRole('link', { name: DAY }));
   await waitFor(() => {
