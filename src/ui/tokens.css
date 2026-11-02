@@ -1,5 +1,61 @@
 @import 'tailwindcss' source('../');
 
+/* Latin only, three woff2 files. Family names are the fontsource variable names (opsz lives on Big Shoulders, not the display cut). */
+@font-face {
+  font-family: 'Big Shoulders Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/big-shoulders/files/big-shoulders-latin-opsz-normal.woff2')
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Big Shoulders Fallback';
+  src: local('Arial Narrow'), local('Arial');
+  size-adjust: 100%;
+  ascent-override: 98.55%;
+  descent-override: 21.45%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Inter Tight Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2')
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter Tight Fallback';
+  src: local('Arial');
+  size-adjust: 100%;
+  ascent-override: 96.88%;
+  descent-override: 24.12%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url('../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src: local('ui-monospace'), local('Consolas');
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 /* Hex comments are the SPEC source values, converted with culori 4.0.2. */
 
 :root {
@@ -27,6 +83,9 @@
   --tier-obsidian: oklch(0.20441636691914422 0.02500746448619417 307.09006933664205); /* #1A1420 */
   --member-volt: oklch(0.9268442532183397 0.2312567299804858 124.41329467547507); /* #C6FF00 */
   --member-ice: oklch(0.7972370958590358 0.146534523865868 221.31090573680405); /* #00D1FF */
+  --glass: rgb(18 18 20 / 0.72);
+  --elev-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --elev-sheet: 0 -24px 48px rgb(0 0 0 / 0.6);
   --s-1: 0.25rem;
   --s-2: 0.5rem;
   --s-3: 0.75rem;
@@ -41,12 +100,12 @@
   --r-xl: 1.75rem;
   --r-full: 9999px;
   --gutter: var(--s-4);
-  --font-body: system-ui, sans-serif;
-  --font-display: system-ui, sans-serif;
-  --font-data: ui-monospace, monospace;
+  --font-body: 'Inter Tight Variable', 'Inter Tight Fallback', system-ui, sans-serif;
+  --font-display: 'Big Shoulders Variable', 'Big Shoulders Fallback', 'Arial Narrow', sans-serif;
+  --font-data: 'JetBrains Mono Variable', 'JetBrains Mono Fallback', ui-monospace, monospace;
   --t-mega: clamp(6rem, 28vw, 10rem);
-  --t-hero: clamp(3rem, 17vw, 4rem);
-  --t-xl: clamp(2rem, 12vw, 2.75rem);
+  --t-hero: 4rem;
+  --t-xl: 2.75rem;
   --t-lg: 1.75rem;
   --t-md: 1.25rem;
   --t-body: 1rem;
@@ -64,13 +123,18 @@
   --line: oklch(0.8669896967028434 0.011373456792052842 89.73294375015145); /* #D6D3CB */
   --text: oklch(0.17852907193943604 0.0040663502664129245 285.98065825000236); /* #111113 */
   --text-muted: oklch(0.46969229217061503 0.009573850750058384 286.02536656535545); /* #5A5A60 */
-  --molten: oklch(0.5486960711668414 0.1826216783991354 37.250667432719375); /* #C43A00 */
+  /* L1: same hue as the dark source, lower lightness. Molten ≥4.5:1 on surface-2; tiers ≥3:1 on surface-1. */
+  --molten: oklch(0.5326960711668414 0.1826216783991354 37.250667432719375); /* #BE3400 */
   --molten-glow: oklch(
-    0.5486960711668414 0.1826216783991354 37.250667432719375 / 0.14901960784313725
-  ); /* #C43A0026 */
+    0.5326960711668414 0.1826216783991354 37.250667432719375 / 0.14901960784313725
+  ); /* #BE340026 */
   --on-molten: oklch(1.0000000000000002 0 none); /* #FFFFFF */
+  --tier-iron: oklch(0.5607673365777687 0.011137769388828257 247.98598228987674); /* #70757B */
+  --tier-steel: oklch(0.6455645205283574 0.06622277884419629 244.56422214084643); /* #6B93B4 */
+  --tier-titanium: oklch(0.6523477614573425 0.007672865306754956 260.7315715011707); /* #8D9095 */
   --member-volt: oklch(0.48393908549741005 0.12608427988867854 127.73975745196654); /* #4A6B00 */
   --member-ice: oklch(0.4867572516100293 0.09090413134223822 223.33099713185374); /* #006A85 */
+  --glass: rgb(244 242 237 / 0.78);
   /* Destructive text needs a darker ink on white. */
   --danger: oklch(0.5177506053555555 0.18376962796000748 16.23893258343034); /* #BA2442 */
 }
@@ -128,7 +192,25 @@
     margin: 0;
     background: var(--bg) !important;
     color: var(--text) !important;
-    font: var(--t-body)/1.45 var(--font-body);
+    font: var(--t-body) / 1.45 var(--font-body);
+  }
+  /* One grain layer. Never animated. Off when battery saver is on. 2% in light. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url('../assets/grain-256.png');
+    background-size: 256px 256px;
+  }
+  [data-theme='light'] body::before {
+    opacity: 0.02;
+  }
+  html[data-battery-saver='on'] body::before {
+    display: none;
   }
   :focus-visible {
     outline: 2px solid var(--text);
@@ -156,6 +238,7 @@
     overflow-wrap: anywhere;
     cursor: pointer;
     touch-action: manipulation;
+    box-shadow: var(--elev-highlight);
   }
   .ui-button--primary {
     background: var(--molten);
@@ -250,7 +333,7 @@
     padding: var(--s-4);
     padding-bottom: max(var(--s-4), env(safe-area-inset-bottom));
     border-radius: var(--r-xl) var(--r-xl) 0 0;
-    box-shadow: 0 -24px 48px rgb(0 0 0 / 60%);
+    box-shadow: var(--elev-sheet);
     overflow-wrap: anywhere;
   }
   .ui-sheet h2 {
@@ -295,9 +378,10 @@
   }
   .ui-number {
     display: inline-block;
-    font-family: var(--font-data);
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
+    font-weight: 900;
     overflow-wrap: anywhere;
   }
   .ui-number--hero {
@@ -306,6 +390,7 @@
   }
   .ui-number--xl {
     font-size: var(--t-xl);
+    font-weight: 800;
     line-height: 0.95;
   }
   .ui-number--mega {
@@ -326,13 +411,20 @@
     gap: var(--s-5);
   }
   .ui-gallery h1 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
     font-size: var(--t-lg);
     font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
   .ui-gallery h2 {
+    font-family: var(--font-body);
     font-size: var(--t-md);
-    margin: 0 0 var(--s-4);
     font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 var(--s-4);
   }
   .ui-gallery section {
     padding: var(--s-4);
@@ -340,6 +432,7 @@
     border: 1px solid var(--line);
     border-radius: var(--r-lg);
     min-width: 0;
+    box-shadow: var(--elev-highlight);
   }
   .ui-gallery__row,
   .ui-gallery__theme {
@@ -373,5 +466,87 @@
       animation: none;
       transition: none;
     }
+  }
+  html[data-reduced-motion='on'] .ui-hold__progress,
+  html[data-reduced-motion='on'] .ui-hold__progress::-webkit-progress-value,
+  html[data-reduced-motion='on'] .ui-hold__progress::-moz-progress-bar {
+    visibility: hidden;
+    animation: none;
+    transition: none;
+  }
+  /* Hero cards only. A screen keeps this to four. */
+  .ui-edge-steel {
+    position: relative;
+    border-color: transparent;
+  }
+  .ui-edge-steel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: conic-gradient(
+      from 210deg,
+      var(--line-steel-a),
+      var(--line-steel-b),
+      var(--line-steel-a)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+  /* Nav and rest timer only. Battery saver and missing backdrop-filter stay solid. */
+  .ui-glass {
+    background: var(--surface-2);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    html:not([data-battery-saver='on']) .ui-glass {
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      backdrop-filter: blur(16px) saturate(1.4);
+    }
+  }
+  .ui-knurl {
+    background-image:
+      repeating-linear-gradient(45deg, rgb(242 240 235 / 0.08) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(-45deg, rgb(242 240 235 / 0.08) 0 1px, transparent 1px 4px);
+  }
+  .ui-eyebrow {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--t-xs);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .ui-glyphs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-2);
+  }
+  .ui-glyphs p {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    min-height: 48px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--t-sm);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .ui-glass-bar {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+    padding: var(--s-3) var(--s-4);
+    border-radius: var(--r-lg);
   }
 }

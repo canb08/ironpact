@@ -87,3 +87,14 @@ Each pin was checked with `npm view <package> version` and installed with `--sav
 | Package | Exact version | Purpose |
 |---|---|---|
 | `@supabase/supabase-js` | `2.118.0` | Browser Remote (auth OTP, PostgREST, RPCs); loaded lazily with the data layer, 15 s request timeout |
+
+## P4A design foundation (2026-11-02)
+
+| Package | Exact version | Purpose |
+|---|---|---|
+| `@fontsource-variable/big-shoulders` | `5.3.0` | Display face with `opsz` 10–72 and `wght` 100–900. Latin `opsz` file only. Not the display package (R1 item 8). |
+| `@fontsource-variable/inter-tight` | `5.3.0` | UI and body. Latin `wght` file only. |
+| `@fontsource-variable/jetbrains-mono` | `5.3.0` | Tabular data. Latin `wght` file only. Axis tops out at 800. |
+| `lucide-react` | `1.66.0` | Tree-shaken 24px stroke icons. Named imports only. |
+
+Resolved with `npm view <package> version` on 2026-11-02. Anybody is not installed (D17: drop it first). `culori@4.0.2` stays the existing dev pin used to convert hex to OKLCH. The three latin woff2 files are the only font files emitted.

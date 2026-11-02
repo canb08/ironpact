@@ -344,6 +344,23 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
 
   // ── P3F: add this ticket's strings directly below ──
   // ── P4A: add this ticket's strings directly below ──
+  devFoundation: 'Self-hosted type, grain and steel.',
+  devGlyphs: 'Glyphs',
+  glyphBarbell: 'Barbell',
+  glyphPlate: 'Plate',
+  glyphKettlebell: 'Kettlebell',
+  glyphBelt: 'Belt',
+  glyphShoe: 'Shoe',
+  glyphScale: 'Scale',
+  glyphFlame: 'Forge flame',
+  glyphWatch: 'Stopwatch',
+  devEdge: 'Hero edge',
+  devGlass: 'Glass',
+  devGrainOn: 'Grain on',
+  devBatterySaver: 'Battery saver',
+  devMotion: 'Motion',
+  devReduceMotion: 'Reduce motion',
+  devSaved: 'Saved',
 
   // ── P4B: add this ticket's strings directly below ──
 
