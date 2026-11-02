@@ -53,3 +53,5 @@ G1 deploy (needs Can: Supabase project + Cloudflare Pages, `docs/DEPLOY.md`), Ph
 
 ## Added during the round
 - **P3H** (lane E, Grok, 2026-11-02): shared credit fixtures, `docs/tickets/P3H.md`, from P3A's contract change request (L12). Test-only: `tests/fixtures/credits/**`, two Vitest files, `scripts/credit-fixtures.mjs`, generated `supabase/tests/credits_fixtures.test.sql`. Touches no shared file, so it can't collide with lane C. If lane C changes `credits.ts` or `week_credits`, the fixtures must still pass.
+- **Lane E engine switch** (2026-11-02): friend's Codex weekly limit is used up (resets ~2026-11-08). P3B was finished on Codex before it ran out. Remaining lane E Codex tickets move to **Grok** (several parallel Grok sessions): **P3E** (UI only) and, if still out, **P4E**. Lane E never puts `supabase/**` or `src/data/**` work on Grok; if one appears, it waits for the reset.
+- **P5A** (lane E, Grok) fired 2026-11-02 alongside P3H; it touches only `src/features/stats/**`, so no overlap with P3E or lane C.
