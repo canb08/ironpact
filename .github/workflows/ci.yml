@@ -168,3 +168,29 @@ jobs:
       - name: Playwright (iPhone 15 WebKit and Pixel 7 Chromium)
         run: npx playwright test
 
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Measured budgets fail (H2 PR, ## Found). Keep the report, do not block merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Production build (mock backend)
+        run: npm run build
+        env:
+          VITE_BACKEND: mock
+      - name: Lighthouse CI (vite preview is started by lhci)
+        run: npx lhci autorun
+      - name: Upload Lighthouse reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-ci
+          path: .lighthouseci
+          if-no-files-found: ignore
+
