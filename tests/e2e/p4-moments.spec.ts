@@ -198,7 +198,7 @@ test('partner shockwave bridge plays once across two opens in an independent con
       }, event);
     };
     await reachFloor(opened);
-    await expect(opened.locator(`[aria-labelledby="my-week-heading"] [data-member="${MOCK_USER_IDS.bob}"]`).first()).toBeAttached();
+    await expect(opened.getByTestId('shared-bar')).toHaveAttribute('data-user', MOCK_USER_IDS.bob);
     await deliver(opened);
     const shockwave = opened.getByTestId('partner-shockwave');
     await expect(shockwave).toHaveAttribute('data-shockwave', event.id);

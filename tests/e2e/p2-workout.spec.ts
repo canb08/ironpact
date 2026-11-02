@@ -42,20 +42,25 @@ async function ensureBench(page: Page): Promise<void> {
 }
 
 async function pressStartUntilOpen(page: Page): Promise<void> {
+  const todayStart = page.getByRole('link', { name: copy.x3StartWorkout, exact: true });
   const start = page.getByRole('button', { name: copy.start, exact: true });
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   const bench = page.getByRole('button', { name: 'Bench press', exact: true });
   const install = page.getByRole('link', { name: copy.installContinue });
-  // Floor START and the session START share a name. The install gate can cover the floor
-  // for a moment after it has already painted, so leave that gate before tapping START.
+  // Today opens the session screen; its existing START opens the picker.
+  // Keep handling the install gate if it covers Today after its first paint.
   await expect(async () => {
     if (await install.isVisible()) await install.click();
+    if (await todayStart.isVisible()) {
+      await todayStart.click();
+      await expect(page).toHaveURL(/\/session$/);
+    }
     if (await start.isVisible()) await start.click();
     if (!(await picker.isVisible())) await expect(bench).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 20_000 });
 }
 
-/** Floor → START → bench, with the readiness sheet out of the way. */
+/** Today → Start workout → session START → bench, then dismiss readiness. */
 async function openBench(page: Page): Promise<void> {
   await reachFloor(page);
   await waitForBench(page);

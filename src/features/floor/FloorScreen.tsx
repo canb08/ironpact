@@ -1,237 +1,146 @@
-import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
-import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import type { MinEntry, Session, SetRow } from '../../core/types.ts';
-import { comebackState } from '../../core/comeback.ts';
-import type { Repo } from '../../data/adapter.ts';
+import { Dumbbell, Footprints, Scale, Swords, Timer } from 'lucide-react';
+import type { Session, SetRow } from '../../core/types.ts';
+import type { Repo, SessionWithSets } from '../../data/adapter.ts';
 import { useRepo } from '../../app/useRepo.ts';
-import { Button, Ring, ToastProvider, copy, fill, useToast } from '../../ui';
-import { BarStrip } from '../duo/BarStrip.tsx';
+import { ListRow, copy, fill } from '../../ui';
+import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { DuoMoments } from '../duo/DuoMoments.tsx';
 import { loadDuo } from '../duo/load.ts';
 import { PresenceBanner } from '../duo/PresenceBanner.tsx';
 import { useCrewTick } from '../duo/useCrewTick.ts';
 import { useDebugWeek } from '../duo/useDebugWeek.ts';
 import { usePresence } from '../duo/usePresence.ts';
-import { barTier, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
+import { barTier, combinedKg, formatRawKg, platesAfterDebugClose, shiftDays } from '../duo/view.ts';
 import { useRepoQuery } from './useRepoQuery.ts';
 import { InstallChip } from './InstallChip.tsx';
+import { SharedBar } from './SharedBar.tsx';
 import '../duo/duo.css';
 import './floor.css';
 
-interface FloorData {
-  duo: NonNullable<Awaited<ReturnType<typeof loadDuo>>>;
-  last: { session: Session; sets: SetRow[] } | undefined;
-  comeback: boolean;
+async function loadFloor(repo: Repo) {
+  const duo = await loadDuo(repo, new Date().toISOString());
+  if (!duo) return null;
+  const [last, partners, entries, prs, exercises] = await Promise.all([
+    repo.q.lastSessionSummary(duo.me.id),
+    Promise.all(duo.partners.map(async (member) => ({
+      member, last: await repo.q.lastSessionSummary(member.id),
+    }))),
+    repo.q.entriesBetween(duo.me.id, duo.me.weekStart, shiftDays(duo.me.weekStart, 6)),
+    repo.q.prEvents({ since: duo.me.weekStart }),
+    repo.q.exercises(),
+  ]);
+  return { duo, last, partners, volume: combinedKg(entries.sets, duo.me.weekStart),
+    prs: prs.filter((pr) => pr.local_date <= duo.me.today), exercises };
 }
 
-async function loadFloor(repo: Repo): Promise<FloorData | null> {
-  const now = new Date().toISOString();
-  const duo = await loadDuo(repo, now);
-  if (!duo) return null;
-  return {
-    duo,
-    last: await repo.q.lastSessionSummary(duo.me.id),
-    comeback: comebackState(duo.me.lastCredit, duo.me.today).active,
-  };
+type FloorData = NonNullable<Awaited<ReturnType<typeof loadFloor>>>;
+
+/** Old default profiles called everyone Athlete; don't present it as a real name. */
+function memberName(name: string, fallback: string): string {
+  return name.trim() && name.trim() !== copy.x3LegacyName ? name.trim() : fallback;
+}
+
+function friendlyDate(date: string, today?: string): string {
+  if (date === today) return copy.x3Today;
+  if (today && date === shiftDays(today, -1)) return copy.x3Yesterday;
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
+  }).format(new Date(`${date}T12:00:00Z`));
 }
 
 function sessionKindLabel(kind: Session['kind']): string {
-  if (kind === 'gym') return copy.gym;
-  if (kind === 'run') return copy.run;
-  if (kind === 'martial') return copy.martialArts;
-  return copy.min;
+  if (kind === 'gym') return copy.x3Workout;
+  if (kind === 'run') return copy.x3Run;
+  if (kind === 'martial') return copy.x3Fight;
+  return copy.x3Min;
 }
 
 function heaviestWorkingSet(sets: readonly SetRow[]): SetRow | undefined {
   return sets.reduce<SetRow | undefined>((best, set) => {
     if (set.is_warmup) return best;
-    if (!best || set.weight_kg > best.weight_kg) return set;
-    return best;
+    return !best || set.weight_kg > best.weight_kg ? set : best;
   }, undefined);
 }
 
-function statusLine(member: FloorData['duo']['me'], live: boolean): string {
-  const status = partnerStatus({ live, lastCredit: member.lastCredit, today: member.today });
-  if (status.kind === 'live') return copy.trainingNow;
-  if (status.kind === 'today') return copy.lastTrainedToday;
-  if (status.kind === 'days') return fill(copy.lastTrained, { days: status.days });
-  return copy.notTrainedYet;
+function sessionDetail(last: SessionWithSets, data: FloorData, today: string): string {
+  const top = heaviestWorkingSet(last.sets);
+  const date = friendlyDate(last.session.local_date, today);
+  if (!top) return fill(copy.x3SessionDetail, { date, kind: sessionKindLabel(last.session.kind) });
+  const exercise = data.exercises.find((row) => row.id === top.exercise_id)?.name ?? copy.x3Workout;
+  return fill(copy.x3SetDetail, { date, exercise, reps: top.reps, kg: formatRawKg(top.weight_kg) });
 }
 
-function FloorBody() {
+const quickLogs = [
+  { to: '/log/run', label: copy.x3Run, Icon: Footprints },
+  { to: '/log/martial', label: copy.x3Fight, Icon: Swords },
+  { to: '/log/weight', label: copy.x3WeighIn, Icon: Scale },
+  { to: '/log/min', label: copy.x3Min, Icon: Timer },
+];
+
+export default function FloorScreen() {
   usePartnerPrShockwave();
   const repo = useRepo();
   const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [tick, setTick] = useState(0);
-  const [hideAdjusted, setHideAdjusted] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const savingRef = useRef(false);
-  const lastMinAt = useRef<number | undefined>(undefined);
   const crewTick = useCrewTick(repo);
   const debugClose = useDebugWeek();
   const presence = usePresence(repo);
-  const data = useRepoQuery(() => loadFloor(repo), [repo, tick, crewTick]);
+  const data = useRepoQuery(() => loadFloor(repo), [repo, crewTick]);
 
-  async function undoMin(entry: MinEntry) {
-    const removed = await repo.w.softDelete('min_entries', entry.id);
-    if (removed.ok) await repo.w.softDelete('sessions', entry.session_id);
-    setTick((value) => value + 1);
-  }
-
-  async function onMin() {
-    const now = performance.now();
-    // A fast local write may finish between taps of the same double-tap.
-    if (savingRef.current || (lastMinAt.current !== undefined && now - lastMinAt.current < 400)) return;
-    lastMinAt.current = now;
-    savingRef.current = true;
-    setSaving(true);
-    try {
-      const result = await repo.w.logMin();
-      if (!result.ok) {
-        showToast({ message: result.error === 'storage_full' ? copy.storageFull : copy.outOfRange });
-        return;
-      }
-      const entry = result.value;
-      showToast({
-        message: copy.minLogged,
-        action: { label: copy.undo, onClick: () => { void undoMin(entry); } },
-      });
-      setTick((value) => value + 1);
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
-    }
-  }
-
-  if (data === undefined) {
-    return (
-      <main className="floor" aria-busy="true">
-        <InstallChip />
-      </main>
-    );
-  }
-  if (data === null) {
-    return (
-      <main className="floor">
-        <InstallChip />
-        <h1>{copy.floor}</h1>
-        <p className="floor-empty">{copy.emptyFloor}</p>
-      </main>
-    );
-  }
+  if (data === undefined) return <main className="floor" aria-busy="true" />;
+  if (data === null) return <main className="floor"><p>{copy.x3Empty}</p><InstallChip /></main>;
 
   const { duo } = data;
-  const names = new Map(duo.partners.map((partner) => [partner.id, partner.name]));
-  const colors = new Map(duo.partners.map((partner) => [partner.id, partner.color]));
-  const liveIds = new Set(presence.rows.map((row) => row.user_id));
-  const top = data.last ? heaviestWorkingSet(data.last.sets) : undefined;
+  const me = { ...duo.me, name: memberName(duo.me.name, copy.x3You) };
+  const partners = duo.partners.map((member) => ({ ...member, name: memberName(member.name, copy.x3Partner) }));
+  const partner = partners[0];
+  const members = [me, ...partners];
   const shownPlates = debugClose ? platesAfterDebugClose(duo.plates) : duo.plates;
-  const meRing = {
-    id: duo.me.id, name: duo.me.name, initial: duo.me.initial, color: duo.me.color,
-    target: duo.me.target, credits: duo.me.credits, minCount: duo.me.minCount,
-  };
-  const coop = [meRing, ...duo.partners.map((partner) => ({
-    id: partner.id, name: partner.name, initial: partner.initial, color: partner.color,
-    target: partner.target, credits: partner.credits, minCount: partner.minCount,
-  }))];
+  const names = new Map(partners.map((member) => [member.id, member.name]));
+  const colors = new Map(partners.map((member) => [member.id, member.color]));
 
-  return (
-    <main className="floor">
-      <InstallChip />
-      <DuoMoments
-        screen="floor"
-        crewId={duo.crewId}
-        weekStart={duo.me.weekStart}
-        members={coop}
-        weekFull={duo.weekFull}
-        plates={shownPlates}
-        tier={barTier(shownPlates)}
-        reduced={duo.reduceMotion}
-        archived={duo.archived}
-        inSession={duo.openSession}
-      />
-      <h1>{copy.floor}</h1>
-      <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} />
-      {data.comeback ? (
-        <section className="comeback" aria-label={copy.comeback}>
-          <h2>{copy.comeback}</h2>
-          <Button size="xl" onClick={() => navigate('/session')}>{copy.shortSession}</Button>
-          <Button size="xl" variant="secondary" disabled={saving} onClick={() => { void onMin(); }}>{copy.justMin}</Button>
-        </section>
-      ) : (
-        <div className="rings">
-          <section className="floor-card" aria-labelledby="my-week-heading">
-            <h2 id="my-week-heading">{copy.myWeek}</h2>
-            <p className="floor-week" data-testid="my-week">{duo.me.line}</p>
-            {/* The toast owns the MIN confirmation; the ring still animates the half segment. */}
-            <Ring members={[meRing]} size="personal" reduced={duo.reduceMotion} />
-            <p className="floor-status">{fill(copy.weeksOn, { count: shownPlates })}</p>
-          </section>
-          {duo.partners.length === 0 ? (
-            <section className="floor-card" aria-labelledby="partner-week-heading">
-              <h2 id="partner-week-heading">{copy.partnerWeek}</h2>
-              {duo.archived ? <p className="is-archived">{copy.archived}</p> : <p>{copy.emptyCrew}</p>}
-              {duo.departed.map((partner) => <p key={partner.id} className="is-archived">{partner.name}</p>)}
-            </section>
-          ) : (
-            <section className="floor-card" aria-labelledby="partner-week-heading">
-              <h2 id="partner-week-heading">{copy.partnerWeek}</h2>
-              {duo.archived ? <p className="is-archived">{copy.archived}</p> : (
-                <Ring members={coop} size="coop" reduced={duo.reduceMotion} />
-              )}
-              {duo.partners.map((partner) => (
-                <div key={partner.id}>
-                  <h3>{partner.name}</h3>
-                  <p className="floor-week" data-testid="partner-week">{partner.line}</p>
-                  <p className="floor-status">{statusLine(partner, liveIds.has(partner.id))}</p>
-                </div>
-              ))}
-            </section>
-          )}
-        </div>
-      )}
-      <BarStrip
-        plates={duo.plates}
-        ghost={duo.weekFull}
-        archived={duo.archived}
-        adjusted={duo.adjusted && !hideAdjusted}
-        debugClose={debugClose}
-        onDismissAdjusted={() => setHideAdjusted(true)}
-        platesTestId="bar-plates"
-        reduced={duo.reduceMotion}
-        batterySaver={duo.batterySaver}
-      />
-      <section className="floor-card" aria-labelledby="last-time-heading">
-        <h2 id="last-time-heading">{copy.lastTime}</h2>
-        {data.last ? (
-          <>
-            <p data-testid="last-session">{fill(copy.lastSession, { date: data.last.session.local_date, kind: sessionKindLabel(data.last.session.kind) })}</p>
-            {top ? <p>{fill(copy.topSet, { reps: top.reps, kg: String(top.weight_kg) })}</p> : null}
-          </>
-        ) : <p className="floor-empty">{copy.emptyFloor}</p>}
-      </section>
-      <nav className="floor-links" aria-label={copy.quickLogs}>
-        <Link className="ui-button ui-button--secondary" to="/log/run">{copy.run}</Link>
-        <Link className="ui-button ui-button--secondary" to="/log/martial">{copy.martialArts}</Link>
-        <Link className="ui-button ui-button--secondary" to="/log/weight">{copy.weight}</Link>
-        <Link className="ui-button ui-button--secondary" to="/log/min">{copy.min}</Link>
-        <Link className="ui-button ui-button--secondary" to="/crew">{copy.crew}</Link>
-        <Link className="ui-button ui-button--secondary" to="/settings">{copy.settings}</Link>
-      </nav>
-      <div className="floor-actions">
-        <Button size="xl" onClick={() => navigate('/session')}>{copy.start}</Button>
-        <Button size="xl" className="floor-min" disabled={saving} onClick={() => { void onMin(); }}>{copy.min}</Button>
-      </div>
-    </main>
-  );
-}
-
-export default function FloorScreen() {
-  return (
-    <ToastProvider>
-      <FloorBody />
-    </ToastProvider>
-  );
+  return <main className="floor">
+    <DuoMoments screen="floor" crewId={duo.crewId} weekStart={me.weekStart}
+      members={members} weekFull={duo.weekFull} plates={shownPlates}
+      tier={barTier(shownPlates)} reduced={duo.reduceMotion}
+      archived={duo.archived} inSession={duo.openSession} />
+    <p className="floor-date"><time dateTime={me.today}>{friendlyDate(me.today)}</time></p>
+    <section className="floor-hero" aria-label={copy.x3SharedBar} data-testid="shared-bar" data-user={me.id} data-partner={partner?.id}>
+      <SharedBar me={me} partner={partner} reduced={duo.reduceMotion || duo.batterySaver} />
+      {duo.archived ? <p className="floor-note">{copy.x3Archived}</p>
+        : !partner ? <p className="floor-note">{copy.x3Invite}</p> : null}
+    </section>
+    <Link className="ui-button ui-button--primary ui-button--xl floor-start" to="/session">
+      <Dumbbell size={24} aria-hidden="true" />{copy.x3StartWorkout}
+    </Link>
+    <nav className="floor-quicklogs" aria-label={copy.x3QuickLogs}>
+      {quickLogs.map(({ to, label, Icon }) => <Link key={to} to={to}>
+        <Icon size={24} aria-hidden="true" /><span>{label}</span>
+      </Link>)}
+    </nav>
+    <p className="floor-min-hint">{copy.x3MinHint}</p>
+    <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} />
+    <section className="floor-activity" aria-label={copy.x3Activity}>
+      <ListRow className="floor-you-row" title={fill(copy.x3LastWorkout, { name: me.name })}
+        detail={data.last ? sessionDetail(data.last, data, me.today) : copy.x3NoWorkouts}
+        chevron={!!data.last} onClick={data.last ? () => navigate(`/day/${data.last!.session.local_date}`) : undefined} />
+      {data.partners.map(({ member, last }) => <ListRow key={member.id}
+        className="floor-partner-row"
+        title={fill(copy.x3LastWorkout, { name: memberName(member.name, copy.x3Partner) })}
+        detail={last ? sessionDetail(last, data, member.today) : copy.x3NoWorkouts} />)}
+      {data.prs.map((pr) => <ListRow key={pr.id} className="floor-pr-row"
+        title={data.exercises.find((row) => row.id === pr.exercise_id)?.name ?? copy.x3Run}
+        detail={fill(copy.x3PrDetail, { date: friendlyDate(pr.local_date, me.today),
+          type: pr.pr_type === 'e1rm' ? copy.x3PrMax : pr.pr_type === 'rep_max' ? fill(copy.x3RepMax, { reps: pr.reps ?? 0 })
+            : pr.pr_type === 'volume' ? copy.x3PrVolume : pr.pr_type === 'pace' ? copy.x3PrPace : copy.x3PrDistance,
+          value: formatRawKg(pr.value), unit: pr.pr_type === 'pace' ? copy.x3SecondsPerKm : pr.pr_type === 'distance' ? copy.x3Metres : copy.x3Kg })}
+        trailing={<span className="ui-chip ui-chip--pr">{copy.x3Pr}</span>}
+        chevron={!!pr.exercise_id} onClick={pr.exercise_id ? () => navigate(`/exercise/${pr.exercise_id}`) : undefined} />)}
+    </section>
+    <p className="floor-volume">{fill(copy.x3Volume, { kg: formatRawKg(data.volume) })}</p>
+    {shownPlates >= 1 && <p className="floor-note" data-testid="week-streak">{fill(copy.x3Streak, { count: shownPlates })}</p>}
+    {duo.adjusted && <p className="floor-note">{copy.x3Adjusted}</p>}
+    {debugClose && <p className="floor-note" role="status" data-testid="debug-week">{copy.x3DebugWeek}</p>}
+    <InstallChip />
+  </main>;
 }
