@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Ring, type RingMember } from '../../../src/ui/Ring';
+import { copy } from '../../../src/ui/copy';
 
 function member(partial: Partial<RingMember> & Pick<RingMember, 'id' | 'credits'>): RingMember {
   return {
@@ -125,5 +126,33 @@ describe('Ring', () => {
     const coopArcs = segments(coop.container);
     expect(coopArcs.find((arc) => arc.state === 'min')?.width).toBe(9);
     expect(coopArcs.find((arc) => arc.state === 'empty')?.width).toBe(18);
+  });
+
+  it('fills a new MIN segment and says the MIN day line', async () => {
+    const view = render(<Ring announceMin members={[member({ id: 'you', credits: 0 })]} />);
+    view.rerender(<Ring announceMin members={[member({ id: 'you', credits: 0.5, minCount: 1 })]} />);
+    await waitFor(() => expect(view.container.querySelector('[data-filling="1"]')).toBeTruthy());
+    expect(view.container.querySelector('[data-state="min"]')).toBeTruthy();
+    expect(view.container.querySelector('[data-puff]')).toBeTruthy();
+    expect(view.container.querySelector('canvas')).toBeNull();
+    expect(screen.getByTestId('min-moment').textContent).toBe(copy.minLogged);
+  });
+
+  it('reduced motion is a static ring with no canvas and no chalk', () => {
+    const { container } = render(
+      <Ring
+        reduced
+        closing
+        members={[
+          member({ id: 'you', name: 'You', credits: 3 }),
+          member({ id: 'partner', name: 'partner', credits: 3 }),
+        ]}
+      />,
+    );
+    expect(container.querySelector('[data-motion="static"]')).toBeTruthy();
+    expect(container.querySelector('[data-puff]')).toBeNull();
+    expect(container.querySelector('canvas')).toBeNull();
+    expect(screen.getByText(copy.ringClosedCentre)).toBeTruthy();
+    expect(container.querySelector('.ring-spin')).toBeNull();
   });
 });
