@@ -199,7 +199,8 @@ jobs:
           echo $! > "$RUNNER_TEMP/preview.pid"
           ready=false
           for attempt in $(seq 1 40); do
-            if grep -q "Local:" "$RUNNER_TEMP/preview.log"; then
+            # Vite colours its banner, so poll the port instead of grepping "Local:".
+            if curl -sf -o /dev/null "http://127.0.0.1:4173/"; then
               ready=true
               break
             fi
