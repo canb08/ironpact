@@ -4,6 +4,8 @@ import { useRepo } from '../../app/useRepo.ts';
 import type { Session } from '../../core/types.ts';
 import { keepAwake, releaseKeepAwake } from '../../platform/wakeLock.ts';
 import { Button, HoldButton, ToastProvider, copy, fill } from '../../ui';
+import { MotionProvider } from '../../ui/motion/MotionProvider.tsx';
+import { MomentHost } from '../../ui/moments/MomentHost.tsx';
 import { skipRest } from '../timer/useRestTimer.ts';
 import { ActiveSession } from './ActiveSession.tsx';
 import { SessionSummary } from './SessionSummary.tsx';
@@ -18,6 +20,7 @@ export default function SessionScreen() {
 function SessionContent() {
   const repo = useRepo();
   const snapshot = useLiveQuery(async () => ({ session: await repo.q.openSession() }), [repo]);
+  const profile = useLiveQuery(async () => repo.q.me(), [repo]);
   const [active, setActive] = useState<Session>();
   const [closedId, setClosedId] = useState<string>();
   const [finished, setFinished] = useState(false);
@@ -34,9 +37,17 @@ function SessionContent() {
     setFinished(true);
   };
 
-  if (active) return <ActiveSession key={active.id} session={active} onReplace={setActive} onFinish={close} />;
+  if (active) return (
+    <MotionProvider reduced={profile?.reduce_motion === true}>
+      <MomentHost screen={active.id} />
+      <ActiveSession key={active.id} session={active} onReplace={setActive} onFinish={close} />
+    </MotionProvider>
+  );
 
-  return <main className="session-entry">
+  return (
+    <MotionProvider reduced={profile?.reduce_motion === true}>
+      <MomentHost screen="entry" />
+      <main className="session-entry">
     <h1>{copy.sessionTitle}</h1>
     {!snapshot ? <p role="status">{copy.sessionLoading}</p> : open ? <>
       {open.kind === 'gym' && <p>{fill(copy.sessionResume, {
@@ -63,5 +74,7 @@ function SessionContent() {
       }}>{copy.start}</Button>}
     </>}
     <WriteFeedback error={write.error} retry={write.retry} />
-  </main>;
+  </main>
+    </MotionProvider>
+  );
 }

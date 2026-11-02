@@ -98,3 +98,12 @@ Each pin was checked with `npm view <package> version` and installed with `--sav
 | `lucide-react` | `1.66.0` | Tree-shaken 24px stroke icons. Named imports only. |
 
 Resolved with `npm view <package> version` on 2026-11-02. Anybody is not installed (D17: drop it first). `culori@4.0.2` stays the existing dev pin used to convert hex to OKLCH. The three latin woff2 files are the only font files emitted.
+
+## P4B motion (2026-11-02)
+
+| Package | Exact version | Purpose |
+|---|---|---|
+| `motion` | `14.9.0` | `LazyMotion` + `domAnimation` + `m.*` from `motion/react` and `motion/react-m` (R1 item 8, E3.10). UI / SLAM / HEAVY springs. Session chunk only, not initial JS. |
+| `@number-flow/react` | `0.6.2` | Lazy number transitions. A static text node under reduced motion (media query or profile). Not initial JS. |
+
+Resolved with `npm view motion version` and `npm view @number-flow/react version` on 2026-11-02. Same pins R1 recorded on 2026-11-01 (`motion@14.9.0` published 2026-10-30). `canvas-confetti` is not installed (P4C). Anybody is still not installed, so the set-logged `wdth` write has no glyph to flex until that face is added; the card scale and 4px plate drop are the visible micro.
