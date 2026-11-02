@@ -7,6 +7,8 @@ import {
   iosHapticsTrickEnabled,
   setHapticsOn,
   setIosHapticsTrick,
+  setPulseMs,
+  vibrate,
 } from '../../../src/platform/haptics';
 
 afterEach(() => {
@@ -45,7 +47,8 @@ describe('haptics', () => {
     expect(vibrate).not.toHaveBeenCalled();
   });
 
-  it('is a no-op when vibrate is missing or throws', () => {
+  it('is a no-op when vibrate is missing and the trick is off, or when vibrate throws', () => {
+    setIosHapticsTrick(false);
     vi.stubGlobal('navigator', {});
     expect(haptic('timerZero')).toBe(false);
     const vibrate = vi.fn(() => { throw new Error('blocked'); });
@@ -54,11 +57,17 @@ describe('haptics', () => {
     expect(vibrate).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the iOS switch trick off unless the flag is explicitly on', () => {
-    expect(iosHapticsTrickEnabled()).toBe(false);
+  it('turns the iOS switch trick on unless VITE_IOS_HAPTICS is an off value', () => {
+    expect(iosHapticsTrickEnabled()).toBe(true);
     vi.stubEnv('VITE_IOS_HAPTICS', 'off');
     expect(iosHapticsTrickEnabled()).toBe(false);
+    vi.stubEnv('VITE_IOS_HAPTICS', '0');
+    expect(iosHapticsTrickEnabled()).toBe(false);
+    vi.stubEnv('VITE_IOS_HAPTICS', 'false');
+    expect(iosHapticsTrickEnabled()).toBe(false);
     vi.stubEnv('VITE_IOS_HAPTICS', 'on');
+    expect(iosHapticsTrickEnabled()).toBe(true);
+    vi.stubEnv('VITE_IOS_HAPTICS', '1');
     expect(iosHapticsTrickEnabled()).toBe(true);
     setIosHapticsTrick(false);
     expect(iosHapticsTrickEnabled()).toBe(false);
@@ -93,5 +102,31 @@ describe('haptics', () => {
     expect(haptic('timerZero')).toBe(true);
     expect(vibrate).toHaveBeenCalledWith([80, 60, 80, 60, 200]);
     expect(click).toHaveBeenCalledTimes(2);
+  });
+
+  it('adds the FEEL patterns and lengthens the set pulse with weight', () => {
+    const vibrateFn = vi.fn(() => true);
+    Object.defineProperty(navigator, 'vibrate', { configurable: true, value: vibrateFn });
+    expect(setPulseMs()).toBe(20);
+    expect(setPulseMs(20)).toBe(20);
+    expect(setPulseMs(100)).toBe(40);
+    expect(setPulseMs(200)).toBe(60);
+    expect(haptic('tick')).toBe(true);
+    expect(haptic('plate')).toBe(true);
+    expect(haptic('round')).toBe(true);
+    expect(haptic('prRamp')).toBe(true);
+    expect(haptic('lockout')).toBe(true);
+    expect(haptic('error')).toBe(true);
+    expect(vibrate([setPulseMs(100)])).toBe(true);
+    expect(vibrateFn.mock.calls).toEqual([
+      [[8]],
+      [[15, 15, 15]],
+      [[40, 40, 40, 40, 40]],
+      [[30, 20, 60, 20, 90]],
+      [[120]],
+      [[10, 10, 10]],
+      [[40]],
+    ]);
+    expect(HAPTIC_PATTERNS.pr).toEqual([30, 40, 30, 40, 120]);
   });
 });

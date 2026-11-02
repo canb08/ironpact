@@ -383,6 +383,37 @@ describe('audio', () => {
     expect(play('clank')).toBe(false);
   });
 
+  it('drops clank pitch as weight rises and plays thud and lockout', async () => {
+    const world = install();
+    await unlockAudio();
+    setSoundOn(true);
+    const drop = 1 / (1 + 100 / 180);
+    expect(play('clank', { weightKg: 100 })).toBe(true);
+    expect(world.oscs[0]?.frequency.sets[0]?.value).toBeCloseTo(110 * drop, 5);
+    expect(world.oscs[1]?.frequency.sets[0]?.value).toBeCloseTo(165 * drop, 5);
+    expect(world.filters[0]?.frequency.sets[0]?.value).toBeCloseTo(2500 * drop, 5);
+    expect(play('clank')).toBe(true);
+    expect(world.oscs[2]?.frequency.sets[0]?.value).toBe(110);
+    expect(world.oscs[3]?.frequency.sets[0]?.value).toBe(165);
+
+    world.oscs.length = 0;
+    world.filters.length = 0;
+    expect(play('thud')).toBe(true);
+    expect(world.oscs[0]?.frequency.sets[0]?.value).toBe(90);
+    expect(world.oscs[0]?.frequency.linear[0]?.value).toBe(50);
+    near(world.oscs[0]?.frequency.linear[0]?.time, 5.09);
+    near(world.oscs[0]?.stopAt, 5.1);
+    expect(world.filters[0]?.frequency.sets).toEqual([{ value: 180, time: 5 }]);
+
+    world.oscs.length = 0;
+    world.filters.length = 0;
+    expect(play('lockout')).toBe(true);
+    expect(world.oscs[0]?.frequency.sets[0]?.value).toBe(48);
+    near(world.oscs[0]?.stopAt, 5.3);
+    expect(world.filters[0]?.frequency.sets).toEqual([{ value: 140, time: 5 }]);
+    expect(world.filters[0]?.Q.sets).toEqual([{ value: 0.6, time: 5 }]);
+  });
+
   it('useSound stays off until setSoundOn and then plays bell', async () => {
     install();
     let last = false;

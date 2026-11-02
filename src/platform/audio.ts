@@ -6,8 +6,10 @@
  */
 import { useEffect, useSyncExternalStore } from 'react';
 
-export const SOUND_CUES = ['clank', '3-2-1', 'bell', 'pr-riser', 'ring-chord', 'plate'] as const;
+export const SOUND_CUES = ['clank', '3-2-1', 'bell', 'pr-riser', 'ring-chord', 'plate', 'thud', 'lockout'] as const;
 export type SoundCue = (typeof SOUND_CUES)[number];
+
+export type SoundPlayOptions = { weightKg?: number };
 
 const listeners = new Set<() => void>();
 let soundOn = false;
@@ -171,13 +173,21 @@ function noiseBurst(
 }
 
 /** Two detuned sines plus a 40 ms bandpass noise burst. `peak` is the sine ceiling. */
-function metal(ctx: AudioContext, t: number, peak: number, gainEnd: number, oscEnd: number): void {
+function metal(
+  ctx: AudioContext,
+  t: number,
+  peak: number,
+  gainEnd: number,
+  oscEnd: number,
+  freqs: readonly [number, number] = [110, 165],
+  noiseHz = 2500,
+): void {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, t);
   gain.gain.linearRampToValueAtTime(peak, t + 0.005);
   gain.gain.linearRampToValueAtTime(0, gainEnd);
   gain.connect(ctx.destination);
-  for (const freq of [110, 165]) {
+  for (const freq of freqs) {
     const osc = ctx.createOscillator();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, t);
@@ -185,7 +195,47 @@ function metal(ctx: AudioContext, t: number, peak: number, gainEnd: number, oscE
     osc.start(t);
     osc.stop(oscEnd);
   }
-  noiseBurst(ctx, t, 0.04, 2500, 1.2, peak);
+  noiseBurst(ctx, t, 0.04, noiseHz, 1.2, peak);
+}
+
+/** Heavier bars speak lower. 0 kg stays at the spec clank; 100 kg is about two thirds. */
+function clankTuning(weightKg: number): { freqs: readonly [number, number]; noiseHz: number } {
+  const kg = Math.min(200, Math.max(0, weightKg));
+  const drop = 1 / (1 + kg / 180);
+  return { freqs: [110 * drop, 165 * drop], noiseHz: 2500 * drop };
+}
+
+/** Dull error hit. Short low sine plus a narrow noise puff. */
+function thud(ctx: AudioContext, t: number): void {
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.35, t + 0.004);
+  gain.gain.linearRampToValueAtTime(0, t + 0.09);
+  gain.connect(ctx.destination);
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(90, t);
+  osc.frequency.linearRampToValueAtTime(50, t + 0.09);
+  osc.connect(gain);
+  osc.start(t);
+  osc.stop(t + 0.1);
+  noiseBurst(ctx, t, 0.05, 180, 0.7, 0.2);
+}
+
+/** Bar slam: a low body and a short noise crack. */
+function lockout(ctx: AudioContext, t: number): void {
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.6, t + 0.008);
+  gain.gain.linearRampToValueAtTime(0, t + 0.28);
+  gain.connect(ctx.destination);
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(48, t);
+  osc.connect(gain);
+  osc.start(t);
+  osc.stop(t + 0.3);
+  noiseBurst(ctx, t, 0.08, 140, 0.6, 0.45);
 }
 
 function bell(ctx: AudioContext, t: number): void {
@@ -232,12 +282,19 @@ function chord(ctx: AudioContext, t: number): void {
   }
 }
 
-function renderCue(ctx: AudioContext, cue: SoundCue): void {
+function renderCue(ctx: AudioContext, cue: SoundCue, options?: SoundPlayOptions): void {
   const t = ctx.currentTime;
   switch (cue) {
-    case 'clank':
+    case 'clank': {
+      const weight = options?.weightKg;
+      if (weight !== undefined && Number.isFinite(weight)) {
+        const tuned = clankTuning(weight);
+        metal(ctx, t, 0.5, t + 0.175, t + 0.18, tuned.freqs, tuned.noiseHz);
+        return;
+      }
       metal(ctx, t, 0.5, t + 0.175, t + 0.18);
       return;
+    }
     case 'plate':
       metal(ctx, t, 0.3, t + 0.12, t + 0.12);
       return;
@@ -253,6 +310,12 @@ function renderCue(ctx: AudioContext, cue: SoundCue): void {
     case 'ring-chord':
       chord(ctx, t);
       return;
+    case 'thud':
+      thud(ctx, t);
+      return;
+    case 'lockout':
+      lockout(ctx, t);
+      return;
     default: {
       const exhaustive: never = cue;
       return exhaustive;
@@ -261,19 +324,19 @@ function renderCue(ctx: AudioContext, cue: SoundCue): void {
 }
 
 /** False when sound is off, the context is not running, or synthesis throws. */
-export function play(cue: SoundCue): boolean {
+export function play(cue: SoundCue, options?: SoundPlayOptions): boolean {
   if (!soundOn) return false;
   const ctx = context;
   if (!ctx || ctx.state !== 'running') return false;
   try {
-    renderCue(ctx, cue);
+    renderCue(ctx, cue, options);
     return true;
   } catch {
     return false;
   }
 }
 
-export function useSound(): { enabled: boolean; play: (cue: SoundCue) => boolean } {
+export function useSound(): { enabled: boolean; play: (cue: SoundCue, options?: SoundPlayOptions) => boolean } {
   const enabled = useSyncExternalStore(subscribe, soundEnabled, soundEnabled);
   useEffect(() => {
     armAudioUnlock();

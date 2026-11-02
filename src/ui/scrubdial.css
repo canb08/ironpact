@@ -1,0 +1,76 @@
+/* Scrub dial: transform/opacity only. Never animate layout. */
+.ui-scrub {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: center;
+  max-width: 100%;
+}
+
+.ui-scrub__label {
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.ui-scrub__control {
+  min-height: 56px;
+  min-width: 7rem;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2em;
+  touch-action: none;
+  user-select: none;
+  cursor: ns-resize;
+  padding: var(--s-2) var(--s-4);
+}
+
+.ui-scrub__value {
+  font-family: var(--font-number);
+  font-size: var(--t-mega);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ui-scrub__unit {
+  font: 600 0.4em/1 var(--font-body);
+  color: var(--text-muted);
+}
+
+.ui-scrub__control:focus-visible {
+  outline: 2px solid var(--plate-yellow);
+  outline-offset: 4px;
+}
+
+.ui-scrub__control[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ui-feel-dock {
+  height: 8px;
+  width: 100%;
+  background: var(--steel);
+}
+
+.ui-feel-dock.is-set {
+  background: var(--plate-red);
+}
+
+.ui-feel-dock.is-plate {
+  background: var(--plate-blue);
+}
+
+.ui-feel-dock.is-pr {
+  background: var(--plate-yellow);
+}
+
+.ui-feel-dock.is-error {
+  background: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-feel-dock.is-error {
+    transform: none;
+  }
+}
