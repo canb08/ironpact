@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests --exclude 'tests/e2e/**'",
+    "e2e": "playwright test",
     "size": "size-limit",
     "secret-scan": "node scripts/secret-scan.mjs"
   },
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
     "@size-limit/file": "14.3.0",
     "@tailwindcss/vite": "4.3.3",
     "@testing-library/react": "16.3.3",

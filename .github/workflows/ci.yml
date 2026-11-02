@@ -145,3 +145,24 @@ jobs:
           # Teardown only: a container that fails to stop must not fail a green run (the runner is discarded anyway).
           supabase stop --no-backup || echo "::warning::supabase stop failed (ignored)"
           rm -f "$RUNNER_TEMP/supabase-status.env" "$RUNNER_TEMP/supabase-start.log" "$RUNNER_TEMP/supabase-status.log" "$RUNNER_TEMP/supabase-functions.log" "$RUNNER_TEMP/supabase-functions.pid"
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Playwright (iPhone 15 WebKit and Pixel 7 Chromium)
+        run: npx playwright test
+

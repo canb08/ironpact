@@ -45,6 +45,7 @@ Never force-push (auto mode blocks it): update an old branch by **merging `main`
 | **E** | **P5D delete account + purge (no deps — fire the moment a Codex is free)** → P4E duo moments (after P4B, P3E) | P4F install gate full (after P4A) · P5A Progress full (after P3F) |
 
 Lane E: P4F and P4E both touch `src/features/floor/` — run them one after the other, not in parallel.
+**Grok has no 5-hour limit (trial, weekly pool only): run every Grok-ready ticket as its own parallel chat, and give a ready Codex ticket to Grok when Codex is busy.**
 Never idle: when an engine finishes, fire the first ticket in its row whose "Starts after" is met.
 
 ## Not in this round

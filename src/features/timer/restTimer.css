@@ -1,0 +1,63 @@
+.rest-timer {
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.rest-timer__chip {
+  justify-self: start;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.rest-timer__loaded {
+  margin: 0;
+  text-align: center;
+  font-size: var(--t-md);
+  font-weight: 700;
+}
+
+.rest-timer__controls {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.rest-timer__controls > * {
+  flex: 1;
+}
+
+.rest-timer__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One 300 ms molten pulse at zero. No loop, no sound. */
+.rest-timer__pulse {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: var(--molten);
+  animation: rest-timer-pulse 300ms linear forwards;
+}
+
+@keyframes rest-timer-pulse {
+  0% { opacity: 0; }
+  50% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rest-timer__pulse {
+    display: none;
+    animation: none;
+  }
+}
