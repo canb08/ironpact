@@ -107,3 +107,11 @@ Resolved with `npm view <package> version` on 2026-11-02. Anybody is not install
 | `@number-flow/react` | `0.6.2` | Lazy number transitions. A static text node under reduced motion (media query or profile). Not initial JS. |
 
 Resolved with `npm view motion version` and `npm view @number-flow/react version` on 2026-11-02. Same pins R1 recorded on 2026-11-01 (`motion@14.9.0` published 2026-10-30). `canvas-confetti` is not installed (P4C). Anybody is still not installed, so the set-logged `wdth` write has no glyph to flex until that face is added; the card scale and 4px plate drop are the visible micro.
+
+## H1 accessibility (2026-11-02)
+
+| Package (dev only) | Exact version | Purpose |
+|---|---|---|
+| `@axe-core/playwright` | `4.14.0` | Serious and critical axe scans in `tests/e2e/p6-a11y.spec.ts` |
+
+Resolved with `npm view @axe-core/playwright version` on 2026-11-02. It peers with the existing `@playwright/test@1.64.1` (`playwright-core >= 1.0.0`). Dev-only, so it stays out of the initial JS budget.
