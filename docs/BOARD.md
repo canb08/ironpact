@@ -70,7 +70,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
 | P5F | Recompute PRs after an edit + edit notices (L13) | Codex Astra | C (back from E) | running 2026-11-02 05:12 on owner's Codex (continue PR #44, branch P5F-work) |
-| P5G | S6 fits 375 px (kg/reps overflow, reported by friend's Lead) | Codex Sol | C | running 2026-11-02 05:12 |
+| P5G | S6 fits 375 px (kg/reps overflow, reported by friend's Lead) | Codex Sol | C | merged #50 |
 | P5A | S13 Progress full | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #37 |
 
 ## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need the owner)
