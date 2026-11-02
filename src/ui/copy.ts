@@ -367,6 +367,16 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P4C: add this ticket's strings directly below ──
 
   // ── P4D: add this ticket's strings directly below ──
+  devSound: 'Sound',
+  devSoundHint: 'First tap unlocks audio. Off until you turn it on.',
+  devSoundOff: 'Sound off',
+  devSoundOn: 'Sound on',
+  devSoundClank: 'Clank',
+  devSoundCountdown: '3-2-1',
+  devSoundBell: 'Bell',
+  devSoundRiser: 'PR riser',
+  devSoundChord: 'Ring chord',
+  devSoundPlate: 'Plate',
 
   // ── P4E: add this ticket's strings directly below ──
 

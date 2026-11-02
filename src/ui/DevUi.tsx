@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { setSoundOn, useSound } from '../platform/audio';
 import { Check } from 'lucide-react';
 import {
   BarbellGlyph,
@@ -28,6 +29,7 @@ function Gallery() {
   const [weight, setWeight] = useState(80);
   const [open, setOpen] = useState(false);
   const { showToast } = useToast();
+  const { enabled: soundOn, play } = useSound();
   const notify = () =>
     showToast({
       message: copy.setLogged,
@@ -201,6 +203,39 @@ function Gallery() {
         <Button variant="secondary" onClick={notify}>
           {copy.devShowToast}
         </Button>
+      </section>
+      <section>
+        <h2>{copy.devSound}</h2>
+        <p>{copy.devSoundHint}</p>
+        <div className="ui-gallery__row">
+          <Button
+            variant="secondary"
+            aria-pressed={soundOn}
+            onClick={() => {
+              setSoundOn(!soundOn);
+            }}
+          >
+            {soundOn ? copy.devSoundOn : copy.devSoundOff}
+          </Button>
+          <Button variant="secondary" onClick={() => play('clank')}>
+            {copy.devSoundClank}
+          </Button>
+          <Button variant="secondary" onClick={() => play('3-2-1')}>
+            {copy.devSoundCountdown}
+          </Button>
+          <Button variant="secondary" onClick={() => play('bell')}>
+            {copy.devSoundBell}
+          </Button>
+          <Button variant="secondary" onClick={() => play('pr-riser')}>
+            {copy.devSoundRiser}
+          </Button>
+          <Button variant="secondary" onClick={() => play('ring-chord')}>
+            {copy.devSoundChord}
+          </Button>
+          <Button variant="secondary" onClick={() => play('plate')}>
+            {copy.devSoundPlate}
+          </Button>
+        </div>
       </section>
       <Sheet open={open} title={copy.devSheet} onClose={() => setOpen(false)}>
         <p>{copy.devSheetBody}</p>
