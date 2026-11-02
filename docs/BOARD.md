@@ -46,10 +46,10 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Grok (Codex out of usage) | C | running 2026-11-02 02:10 |
 | P2E | S14 exercise detail + S15 day editor | Grok | C | running 2026-11-02 02:10 |
 | P2G | Playwright Phase 2 | Grok | C | todo — after P2D, P2E |
-| P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | pr #28 (reviewed: SQL read in full; contract request → L12) |
+| P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | merged #28 |
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
-| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | todo — after P3A |
+| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | running 2026-11-02 |
 | P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
 | P3F | Progress S13: trend chart | Grok | E | running 2026-11-02 |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
