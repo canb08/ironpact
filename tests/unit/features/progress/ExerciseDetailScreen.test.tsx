@@ -12,6 +12,7 @@ afterEach(async () => {
   cleanup();
   await harness?.close();
   harness = undefined;
+  vi.useRealTimers();
 });
 
 it('shows history and best e1RM, saves rest seconds, and stores big jumps on the profile', async () => {
@@ -185,7 +186,12 @@ it('shows PRs recalculated only when an edit changes the standing PR', async () 
   expect(events.find((row) => row.pr_type === 'e1rm')?.value).toBeCloseTo(90 * (1 + 5 / 30), 5);
 });
 
-it('keeps the rep-max table collapsed and labels a private partner overlay with their saved name', async () => {
+it.each([
+  { now: '2026-11-02T12:00:00.000Z', localDate: '2026-11-02' },
+  { now: '2026-11-02T23:30:00.000Z', localDate: '2026-11-03' },
+])('keeps the rep-max table collapsed and labels a private partner overlay with their saved name at $now', async ({ now, localDate }) => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(now));
   harness = await progressHarness();
   await harness.repo.sync.pullNow();
   const { profile, exercise, session, set, id } = await import('../../core/fixtures.ts');
@@ -197,12 +203,11 @@ it('keeps the rep-max table collapsed and labels a private partner overlay with 
   if (!crew) throw new Error('missing crew');
   await harness.db.crew_members.put({ crew_id: crew.crew.id, user_id: partnerId, role: 'member', joined_at: '2026-10-01T08:00:00Z', left_at: null });
   await harness.db.exercises.put(exercise);
-  // Local calendar date: the screen labels 'Today' in local time, so a UTC date breaks between local midnight and 01:00.
-  const now = new Date();
-  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  // History dates belong to the profile's timezone, not the UTC clock.
+  expect(me.tz).toBe('Europe/Amsterdam');
   for (const [user, n, weight] of [[me.id, 90, 80], [partnerId, 100, 213.7]] as const) {
     for (let index = 0; index < 2; index++) {
-      await harness.db.sessions.put({ ...session, id: id(n + index), user_id: user, local_date: date });
+      await harness.db.sessions.put({ ...session, id: id(n + index), user_id: user, local_date: localDate });
       await harness.db.sets.put({ ...set, id: id(n + index + 20), user_id: user, session_id: id(n + index), exercise_id: exercise.id, weight_kg: weight, reps: 1, is_warmup: false });
     }
   }
@@ -216,4 +221,5 @@ it('keeps the rep-max table collapsed and labels a private partner overlay with 
   expect(document.body.textContent).not.toContain('213.7');
   expect(screen.getByText(copy.x5Comparison)).toBeTruthy();
   expect(screen.getAllByRole('link', { name: copy.x5Today })).toHaveLength(1);
+  expect(screen.getByRole('link', { name: copy.x5Today }).getAttribute('href')).toBe(`/day/${localDate}`);
 });

@@ -106,7 +106,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
 | X7 | Crew centred on partner | Grok | E | PR #76 — Lead approved round 2 (partner hero, stat tiles); Lead pushed the feed-dot colour fix; CI running |
-| X8 | Settings grouped sub-pages | Codex Sol High | C | PR #73 — Lead review: section headers + switches instead of checkboxes |
+| X8 | Settings grouped sub-pages | Codex Sol High | C | merged #73 (Lead review round 2: section headers, switches; also fixed the midnight date bug in the ExerciseDetail test; theme radio → segmented in X11) |
 | X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
@@ -126,7 +126,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
 
-**Lead fix on main (2026-11-03 00:45):** `ExerciseDetailScreen.test.tsx` built its session date in UTC while the screen labels Today in local time, so it failed between local 00:00 and 01:00 (red on main and every PR). Now uses the local date.
+**Midnight test bug (2026-11-03 00:45):** `ExerciseDetailScreen.test.tsx` used a UTC date while the screen labels Today in local time (red between local 00:00 and 01:00). Fixed on main by lane C in X8 (#73, profile timezone); lane E's duplicate fix was dropped in the merge.
 
 **Engines (2026-11-03 00:20):** friend's Grok hit its weekly limit (resets 2026-11-08). Friend's Codex is back after 00:43. Remaining lane E work: Y3 (after X4), Y4, Y5, Y7, Y8 (needs lane C ack), Y9 → Codex, or wait for the Grok reset.
 
