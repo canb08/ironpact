@@ -33,7 +33,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | B5 | S11 quick logs + S4 Floor | Grok | owner | merged #16 (Lead: live queries) |
 | B6 | S12 Crew + Settings → Vault export | Codex Sol | owner | merged #17 |
 | B8 | Playwright p1 e2e + CI job | Grok | owner | merged #19 |
-| G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | C | deployed 2026-11-02: Supabase `Spotter` (eu-central-1, 11 migrations + seed, functions export/health/delete-account), Gmail SMTP + 6-digit OTP (L18), Pages `ironpact-59a.pages.dev` (build OK; 522 while the new subdomain provisions), HEALTH_URL set. Next: owner phone test (`docs/DEVICE-TEST.md`) |
+| G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | C | deployed 2026-11-02: Supabase `Spotter` (eu-central-1, 11 migrations + seed, functions export/health/delete-account), Gmail SMTP + 6-digit OTP (L18), Pages **https://spotter-crew.pages.dev** (live 17:40; first project `ironpact` stuck on 522 and was deleted; CSP locked to the project), HEALTH_URL set. Next: owner phone test (`docs/DEVICE-TEST.md`) |
 
 ## Phase 2–3 (two lanes, rules in `docs/LANES.md`)
 | ID | What | Engine | Lane | Status |
