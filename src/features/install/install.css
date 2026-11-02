@@ -3,8 +3,8 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
-  width: min(40rem, 100%);
+  gap: var(--s-4);
+  width: min(28rem, 100%);
   margin: 0 auto;
   padding: var(--s-4);
   padding-top: max(var(--s-6), env(safe-area-inset-top));
@@ -26,26 +26,25 @@
 }
 
 .install-mark {
-  font-family: var(--font-display);
-  font-size: var(--t-lg);
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-family: var(--font-body);
+  font-size: var(--t-sm);
+  font-weight: 600;
 }
 
 .install h1,
 .install h2 {
-  font-family: var(--font-display);
-  font-weight: 800;
-  line-height: 0.95;
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .install h1 {
   font-size: var(--t-xl);
-  max-width: 16ch;
+  max-width: none;
 }
 
 .install h2 {
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
 }
 
 .install-body {
@@ -68,14 +67,16 @@
 
 .install-step {
   display: grid;
-  justify-items: center;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  justify-items: start;
   gap: var(--s-3);
-  min-height: 8.5rem;
+  min-height: 96px;
   padding: var(--s-4);
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  text-align: center;
+  text-align: start;
 }
 
 .install-walk[data-motion='loop'] .install-step {
@@ -85,37 +86,39 @@
 .install-add {
   display: grid;
   place-items: center;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 48px;
+  height: 48px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--text);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--t-xl);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
 }
 
 .install-grid {
   display: grid;
-  grid-template-columns: repeat(3, 2.75rem);
-  gap: var(--s-2);
+  grid-template-columns: repeat(3, 12px);
+  gap: var(--s-1);
 }
 
 .install-grid span {
+  font-size: 10px;
   display: grid;
   place-items: center;
   aspect-ratio: 1;
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--on-molten);
-  font-family: var(--font-display);
-  font-weight: 800;
+  font-family: var(--font-body);
+  font-weight: 600;
 }
 
 .install-grid .is-app {
-  background: var(--molten);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .install-url {
@@ -140,6 +143,9 @@
 }
 
 .install-skip {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
   justify-self: center;
   padding: var(--s-3);
   color: var(--text-muted);
@@ -168,3 +174,5 @@
 html[data-reduced-motion='on'] .install-step {
   animation: none;
 }
+
+.install-step svg { width: 32px; height: 32px; }

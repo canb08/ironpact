@@ -48,17 +48,16 @@ One call: `feel(kind, { weightKg? })`. It fires the matching haptic, sound and v
 4. **Half 2: kicks** (mixed, mostly kick-oriented; **long pads** fingers-to-elbow plus the belly pad). Same structure: 3 combos × 3:00 + push-ups/squats, swap, 3 combos.
 5. Done. Per person per class: **6 striking rounds** (18 min of striking), **6 holding rounds**, 60 push-ups, 60 squats.
 
-**What the app does with it: "Pad class" mode** (the default when you tap Muay Thai)
-- **Before:** one screen: who strikes first (you or partner), round length (3:00 default), reps between rounds (10/10 default), warm-up length (skippable). Start.
-- **During:** the phone lies on the bench, so everything is readable from 2 m away. A full-screen timer, plus a banner in the **striker's plate colour**: "**You strike** · Punches · combo 2 of 3" or "**Can strikes** · you hold". The bell (`feel('round')`) sounds at start and end. At 10 s left you get a double `tick` and the screen edge pulses.
-- **Between rounds:** "**10 push-ups** (you) · **10 squats** (Can)". One big "Done" tap starts the next combo after a 3-2-1. There's no timer, because people are slower or faster.
-- **Swap:** after 3 combos, a "**Swap gear: gloves ↔ pads**" card appears. The next round starts when you tap "Ready".
-- **Half time:** a 2:00 rest countdown with a gear reminder: "**Long pads + belly pad**".
-- **Combo notes (optional, never blocking):** during the push-up screen, a strip of strike chips lets you jot down the coach's combo: `1` jab, `2` cross, `3` lead hook, `4` rear hook, `5` lead upper, `6` rear upper, `Teep`, `L kick`, `R kick`, `Knee`, `Elbow`. Taps build "1-2-R kick". Skip with one tap.
-- **After:** the summary is filled in for you: minutes, **rounds you struck (6)**, rounds held, push-ups/squats, focus `Pads`, and the combos you jotted down. Save → `feel('plate')` → the together prompt (Proof, below).
-- **Storage (no data change):** `discipline: 'Muay Thai'`, `minutes` = elapsed, `rounds` = rounds struck, `note` (≤120 chars) = `Pads · 1-2-3 / 1-1-2 / 2-3-2 · L kick-2 / …`, truncated at a combo boundary if it gets long.
-- **Combo book:** Progress → Muay Thai lists every combo you've jotted down, newest first, with how often you've drilled it. Beginners see their vocabulary grow.
-- **Other ways to log:** "Bag / solo rounds" (a plain round timer: rounds × length, bell) and "Quick log" (rounds `ScrubDial` × round length, focus chips **Pads · Bag · Clinch · Technique · Conditioning**, and "Same as last class"). **No sparring chip** while they're beginners. **Muay Thai is the only discipline.**
+**What the app does with it: log it after class, in two taps** (owner correction, 2026-11-02: nobody touches a phone during class, because their hands are full)
+- No live timer and no in-class screens. You log the class **after** it ends, quickly.
+- The Muay Thai sheet opens on one **Pad class** card that already describes the usual class: 2 halves (punches, kicks) × 3 combos × 3:00 → **6 rounds struck, 6 held, ~60 min, 60 push-ups + 60 squats**, focus `Pads`. One big **Log class** button saves it → `feel('plate')` → the together prompt (Proof). **Two taps from Today.**
+- **Adjust** (a quiet expander) for the odd class: combos per half (2-4), round length (2/3/5 min chips), total minutes. Rounds struck = 2 × combos.
+- **Optional, never blocking:**
+  - "How did it feel?" 1-5 chips (stored as RPE only if the schema has it).
+  - "Combos you remember": strike chips `1` jab, `2` cross, `3` lead hook, `4` rear hook, `5` lead upper, `6` rear upper, `Teep`, `L kick`, `R kick`, `Knee`, `Elbow`. They build "1-2-R kick" into the note.
+- **Same as last class** chip. Focus chips for non-class days: Pads (default) · Bag · Clinch · Technique · Conditioning. **No sparring** while they're beginners. **Muay Thai is the only discipline.**
+- **Storage (no data change):** `discipline: 'Muay Thai'`, `minutes`, `rounds` = rounds struck, `note` (≤120 chars) = `Pads · 1-2-3 / L kick-2 / …`, truncated at a combo boundary.
+- **Combo book:** Progress → Muay Thai lists every combo you've noted, newest first, with how often it came up.
 
 ### Runs that feel like running (Y6, after X3)
 - Distance and duration are `ScrubDial`s: 0.1 km detents, with flicks that accelerate. The pace updates live in big numerals while you scrub ("5:12 /km").
@@ -102,7 +101,7 @@ One call: `feel(kind, { weightKg? })`. It fires the matching haptic, sound and v
 | ID | What | Starts after | Engine |
 |---|---|---|---|
 | Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, `ScrubDial`, CSS spring easings | now | Grok |
-| Y2 | Muay Thai pad class mode (halves, swaps, push-up/squat breaks, combo notes), bag timer, quick log, combo book | X3 + Y1 merged | Grok |
+| Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | X3 + Y1 merged | Grok |
 | Y3 | Load the bar: plate taps, scrub dials, same again, swipe rows | X4 merged, Y1 | Codex |
 | Y4 | Rest ritual + full-screen rest | Y3 | Grok |
 | Y5 | Motion pass: tabs, list→detail, sheets, bar lockout, PR takeover, shockwave | X3–X7 merged, Y1 | Codex |
