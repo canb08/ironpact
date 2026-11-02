@@ -100,12 +100,12 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
 | X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | merged #65 (Lead review round 2: chunkier PlateBar, chalk primary) |
-| X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | running — owner's Codex (Sol High) |
-| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | queued (after X1+X2) |
-| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | queued (after X1+X2) |
-| X5 | Progress hub + exercise detail | Grok or Codex | E | queued (after X1+X2) |
-| X6 | Day editor: compact rows + edit sheet | Grok | E | queued (after X1+X2) |
-| X7 | Crew centred on partner | Grok | E | queued (after X1+X2) |
+| X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | merged #66 (shell copy in src/app/shell/copy.ts → fold into copy.ts in X10) |
+| X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | **ready** (X1+X2 merged) — waiting for friend's usage |
+| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | running — owner's Codex (Sol High) |
+| X5 | Progress hub + exercise detail | Grok or Codex | E | **ready** — waiting for friend's usage |
+| X6 | Day editor: compact rows + edit sheet | Grok | E | **ready** — waiting for friend's usage |
+| X7 | Crew centred on partner | Grok | E | **ready** — waiting for friend's usage |
 | X8 | Settings grouped sub-pages | Grok | C | queued (after X1+X2) |
 | X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
