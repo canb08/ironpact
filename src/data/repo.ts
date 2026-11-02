@@ -5,7 +5,7 @@ import type { BodyweightEntry, CardioEntry, MartialEntry, MinEntry, Result, Sess
 import { recomputePrs as standingPrs, type PrEventDraft, type PrHistory } from '../core/prs.ts';
 import { weekStartOf } from '../core/weeks.ts';
 import { bodyweightFormSchema, cardioFormSchema, disciplineInNamespaceSchema, exercisePrefSchema, exerciseSchema, martialFormSchema, minEntrySchema, prEventSchema, profileFormSchema, sessionSchema, setFormSchema } from '../core/validate.ts';
-import type { EditNotice, ExercisePref, FeedItem, PrEvent, RemoteRow, Repo, RepoQueries, RepoWrites, SessionPatch, SessionWithSets, StartSessionInput, WriteError } from './adapter.ts';
+import type { EditNotice, ExercisePref, FeedItem, PrEvent, Repo, RepoQueries, RepoWrites, SessionPatch, SessionWithSets, StartSessionInput, WriteError } from './adapter.ts';
 import { compareInstant, createClock, localDateIn, type Clock } from './clock.ts';
 import { asRemote, IronpactDB } from './db.ts';
 import { defaultProfile } from './defaults.ts';
@@ -329,17 +329,6 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     if (exerciseId === null) return exercise == null && (prType === 'distance' || prType === 'pace');
     return exercise === exerciseId && (prType === 'e1rm' || prType === 'rep_max' || prType === 'volume');
   }
-  /** Stale claim: same row, `deleted_at` only. Never rewrite value, reps, previous_value, or source. */
-  function tombstonePr(row: { [key: string]: unknown }, now: string): RemoteRow {
-    const stamp = typeof row.client_updated_at === 'string' && compareInstant(row.client_updated_at, now) > 0 ? row.client_updated_at : now;
-    return { ...row, deleted_at: now, client_updated_at: stamp };
-  }
-  function sourceIsLive(history: PrHistory, draft: PrEventDraft): boolean {
-    if (draft.pr_type === 'distance' || draft.pr_type === 'pace') {
-      return history.cardio.some((row) => row.id === draft.source_id && row.deleted_at == null);
-    }
-    return history.sets.some((row) => row.id === draft.source_id && row.deleted_at == null && !row.is_warmup);
-  }
   /** Tombstones and inserts for one exercise, or for every run when `exerciseId` is null. */
   async function planPrs(user: string, exerciseId: string | null, now: string, pending: readonly Mutation[]): Promise<{ mutations: Mutation[]; changed: boolean }> {
     const history = await historyFor(user, pending);
@@ -348,7 +337,7 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       history.sets = history.sets.filter((set) => set.exercise_id === exerciseId);
       history.cardio = [];
     }
-    const drafts = standingPrs(history).filter((draft) => inPrScope(draft.exercise_id, draft.pr_type, exerciseId) && sourceIsLive(history, draft));
+    const drafts = standingPrs(history).filter((draft) => inPrScope(draft.exercise_id, draft.pr_type, exerciseId));
     const stored = overlay(await db.mirror('pr_events').where('user_id').equals(user).toArray(), pending, 'pr_events')
       .filter((row) => !row.deleted_at && row.user_id === user && inPrScope(row.exercise_id, row.pr_type, exerciseId));
     const used = new Set<string>();
@@ -361,7 +350,8 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     const mutations: Mutation[] = [];
     for (const row of stored) {
       if (typeof row.id !== 'string' || used.has(row.id)) continue;
-      mutations.push({ table: 'pr_events', row: tombstonePr(row, now) });
+      const stamp = typeof row.client_updated_at === 'string' && compareInstant(row.client_updated_at, now) > 0 ? row.client_updated_at : now;
+      mutations.push({ table: 'pr_events', row: { ...row, deleted_at: now, client_updated_at: stamp } });
     }
     for (const draft of fresh) {
       if (draft.user_id !== user) throw new WriteFailure('world_record');
@@ -383,7 +373,7 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     const mutations: Mutation[] = [{ table, row: { ...row, deleted_at: deleted ? now : null, client_updated_at: now } }];
     if ((table === 'sets' || table === 'cardio_entries') && deleted) {
       const prs = await db.mirror('pr_events').where('source_id').equals(id).toArray();
-      mutations.push(...prs.filter((pr) => pr.user_id === user && !pr.deleted_at).map((pr) => ({ table: 'pr_events' as const, row: tombstonePr(pr, now) })));
+      mutations.push(...prs.filter((pr) => pr.user_id === user).map((pr) => ({ table: 'pr_events' as const, row: { ...pr, deleted_at: now, client_updated_at: typeof pr.client_updated_at === 'string' && compareInstant(pr.client_updated_at, now) > 0 ? pr.client_updated_at : now } })));
     }
     return { mutations, now, localDate: typeof row.local_date === 'string' ? row.local_date : '' };
   }
