@@ -21,20 +21,23 @@ async function openDay() {
   expect(run.ok).toBe(true);
   harness.render(`/day/${DAY}`);
   expect(await screen.findByRole('region', { name: copy.run })).toBeTruthy();
-  const current = document.querySelector('.progress-day.is-current');
-  expect(current?.getAttribute('aria-label')).toBeNull();
-  expect(current?.textContent).toContain(DAY);
+  const current = document.querySelector('.day-chip.is-current');
+  expect(current?.getAttribute('aria-current')).toBe('date');
+  expect(current?.getAttribute('href')).toBe(`/day/${DAY}`);
+  expect(current?.textContent).toContain('Sat24');
+  fireEvent.click(screen.getByRole('button', { name: fill(copy.x6EditWorkout, { type: copy.run.toLowerCase() }) }));
+  expect(await screen.findByRole('dialog')).toBeTruthy();
   return harness;
 }
 
 it('moves a run to another day and shows it only there', async () => {
   const opened = await openDay();
-  const run = within(screen.getByRole('region', { name: copy.run }));
+  const run = within(screen.getByRole('dialog'));
   fireEvent.change(run.getByLabelText(copy.dateLabel), { target: { value: '2026-10-25' } });
   fireEvent.click(run.getByRole('button', { name: copy.save }));
 
   await waitFor(() => {
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('2026-10-25');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Sun 25 Oct');
   });
   expect(await screen.findByRole('region', { name: copy.run })).toBeTruthy();
   // The moved day re-reads live data; the empty state can flash before the run lands.
@@ -42,9 +45,9 @@ it('moves a run to another day and shows it only there', async () => {
     expect(screen.queryByText(copy.emptyDay)).toBeNull();
   });
 
-  fireEvent.click(screen.getByRole('link', { name: DAY }));
+  fireEvent.click(screen.getByRole('link', { name: 'Sat 24 Oct' }));
   await waitFor(() => {
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(DAY);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Sat 24 Oct');
   });
   await waitFor(() => {
     expect(screen.queryByRole('region', { name: copy.run })).toBeNull();
@@ -80,15 +83,18 @@ it('shows the copy-bank error for an out-of-range edit and does not save', async
 
   const updateEntry = vi.spyOn(opened.repo.w, 'updateEntry');
   const updateSet = vi.spyOn(opened.repo.w, 'updateSet');
-  const run = within(await screen.findByRole('region', { name: copy.run }));
+  fireEvent.click(await screen.findByRole('button', { name: fill(copy.x6EditWorkout, { type: copy.run.toLowerCase() }) }));
+  const run = within(await screen.findByRole('dialog'));
   fireEvent.change(run.getByLabelText(copy.distance), { target: { value: '101' } });
   fireEvent.change(run.getByLabelText(copy.dateLabel), { target: { value: '2026-10-25' } });
   fireEvent.click(run.getByRole('button', { name: copy.save }));
   expect((await run.findByTestId('error-distance')).textContent).toBe(copy.outOfRange);
   expect(updateEntry).not.toHaveBeenCalled();
 
-  const set = within(await screen.findByRole('region', { name: 'Set 1' }));
-  fireEvent.change(set.getByLabelText(copy.kg), { target: { value: '501' } });
+  fireEvent.click(run.getByRole('button', { name: copy.close }));
+  fireEvent.click(screen.getByRole('button', { name: fill(copy.x6EditSet, { exercise: 'Bench press', index: 1 }) }));
+  const set = within(await screen.findByRole('dialog'));
+  fireEvent.change(set.getByLabelText(copy.kg), { target: { value: '80.1' } });
   fireEvent.click(set.getByRole('button', { name: copy.save }));
   expect((await set.findByTestId('error-kg')).textContent).toBe(copy.outOfRange);
   expect(updateSet).not.toHaveBeenCalled();
@@ -98,7 +104,7 @@ it('shows the copy-bank error for an out-of-range edit and does not save', async
   expect(sameDay.cardio[0]?.distance_m).toBe(5200);
   expect(sameDay.sets[0]?.weight_kg).toBe(80);
   expect(nextDay.cardio).toHaveLength(0);
-  expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(DAY);
+  expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Sat 24 Oct');
 });
 
 it('soft-deletes a run and restores it on the same day', async () => {
@@ -126,7 +132,7 @@ it('shows the closed-week notice without a PR notice, and a run edit only when t
     adjusted_after_edit: false,
     computed_at: '2026-10-26T00:05:00.000Z',
   });
-  const run = within(screen.getByRole('region', { name: copy.run }));
+  const run = within(screen.getByRole('dialog'));
   fireEvent.change(run.getByLabelText(copy.note), { target: { value: 'easy' } });
   fireEvent.click(run.getByRole('button', { name: copy.save }));
   expect(await screen.findByText(copy.barAdjusted)).toBeTruthy();
@@ -146,9 +152,10 @@ it('shows the closed-week notice without a PR notice, and a run edit only when t
   expect((await next.repo.w.recomputePrs(null)).ok).toBe(true);
   next.render(`/day/${DAY}`);
   const cards = await screen.findAllByRole('region', { name: copy.run });
-  const longerCard = cards.find((node) => (within(node).getByLabelText(copy.distance) as HTMLInputElement).value === '8');
+  const longerCard = cards.find((node) => node.textContent?.includes('8 km'));
   if (!longerCard) throw new Error('missing 8 km run');
-  const card = within(longerCard);
+  fireEvent.click(within(longerCard).getByRole('button', { name: fill(copy.x6EditWorkout, { type: copy.run.toLowerCase() }) }));
+  const card = within(await screen.findByRole('dialog'));
   expect(screen.queryByText(copy.prsRecalculated)).toBeNull();
   fireEvent.change(card.getByLabelText(copy.distance), { target: { value: '4' } });
   fireEvent.click(card.getByRole('button', { name: copy.save }));
