@@ -75,9 +75,9 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 ## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need Can)
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: Can's Grok at 90% weekly) | todo — fire on friend's Grok |
-| H2 | Lighthouse CI on the production build | Grok | **E** (moved: Can's Grok at 90% weekly) | todo — fire on friend's Grok |
-| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: Can's Grok at 90% weekly) | todo — fire on friend's Grok |
+| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: Can's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H2 | Lighthouse CI on the production build | Grok | **E** (moved: Can's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: Can's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
 
 ## Parked / follow-ups
