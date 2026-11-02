@@ -229,6 +229,7 @@ async function audit(
     });
   }
 
+  await settleMotion(page);
   await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
   await page.setViewportSize(device);
   const results = await new AxeBuilder({ page }).analyze();
@@ -245,6 +246,26 @@ async function audit(
 function slug(value: string): string {
   const cleaned = value.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
   return (cleaned || 'el').slice(0, 80);
+}
+
+/** Axe samples live pixels. Wait out a fade or the PR flash unless reduced motion already killed it. */
+async function settleMotion(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      || document.documentElement.dataset.reducedMotion === 'on';
+    if (reduced) return;
+    const finite = document.getAnimations().filter((animation) => {
+      const timing = animation.effect?.getComputedTiming();
+      if (timing?.iterations === Infinity) return false;
+      const state = animation.playState as string;
+      return state === 'running' || state === 'pending';
+    });
+    const done = Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)));
+    await Promise.race([
+      done,
+      new Promise<void>((resolve) => { window.setTimeout(resolve, 2000); }),
+    ]);
+  });
 }
 
 function measure(labels: { tab: boolean; log: string; undo: string; minus: string; plus: string; skip: string }): Probe {
