@@ -69,7 +69,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (Can's Codex took it: lane C idle, P5C needs it; Can's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Codex Sol → Grok if friend's Codex still out | E | todo — after P4B, P3E |
-| P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | running 2026-11-02 (lane E, Grok) |
+| P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | pr #37 (skimmed UI; local checks green, 7-day avg + 375 px tests present) |
 
 ## Parked / follow-ups
 - **For lane C (seen by friend's Claude, 2026-11-02, mock backend, 375 px wide):** on `/session` after choosing an exercise, the kg and reps inputs overflow the right edge (horizontal scroll). Belongs to the session screen (P2D / S6).
