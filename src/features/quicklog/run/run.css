@@ -76,7 +76,7 @@
   min-height: 44px;
   justify-content: flex-start;
   padding-inline: var(--s-1);
-  color: var(--steel);
+  color: var(--text-muted);
   font-weight: 500;
   box-shadow: none;
 }
@@ -104,7 +104,7 @@
   min-height: 44px;
   width: 100%;
   padding-inline: var(--s-1);
-  color: var(--steel);
+  color: var(--text-muted);
   font-weight: 500;
   box-shadow: none;
 }

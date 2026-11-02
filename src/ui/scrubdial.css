@@ -65,6 +65,11 @@
   justify-items: stretch;
   gap: 0;
   padding: 0 0 0 2px;
+  /* --steel is 4.41:1 on dark surface-2 and 2.86:1 on light. Rubber is the
+     same in both themes, and steel on it is 5.2:1. The numeral stays chalk. */
+  background: var(--rubber);
+  color: var(--chalk);
+  border-radius: var(--r-sm);
 }
 
 .ui-scrub--wheel .ui-scrub__stack {
@@ -79,12 +84,12 @@
 
 .ui-scrub--wheel .ui-scrub__neighbor {
   font-family: var(--font-number);
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
   color: var(--steel);
-  opacity: 0.4;
+  opacity: 1;
   white-space: nowrap;
   pointer-events: none;
   max-width: 100%;
@@ -120,6 +125,7 @@
 .ui-scrub--wheel .ui-scrub__unit {
   font: 600 17px/1 var(--font-body);
   color: var(--steel);
+  opacity: 1;
   white-space: nowrap;
 }
 
