@@ -1,5 +1,5 @@
 # P4G · Playwright Phase 4
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) — moved from C · **Model:** Grok · Build · **Branch:** `P4G-playwright` · **Starts after:** P4C and P4E merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) — moved from C · **Model:** Grok · Build · **Branch:** `P4G-playwright` · **Starts after:** P4C and P4E merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §6 Phase 4 Definition of done + Demo script, §7.4, §7.6 (CLS).

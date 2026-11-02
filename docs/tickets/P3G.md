@@ -1,5 +1,5 @@
 # P3G · Playwright Phase 3 end-to-end
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3G-playwright` · **Starts after:** P3E, P3F merged (and B8)
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3G-playwright` · **Starts after:** P3E, P3F merged (and B8)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §6 Phase 3 Definition of done + Demo script, §7.4. B8's `playwright.config.ts`.

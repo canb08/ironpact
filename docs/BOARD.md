@@ -5,34 +5,34 @@ Status: `todo` · `running` · `pr #n` · `merged` · `parked (why)`. Pull befor
 ## Engines (4 coders + 2 Claude Leads) — Phase 2–3 lanes: see `docs/LANES.md`
 | Engine | Account | Best at here |
 |---|---|---|
-| Codex (Sol High / Astra) | Can | screens with tricky state (B4, B6), e2e |
+| Codex (Sol High / Astra) | owner | screens with tricky state (B4, B6), e2e |
 | Codex (Sol High / Astra) | friend | backend + sync (A6 finish, A7) |
 | Grok (SuperGrok) | friend | independent config/research (R1, A8), then B3 |
-| Grok (SuperGrok) | Can | independent PWA shell (B7), then B5 |
+| Grok (SuperGrok) | owner | independent PWA shell (B7), then B5 |
 Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub connector works). Risky code (RLS, sync, export) stays on Codex.
 
 ## Phase 0–1 (walking skeleton)
 | ID | What | Engine | Claimed by | Status |
 |---|---|---|---|---|
-| A1 | Scaffold + CI | Codex Sol | Can | merged #1 |
-| C2 | Export formatter + goldens | Claude | Can's Claude | merged #2 |
+| A1 | Scaffold + CI | Codex Sol | owner | merged #1 |
+| C2 | Export formatter + goldens | Claude | the owner's Claude | merged #2 |
 | A2 | Schema, triggers, seed, DB CI | Codex Sol | friend | merged #5 |
 | A3 | RLS, RPCs, security tests | Codex Astra | friend | merged #6 |
-| B1 | Tokens, UI primitives, copy bank | Codex Sol | Can | merged #7 |
-| C1 | Frozen contracts (types + Repo/Remote) | Claude | Can's Claude | merged (direct) |
+| B1 | Tokens, UI primitives, copy bank | Codex Sol | owner | merged #7 |
+| C1 | Frozen contracts (types + Repo/Remote) | Claude | the owner's Claude | merged (direct) |
 | A5 | Edge Functions export + health | Codex Sol | friend | merged #8 |
-| B2 | Pure core: validate, weeks, credits, e1RM | Codex Sol | Can | merged #9 |
-| C3 | Frozen route table, placeholder screens, `useRepo()` | Claude | Can's Claude | merged (direct) |
+| B2 | Pure core: validate, weeks, credits, e1RM | Codex Sol | owner | merged #9 |
+| C3 | Frozen route table, placeholder screens, `useRepo()` | Claude | the owner's Claude | merged (direct) |
 | A6 | Offline data layer + mock backend | Codex **Astra** → fixes on Grok | friend | merged #10 |
 | R1 | Verify ⚠️ platform facts (research) | Grok | friend | merged #11 |
 | A8 | `_headers`, keepalive, deploy docs | Grok | friend | merged #12 |
-| B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | Can | merged #13 |
-| A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | Can | merged #18 (Lead: 15 s request timeout) |
-| B4 | S6 session + S7 exercise picker | Codex Sol | Can | merged #15 |
+| B7 | sw.ts, manifest, S1 install gate, storage persist | Codex Sol | owner | merged #13 |
+| A7 | Supabase Remote + 20-set flight test + health DB read (L4) | Codex Sol | owner | merged #18 (Lead: 15 s request timeout) |
+| B4 | S6 session + S7 exercise picker | Codex Sol | owner | merged #15 |
 | B3 | S2 OTP sign-in, S3 crew + /join, App wiring + install bootstrap (L5) | Grok | friend | merged #14 |
-| B5 | S11 quick logs + S4 Floor | Grok | Can | merged #16 (Lead: live queries) |
-| B6 | S12 Crew + Settings → Vault export | Codex Sol | Can | merged #17 |
-| B8 | Playwright p1 e2e + CI job | Grok | Can | merged #19 |
+| B5 | S11 quick logs + S4 Floor | Grok | owner | merged #16 (Lead: live queries) |
+| B6 | S12 Crew + Settings → Vault export | Codex Sol | owner | merged #17 |
+| B8 | Playwright p1 e2e + CI job | Grok | owner | merged #19 |
 | G1 | Phase 1 gate: deploy, demo, checkpoint | Claude | — | todo (needs Supabase project + Cloudflare) |
 
 ## Phase 2–3 (two lanes, rules in `docs/LANES.md`)
@@ -66,18 +66,18 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5B | S14 completed | Grok | C | merged #38 |
 | P5C | S16 Settings full | Grok | C | merged #42 |
 | P4G | Playwright Phase 4 | Grok | **E** (moved from C to balance lanes, 2026-11-02) | todo — after P4C, P4E |
-| P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (Can's Codex took it: lane C idle, P5C needs it; Can's Claude reviews + merges) | merged #32 |
-| P4F | S1 install gate full + Floor install chip | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
+| P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
+| P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | pr #46 (reviewed: scope ok, reduced-motion + once-only tests, initial JS 116 kB; local 652 tests green) |
 | P5F | Recompute PRs after an edit + edit notices (L13) | Grok | C | pr #44 (db red: rows rejected by 0007 check; fix running) |
-| P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #37 |
+| P5A | S13 Progress full | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #37 |
 
-## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need Can)
+## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need the owner)
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: Can's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
-| H2 | Lighthouse CI on the production build | Grok | **E** (moved: Can's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
-| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: Can's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
 
 ## Parked / follow-ups

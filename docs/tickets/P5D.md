@@ -1,5 +1,5 @@
 # P5D · Delete-account function + 30-day purge
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P5D-delete-account` · **Starts after:** nothing (fire when a lane E Codex is free)
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Codex · GPT-6 Astra, High · **Branch:** `P5D-delete-account` · **Starts after:** nothing (fire when a lane E Codex is free)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §6 Phase 5 (delete account, purge), §4.4, §5.2 (token revoke), §10 E3.3, existing `supabase/functions/**` patterns (A5/A7).
