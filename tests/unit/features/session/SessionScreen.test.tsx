@@ -21,16 +21,15 @@ describe('S6 with the A6 mock Repo', () => {
   async function start() {
     await harness.exercise();
     harness.render(<SessionScreen />);
-    await userEvent.click(await screen.findByRole('button', { name: copy.start }));
     const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
     await userEvent.click(await within(picker).findByRole('button', { name: 'Bench press' }));
-    await screen.findByRole('button', { name: copy.logSet });
+    await screen.findByRole('button', { name: copy.x4Log });
   }
   const rows = () => within(screen.getByRole('region', { name: copy.sessionSets })).queryAllByRole('listitem');
   async function log(count: number) {
     for (let index = 1; index <= count; index++) {
       harness.tick();
-      await userEvent.click(screen.getByRole('button', { name: copy.logSet }));
+      await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
       await waitFor(() => expect(rows()).toHaveLength(index));
     }
   }
@@ -39,6 +38,7 @@ describe('S6 with the A6 mock Repo', () => {
     await start();
     fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value: '80' } });
     await userEvent.click(screen.getByRole('button', { name: copy.sessionWarmup }));
+    await userEvent.click(screen.getByRole('button', { name: copy.x4AddRpe }));
     await userEvent.click(screen.getByRole('button', { name: fill(copy.sessionRpeValue, { value: 8 }) }));
     await log(3);
     const session = await harness.repo.q.openSession();
@@ -54,7 +54,7 @@ describe('S6 with the A6 mock Repo', () => {
     await start();
     const logSet = vi.spyOn(harness.repo.w, 'logSet');
     fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value } });
-    await userEvent.click(screen.getByRole('button', { name: copy.logSet }));
+    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
     expect(screen.getByRole('alert').textContent).toBe(copy.outOfRange);
     expect(logSet).not.toHaveBeenCalled();
     expect(rows()).toHaveLength(0);
@@ -67,7 +67,7 @@ describe('S6 with the A6 mock Repo', () => {
     expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('2.5');
     expect((screen.getByRole('spinbutton', { name: copy.reps }) as HTMLInputElement).value).toBe('6');
     fireEvent.change(screen.getByRole('spinbutton', { name: copy.reps }), { target: { value: '101' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.logSet }));
+    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
     expect(screen.getByRole('alert').textContent).toBe(copy.outOfRange);
     fireEvent.change(screen.getByRole('spinbutton', { name: copy.reps }), { target: { value: '6' } });
     fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value: '80.25' } });
@@ -79,13 +79,13 @@ describe('S6 with the A6 mock Repo', () => {
     await start();
     const logSet = vi.spyOn(harness.repo.w, 'logSet').mockResolvedValueOnce({ ok: false, error: 'storage_full' });
     fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value: '82.5' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.logSet }));
+    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
     const modal = await screen.findByRole('alertdialog', { name: copy.storageFull });
     expect(rows()).toHaveLength(0);
     await userEvent.click(within(modal).getByRole('button', { name: copy.retry }));
     await waitFor(() => expect(rows()).toHaveLength(1));
     expect(logSet).toHaveBeenCalledTimes(2);
-    expect(rows()[0]!.textContent).toContain('82.5');
+    await waitFor(() => expect(rows()[0]!.textContent).toContain('82.5'));
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
@@ -114,10 +114,10 @@ describe('S6 with the A6 mock Repo', () => {
     const input = await screen.findByRole('spinbutton', { name: copy.sessionAddedKg });
     expect((input as HTMLInputElement).value).toBe('-20');
     fireEvent.change(input, { target: { value: '-100.25' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.logSet }));
+    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
     expect(screen.getByRole('alert').textContent).toBe(copy.outOfRange);
     fireEvent.change(input, { target: { value: '-22.5' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.logSet }));
+    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
     await waitFor(() => expect(rows()).toHaveLength(2));
     expect((await harness.repo.q.setsOfSession(session.id))[1]!.weight_kg).toBe(-22.5);
   });
@@ -157,10 +157,10 @@ describe('S6 with the A6 mock Repo', () => {
   it('finishes only after the full 600 ms hold; click, short hold and cancellation do not finish', async () => {
     await start();
     const finish = vi.spyOn(harness.repo.w, 'finishSession');
-    const button = screen.getByRole('button', { name: copy.rackItName });
-    expect(button.getAttribute('aria-label')).toBe(copy.rackItName);
-    expect(button.textContent).toContain(copy.rackIt);
-    expect(button.textContent).toContain(copy.finish);
+    const button = screen.getByRole('button', { name: copy.x4FinishHold });
+    expect(button.getAttribute('aria-label')).toBe(copy.x4FinishHold);
+    expect(button.textContent).toContain(copy.x4Finish);
+    expect(button.textContent).toContain(copy.x4Hold);
     const sets = screen.getByRole('region', { name: copy.sessionSets });
     expect(sets.tabIndex).toBe(0);
     vi.useFakeTimers();
@@ -176,7 +176,7 @@ describe('S6 with the A6 mock Repo', () => {
     act(() => vi.advanceTimersByTime(1));
     expect(finish).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
-    await screen.findByText(copy.sessionFinished);
+    await screen.findByText(copy.x4Summary);
     expect(await harness.repo.q.openSession()).toBeUndefined();
   });
 
@@ -188,7 +188,7 @@ describe('S6 with the A6 mock Repo', () => {
     const startSession = vi.spyOn(harness.repo.w, 'startSession');
     harness.render(<SessionScreen />);
     await userEvent.click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
-    await screen.findByRole('button', { name: copy.logSet });
+    await screen.findByRole('button', { name: copy.x4Log });
     expect(rows()).toHaveLength(1);
     expect(startSession).not.toHaveBeenCalled();
     expect((await harness.repo.q.openSession())!.id).toBe(original!.id);
@@ -204,11 +204,52 @@ describe('S6 with the A6 mock Repo', () => {
     unwrap(await harness.repo.w.finishSession(session.id));
     harness.tick();
     harness.render(<SessionScreen />);
-    await userEvent.click(await screen.findByRole('button', { name: copy.start }));
-    await screen.findByRole('button', { name: copy.logSet });
+    const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
+    await userEvent.click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    await screen.findByRole('button', { name: copy.x4Log });
     expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('60');
     await log(3);
     const active = (await harness.repo.q.openSession())!;
     expect((await harness.repo.q.setsOfSession(active.id)).map((row) => [row.weight_kg, row.rpe])).toEqual([[60, null], [80, null], [80, null]]);
   });
+  it('keeps both exercise groups and edits a set through the outbox', async () => {
+    await start();
+    const squat = await harness.exercise('Back squat');
+    await log(3);
+    await userEvent.click(screen.getByRole('button', { name: copy.nextExercise }));
+    const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
+    await userEvent.click(await within(picker).findByRole('button', { name: squat.name }));
+    await screen.findByRole('form', { name: squat.name });
+    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    await waitFor(() => expect(rows()).toHaveLength(4));
+    const list = screen.getByRole('region', { name: copy.sessionSets });
+    expect(within(list).getByRole('heading', { name: 'Bench press' })).toBeTruthy();
+    expect(within(list).getByRole('heading', { name: squat.name })).toBeTruthy();
+    await userEvent.click(within(rows()[0]!).getByRole('button', { name: fill(copy.x4SetOptions, { index: 1 }) }));
+    const edit = await screen.findByRole('dialog', { name: copy.x4EditTitle });
+    fireEvent.change(within(edit).getByRole('spinbutton', { name: copy.kg }), { target: { value: '82.5' } });
+    await userEvent.click(within(edit).getByRole('button', { name: copy.x4SaveSet }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: copy.x4EditTitle })).toBeNull());
+    await waitFor(() => expect(rows()[0]!.textContent).toContain('82.5'));
+    const session = (await harness.repo.q.openSession())!;
+    const first = (await harness.repo.q.setsOfSession(session.id))[0]!;
+    expect(first.weight_kg).toBe(82.5);
+    expect(await harness.repo.q.isPending(first.id)).toBe(true);
+  });
+
+  it('retries a failed workout start without keeping the picker above the storage dialog', async () => {
+    await harness.exercise();
+    const begin = vi.spyOn(harness.repo.w, 'startSession').mockResolvedValueOnce({ ok: false, error: 'storage_full' });
+    harness.render(<SessionScreen />);
+    const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
+    await userEvent.click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    const modal = await screen.findByRole('alertdialog', { name: copy.storageFull });
+    expect(screen.queryByRole('dialog', { name: copy.pickerTitle })).toBeNull();
+    expect(await harness.repo.q.openSession()).toBeUndefined();
+    await userEvent.click(within(modal).getByRole('button', { name: copy.retry }));
+    await screen.findByRole('button', { name: copy.x4Log });
+    expect(begin).toHaveBeenCalledTimes(2);
+    expect(await harness.repo.q.openSession()).toBeDefined();
+  });
+
 });

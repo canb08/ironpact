@@ -34,11 +34,9 @@ export { defaultRestSeconds, COMPOUND_REST_SECONDS, ISOLATION_REST_SECONDS } fro
  * state.phase        // 'idle' | 'running' | 'over'
  * ```
  *
- * Mount `<RestTimerOverlay />` on S6 (`part="all"`). E7.1: put `part="readout"`
- * in the top read-only zone and `part="controls"` directly above LOG SET.
- * Pass `onSkipHold` so a 600 ms hold on Skip can finish the session. Pass
- * `reduceMotion` from the profile; otherwise the overlay reads
- * `prefers-reduced-motion`.
+ * Mount one `<RestTimerOverlay />` in the session dock. It contains the slim
+ * readout and ±15 / Skip controls; tapping its readout expands it in place.
+ * Pass `reduceMotion` from the profile; otherwise it reads the device preference.
  *
  * Wake lock: call `keepAwake()` from `src/platform/wakeLock.ts` inside the
  * START tap (user gesture, so the silent-video fallback may play). `startRest`

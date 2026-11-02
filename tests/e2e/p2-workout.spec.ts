@@ -61,18 +61,19 @@ async function openBench(page: Page): Promise<void> {
   await waitForBench(page);
   await pressStartUntilOpen(page);
   await ensureBench(page);
-  await expect(page.getByRole('button', { name: copy.logSet, exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: copy.x4Log, exact: true })).toBeVisible();
 }
 
 async function rackIt(page: Page): Promise<void> {
-  const rack = page.getByRole('button', { name: copy.finish });
+  const rack = page.getByRole('button', { name: copy.x4FinishHold });
   await rack.focus();
   await page.keyboard.down('Enter');
-  await page.clock.runFor(700);
+  await page.clock.setFixedTime(CLOCK.getTime() + 700);
   await expect(page.getByRole('region', { name: copy.summaryTitle })).toBeVisible();
   await page.keyboard.up('Enter');
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
-  await expect(page.getByRole('button', { name: copy.start, exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId('my-week')).toBeVisible();
 }
 
 async function bumpKg(page: Page, from: string, to: string): Promise<void> {
@@ -122,38 +123,38 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('ironpact.install-dismissed', '1');
   });
-  await page.clock.install({ time: CLOCK });
+  await page.clock.setFixedTime(CLOCK);
 });
 
 test('thumb zone: three taps log sets, the zero flash shows, then +0:05 over', async ({ page }) => {
   await openBench(page);
-  const log = page.getByRole('button', { name: copy.logSet, exact: true });
+  const log = page.getByRole('button', { name: copy.x4Log, exact: true });
   for (let count = 1; count <= 3; count += 1) {
     await tapInThumbZone(page, log);
-    await expect(page.getByText(fill(copy.sessionSetCount, { count }), { exact: true })).toBeVisible();
+    await expect(page.getByText((count === 1 ? copy.x4SetOne : fill(copy.x4SetCount, { count })), { exact: true })).toBeVisible();
   }
 
   // Compound rest is 120s. The clock is still at the start, so the chip reads 2:00.
   await expect(page.getByRole('region', { name: copy.restTimerLabel }).first()).toBeVisible();
   await expect(restChip(page)).toHaveText('2:00');
 
-  await page.clock.runFor(120_000);
+  await page.clock.setFixedTime(CLOCK.getTime() + 120_000);
   await expect(page.getByTestId('rest-pulse')).toBeVisible();
   await expect(page.getByText(copy.restComplete, { exact: true })).toBeVisible();
   await expect(page.locator('.rest-timer__live')).toHaveText(copy.restOverAnnounce);
 
-  await page.clock.runFor(5_000);
+  await page.clock.setFixedTime(CLOCK.getTime() + 125_000);
   await expect(restChip(page)).toHaveText(fill(copy.restOverChip, { time: '0:05' }));
   await expect(page.getByTestId('rest-pulse')).toBeHidden();
 });
 
 test('backgrounding 60s mid-rest returns the remaining time from ends_at', async ({ page }) => {
   await openBench(page);
-  await page.getByRole('button', { name: copy.logSet, exact: true }).click();
+  await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
   await expect(restChip(page)).toHaveText('2:00');
 
   await setVisibility(page, true);
-  await page.clock.setSystemTime(CLOCK.getTime() + 60_000);
+  await page.clock.setFixedTime(CLOCK.getTime() + 60_000);
   await setVisibility(page, false);
 
   await expect(restChip(page)).toHaveText('1:00');
@@ -162,17 +163,17 @@ test('backgrounding 60s mid-rest returns the remaining time from ends_at', async
 test('a heavier set shows a PR card and deleting that set removes the PR', async ({ page }) => {
   await openBench(page);
   await bumpKg(page, '0', '2.5');
-  await page.getByRole('button', { name: copy.logSet, exact: true }).click();
-  await expect(page.getByText(copy.firstSession, { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
+  await expect(page.getByText(copy.x4Baseline, { exact: true })).toBeVisible();
   await rackIt(page);
 
   // Later started_at so this session is not the baseline (UUIDs must not decide).
-  await page.clock.setSystemTime(CLOCK.getTime() + 120_000);
+  await page.clock.setFixedTime(CLOCK.getTime() + 120_000);
   await pressStartUntilOpen(page);
   await ensureBench(page);
 
   await bumpKg(page, '2.5', '5');
-  await page.getByRole('button', { name: copy.logSet, exact: true }).click();
+  await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
   const card = page.getByRole('region', { name: copy.prCardLabel });
   await expect(card).toBeVisible();
   await expect.poll(() => livePrCount(page)).toBeGreaterThan(0);

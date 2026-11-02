@@ -1,12 +1,11 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useRepo } from '../../app/useRepo.ts';
 import type { Nudge } from '../../core/progression.ts';
 import { formatNudgeChip, nudgeCopyKey } from '../../core/progression.ts';
-import type { Exercise, Result, Session, SetRow } from '../../core/types.ts';
+import type { Exercise, Session, SetRow } from '../../core/types.ts';
 import { uiSchemas } from '../../core/validate.ts';
-import type { WriteError } from '../../data/adapter.ts';
 import { haptic } from '../../platform/haptics.ts';
-import { Button, HoldButton, Sheet, Stepper, copy, fill } from '../../ui';
+import { Button, Stepper, copy, fill } from '../../ui';
 import { RestTimerOverlay } from '../timer/RestTimerOverlay.tsx';
 import { skipRest, startRest, useRestTimer } from '../timer/useRestTimer.ts';
 import { SetList } from './SetList.tsx';
@@ -22,12 +21,16 @@ interface LoggingCardProps {
   sets: SetRow[];
   prefillSets: readonly { weight_kg: number; reps: number }[];
   pending: Map<string, boolean>;
+  allSets: SetRow[];
+  exercises: Exercise[];
+  bigJumps: boolean;
+  finishing: boolean;
+  reduceMotion?: boolean | undefined;
+  onBusyChange: (busy: boolean) => void;
   restSeconds: number;
   nudge: Nudge | null;
   onNext: () => void;
-  onFinish: (session: Session) => void;
   onLogged: (row: SetRow) => void;
-  onRack: () => Promise<Result<Session, WriteError | 'label_taken'>>;
 }
 
 function nudgeSentence(nudge: Nudge): string {
@@ -36,17 +39,30 @@ function nudgeSentence(nudge: Nudge): string {
   return copy[key];
 }
 
-export function LoggingCard({ session, exercise, sets, prefillSets, pending, restSeconds, nudge, onNext, onFinish, onLogged, onRack }: LoggingCardProps) {
+export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJumps, finishing, reduceMotion, onBusyChange, prefillSets, pending, restSeconds, nudge, onNext, onLogged }: LoggingCardProps) {
   const repo = useRepo();
   const write = useSessionWrite();
   const logged = useSetLoggedMicro();
+  const busy = write.busy || finishing;
+  useEffect(() => { onBusyChange(write.busy); }, [write.busy, onBusyChange]);
   const rest = useRestTimer();
   const id = useId();
+  const dock = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const element = dock.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      element.closest('main')?.style.setProperty('--session-dock-height', `${element.offsetHeight + 24}px`);
+      element.classList.toggle('session-controls--flow', element.getBoundingClientRect().height > window.innerHeight * .55);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const workingLogged = sets.filter((set) => !set.is_warmup).length;
   const opening = prefillAt(prefillSets, workingLogged);
   const fallback = sets.at(-1);
-  const [kg, setKg] = useState(opening?.weight_kg ?? fallback?.weight_kg ?? 0);
-  const [reps, setReps] = useState(opening?.reps ?? fallback?.reps ?? exercise.rep_target);
+  const [kg, setKg] = useState(fallback?.weight_kg ?? opening?.weight_kg ?? 0);
+  const [reps, setReps] = useState(fallback?.reps ?? opening?.reps ?? exercise.rep_target);
   const [rpe, setRpe] = useState<number | null>(null);
   const [warmup, setWarmup] = useState(false);
   const [invalid, setInvalid] = useState(false);
@@ -55,16 +71,15 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
   const [bump, setBump] = useState(0);
   const [freshId, setFreshId] = useState<string | null>(null);
   const weightLabel = exercise.kind === 'bw_lift' ? copy.sessionAddedKg : copy.kg;
-  const step = exercise.increment_kg > 0 ? exercise.increment_kg : 2.5;
+  const step = bigJumps && exercise.lower_body && exercise.category === 'compound' ? 5 : exercise.increment_kg > 0 ? exercise.increment_kg : 2.5;
   const resting = rest.state.phase !== 'idle';
   const valid = (exercise.kind === 'bw_lift' ? uiSchemas.added_kg : uiSchemas.lift_kg).safeParse(kg).success
     && uiSchemas.reps.safeParse(reps).success && (rpe === null || uiSchemas.rpe.safeParse(rpe).success);
-  const rack = () => { void write.run(onRack, onFinish); };
   const rpePills = <div className="session-rpe-pills" role="group" aria-label={copy.sessionRpe}>
-    <Button size="xl" variant="secondary" disabled={write.busy} aria-pressed={rpe === null} onClick={() => setRpe(null)}>{copy.sessionNoRpe}</Button>
-    {Array.from({ length: 9 }, (_, index) => 6 + index / 2).map((value) => <Button key={value} size="xl"
-      variant="secondary" disabled={write.busy} aria-label={fill(copy.sessionRpeValue, { value })} aria-pressed={rpe === value}
-      onClick={() => setRpe(rpe === value ? null : value)}>{value}</Button>)}
+    <Button variant="secondary" disabled={busy} aria-pressed={rpe === null} onClick={() => setRpe(null)}>{copy.sessionNoRpe}</Button>
+    {Array.from({ length: 9 }, (_, index) => 6 + index / 2).map((value) => <Button key={value}
+      variant="secondary" disabled={busy} aria-label={fill(copy.sessionRpeValue, { value })} aria-pressed={rpe === value}
+      onClick={() => { setRpe(rpe === value ? null : value); setRpeOpen(false); }}>{value}</Button>)}
   </div>;
 
   useEffect(() => {
@@ -81,15 +96,7 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
   }, [rest.state.endsAt, rest.state.startedAt, rest.state.exerciseId, exercise.id, restSeconds, repo]);
 
   return <>
-    {nudge && !applied && !resting && <div className="session-nudge">
-      <Button size="xl" variant="secondary" disabled={write.busy} onClick={() => {
-        setApplied(true);
-        setBump(nudge.incrementKg);
-        setKg((current) => roundKg(current + nudge.incrementKg));
-      }}>{formatNudgeChip(nudge)}</Button>
-      <p>{nudgeSentence(nudge)}</p>
-    </div>}
-    <SetList sets={sets} pending={pending} freshId={freshId} onDeleted={(row) => {
+    <SetList sets={allSets} exercises={exercises} pending={pending} freshId={freshId} onDeleted={(row) => {
       if (row.id === freshId || row.id === sets.at(-1)?.id) skipRest();
       if (row.id === freshId) setFreshId(null);
     }} />
@@ -97,8 +104,9 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
       {invalid && !valid && <p role="alert" className="session-error">{copy.outOfRange}</p>}
       <WriteFeedback error={write.error} retry={write.retry} />
     </div>
-    <form className="session-controls" noValidate aria-label={exercise.name} onSubmit={(event) => {
+    <form ref={dock} data-session-dock className="session-controls" noValidate aria-label={exercise.name} onSubmit={(event) => {
       event.preventDefault();
+      if (finishing) return;
       setInvalid(!valid);
       if (!valid) return;
       void write.run(() => repo.w.logSet({ session_id: session.id, exercise_id: exercise.id,
@@ -115,35 +123,34 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
         onLogged(row);
       });
     }}>
+      <RestTimerOverlay reduceMotion={reduceMotion} />
+      {nudge && !applied && !resting && <div className="session-nudge">
+        <Button variant="secondary" disabled={busy} onClick={() => {
+          setApplied(true); setBump(nudge.incrementKg);
+          setKg((current) => roundKg(current + nudge.incrementKg));
+        }}>{formatNudgeChip(nudge)}</Button>
+        <p>{nudgeSentence(nudge)}</p>
+      </div>}
       <SetLoggedPlayer playKey={logged.playKey} reduced={logged.reduced} />
       <div className="session-steppers">
         <div data-set-logged-weight="">
-          <Stepper label={weightLabel} value={kg} step={step} onChange={setKg} disabled={write.busy} />
+          <Stepper label={weightLabel} value={kg} step={step} unit={copy.kg} onChange={setKg} disabled={busy} />
         </div>
-        <Stepper label={copy.reps} value={reps} step={1} onChange={setReps} disabled={write.busy} />
+        <Stepper label={copy.reps} value={reps} step={1} onChange={setReps} disabled={busy} />
       </div>
       <div className="session-options">
-        <Button className="session-rpe-trigger" size="xl" variant="secondary" disabled={write.busy} onClick={() => setRpeOpen(true)}>
-          {rpe === null ? copy.sessionRpe : fill(copy.sessionRpeValue, { value: rpe })}
+        <Button variant="ghost" disabled={busy} aria-expanded={rpeOpen} onClick={() => setRpeOpen(!rpeOpen)}>
+          {rpe === null ? copy.x4AddRpe : fill(copy.sessionRpeValue, { value: rpe })}
         </Button>
-        <div className="session-rpe-inline">{rpePills}</div>
-        <Button size="xl" variant="secondary" aria-pressed={warmup} disabled={write.busy}
+        <Button variant="ghost" aria-pressed={warmup} disabled={busy}
           onClick={() => setWarmup(!warmup)}>{copy.sessionWarmup}</Button>
+        <Button variant="ghost" disabled={busy} onClick={onNext}>{copy.nextExercise}</Button>
       </div>
-      {/* RACK IT stays reachable during rest: the timer adds controls, it never replaces the finish action. */}
-      {resting && <RestTimerOverlay part="controls" onSkipHold={rack} />}
-      <div className="session-actions">
-        <Button size="xl" variant="secondary" disabled={write.busy} onClick={onNext}>{copy.nextExercise}</Button>
-        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} disabled={write.busy} aria-label={copy.rackItName} onHoldComplete={rack}>
-          {`${copy.rackIt} `}
-          <span className="session-hold-hint">{copy.finish}</span>
-        </HoldButton>
-      </div>
-      <Button className="session-log" type="submit" size="xl" disabled={write.busy} aria-describedby={`${id}-error`}>
-        {copy.logSet}
+      {rpeOpen && rpePills}
+      <Button className="session-log" type="submit" size="xl" disabled={busy} aria-describedby={`${id}-error`}>
+        {copy.x4Log}
       </Button>
-      {logged.visible && <p role="status">{copy.setLogged}</p>}
+      {logged.visible && <p role="status">{copy.x4Saved}</p>}
     </form>
-    <Sheet open={rpeOpen} onClose={() => setRpeOpen(false)} title={copy.sessionRpe}>{rpePills}</Sheet>
   </>;
 }

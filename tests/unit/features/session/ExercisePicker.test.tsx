@@ -71,7 +71,7 @@ describe('S7 with the A6 mock Repo', () => {
     harness.tick();
     unwrap(await harness.repo.w.logSet({ session_id: session.id, exercise_id: exercises[2]!.id, weight_kg: 20, reps: 5 }));
     harness.render(<ExercisePicker open onSelect={() => {}} onClose={() => {}} />);
-    const recent = await screen.findByRole('region', { name: copy.pickerRecent });
+    const recent = await screen.findByRole('region', { name: copy.x4Recent });
     expect(within(recent).getAllByRole('button').map((button) => button.textContent)).toEqual([
       'Lift 2', 'Lift 9', 'Lift 8', 'Lift 7', 'Lift 6', 'Lift 5', 'Lift 4', 'Lift 3',
     ]);
