@@ -18,18 +18,11 @@ import { defaultRestSeconds } from '../timer/restTimer.ts';
 import { applyDocumentFeel, deleteReady } from './feel.ts';
 import { listedPlates, togglePlate } from './plates.ts';
 import '../export/export.css';
+import { settingsSections as sections } from './sections.ts';
 import './settings.css';
 
 const notificationsAvailable = false; // Phase 7: retain preferences and controls until push ships.
 
-const sections = [
-  { id: 'profile', title: copy.settingsProfile, detail: copy.x8ProfileDetail },
-  { id: 'training', title: copy.settingsTraining, detail: copy.x8TrainingDetail },
-  { id: 'appearance', title: copy.x8Appearance, detail: copy.x8AppearanceDetail },
-  { id: 'privacy', title: copy.x8Privacy, detail: copy.x8PrivacyDetail },
-  { id: 'crew', title: copy.settingsCrew, detail: copy.x8CrewDetail },
-  { id: 'account', title: copy.settingsAccount, detail: copy.x8AccountDetail },
-] as const;
 type Section = typeof sections[number]['id'];
 
 type Patch = Partial<Omit<Profile, 'id'>>;
@@ -41,8 +34,7 @@ export default function SettingsScreen() {
   const repo = useRepo();
   const user = useSyncExternalStore(repo.auth.onChange, repo.auth.userId);
   return (
-    <main className="settings-screen">
-      <h1>{copy.settingsTitle}</h1>
+    <main className="settings-screen" aria-label={sections.find((item) => item.id === current)?.title ?? copy.settingsTitle}>
       {user ? <SettingsBody key={`${user}-${current ?? 'index'}`} section={current} /> : <p>{copy.profileNeeded}</p>}
     </main>
   );
@@ -167,8 +159,7 @@ function ProfileSettings({ repo, section }: { repo: Repo; section: Section }) {
   return (
     <div className="settings-profile" aria-busy={pending} aria-hidden={pending || undefined} inert={pending || undefined}>
       {section === 'profile' && (
-        <section className="settings-section" aria-labelledby="settings-profile">
-          <h2 id="settings-profile">{copy.settingsProfile}</h2>
+        <section className="settings-section" aria-label={copy.settingsProfile}>
           <div className="settings-field">
             <label htmlFor="settings-name">{copy.displayName}</label>
             <input
@@ -231,8 +222,7 @@ function ProfileSettings({ repo, section }: { repo: Repo; section: Section }) {
       )}
 
       {section === 'training' && (
-        <section className="settings-section" aria-labelledby="settings-training">
-          <h2 id="settings-training">{copy.settingsTraining}</h2>
+        <section className="settings-section" aria-label={copy.settingsTraining}>
           <p id="plate-inventory">{copy.plateInventory}</p>
           <div role="group" aria-labelledby="plate-inventory" className="settings-plates">
             {listedPlates(profile?.plates_kg ?? []).map((kg) => (
@@ -268,8 +258,7 @@ function ProfileSettings({ repo, section }: { repo: Repo; section: Section }) {
       )}
 
       {section === 'appearance' && (
-        <section className="settings-section" aria-labelledby="settings-feel">
-          <h2 id="settings-feel">{copy.x8Appearance}</h2>
+        <section className="settings-section" aria-label={copy.x8Appearance}>
           <Toggle label={copy.soundOn} checked={profile?.sound_on ?? false} disabled={pending} onChange={(sound_on) => saveIfReady({ sound_on })} />
           <Toggle label={copy.hapticsOn} checked={profile?.haptics_on ?? false} disabled={pending} onChange={(haptics_on) => saveIfReady({ haptics_on })} />
           <Toggle label={copy.reduceMotionOn} checked={profile?.reduce_motion ?? false} disabled={pending} onChange={(reduce_motion) => saveIfReady({ reduce_motion })} />
@@ -310,8 +299,7 @@ function ProfileSettings({ repo, section }: { repo: Repo; section: Section }) {
       )}
 
       {section === 'privacy' && (
-        <section className="settings-section" aria-labelledby="settings-privacy">
-          <h2 id="settings-privacy">{copy.x8Privacy}</h2>
+        <section className="settings-section" aria-label={copy.x8Privacy}>
           <Toggle label={copy.shareBodyweight} checked={profile?.show_bodyweight ?? false} disabled={pending} onChange={(show_bodyweight) => saveIfReady({ show_bodyweight })} />
           <Toggle label={copy.shareDots} checked={profile?.share_dots ?? false} disabled={pending} onChange={(share_dots) => saveIfReady({ share_dots })} />
         </section>
@@ -413,8 +401,7 @@ function CrewPanel({ repo }: { repo: Repo }) {
   }
 
   return (
-    <section className="settings-section" aria-labelledby="settings-crew">
-      <h2 id="settings-crew">{copy.settingsCrew}</h2>
+    <section className="settings-section" aria-label={copy.settingsCrew}>
       {!data ? <p>{copy.loading}</p> : !membership ? <p>{copy.noCrew}</p> : (
         <>
           <p>{membership.crew.name}</p>
@@ -452,8 +439,7 @@ function AccountPanel({ repo }: { repo: Repo }) {
   }
 
   return (
-    <section className="settings-section" aria-labelledby="settings-account">
-      <h2 id="settings-account">{copy.settingsAccount}</h2>
+    <section className="settings-section" aria-label={copy.settingsAccount}>
       <Button variant="secondary" onClick={() => void repo.auth.signOut()}>{copy.signOut}</Button>
       <HoldButton aria-label={copy.holdDeleteAccount} variant="secondary" className="settings-danger" disabled={busy} onHoldComplete={() => { setHeld(true); setTyped(''); setMessage(''); }}>
         <DangerMark />
@@ -501,10 +487,11 @@ function FrozenStepper({ label }: { label: string }) {
 function Toggle({ label, checked, disabled = false, onChange }: { label: string; checked: boolean; disabled?: boolean; onChange: (next: boolean) => void }) {
   const id = useId();
   return (
-    <div className="settings-toggle">
-      <input id={id} type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.currentTarget.checked)} />
-      <label htmlFor={id}>{label}</label>
-    </div>
+    <button type="button" role="switch" className="settings-toggle"
+      aria-labelledby={id} aria-checked={checked} disabled={disabled} onClick={() => onChange(!checked)}>
+      <span id={id}>{label}</span>
+      <span className="settings-toggle__track" aria-hidden="true" />
+    </button>
   );
 }
 

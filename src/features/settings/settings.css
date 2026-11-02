@@ -25,7 +25,6 @@
   padding-top: var(--s-3);
   border-top: 1px solid var(--line);
 }
-.settings-toggle,
 .settings-radio {
   display: flex;
   align-items: center;
@@ -33,13 +32,11 @@
   min-height: 48px;
   min-width: 0;
 }
-.settings-toggle input,
 .settings-radio input {
   width: 1.5rem;
   height: 1.5rem;
   flex: 0 0 auto;
 }
-.settings-toggle label,
 .settings-radio span {
   flex: 1;
   min-height: 48px;
@@ -131,3 +128,46 @@
 
 .settings-sync-errors summary { min-height: 48px; padding-block: var(--s-3); box-sizing: border-box; cursor: pointer; }
 .settings-screen > .settings-section { padding-top: 0; border-top: 0; }
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--s-2) 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.settings-toggle > span:first-child { min-width: 0; }
+.settings-toggle__track {
+  position: relative;
+  flex: 0 0 44px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 1px solid var(--text);
+  border-radius: var(--r-full);
+  background: var(--steel);
+}
+.settings-toggle__track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  background: var(--rubber);
+}
+.settings-toggle[aria-checked='true'] .settings-toggle__track { background: var(--chalk); }
+.settings-toggle[aria-checked='true'] .settings-toggle__track::before { transform: translateX(20px); }
+.settings-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.settings-toggle:disabled { opacity: 0.55; cursor: default; }
+.settings-radio input { accent-color: var(--text); }

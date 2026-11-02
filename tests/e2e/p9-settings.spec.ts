@@ -36,9 +36,14 @@ for (const theme of ['dark', 'light'] as const) {
       expect(box?.width).toBeGreaterThanOrEqual(44);
       await row.click();
       await expect(page).toHaveURL(new RegExp(`/settings/${section}$`));
-      await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+      await expect(page.locator('.app-shell__header').getByRole('heading', { name: title, exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { name: title, exact: true })).toHaveCount(1);
       if (['profile', 'training', 'appearance', 'privacy'].includes(section)) {
         await expect(page.locator('.settings-profile')).toHaveAttribute('aria-busy', 'false');
+      }
+      for (const control of await page.getByRole('switch').all()) {
+        expect((await control.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await expect(control).toHaveAttribute('aria-checked', /^(true|false)$/);
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
       expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(1624);
@@ -77,4 +82,20 @@ test('profile saves survive navigation, notifications stay hidden, and export co
   await page.getByRole('button', { name: new RegExp(`^${copy.settingsProfile}`) }).click();
   await expect(name).toHaveValue('Lifter');
   await expect(page.getByText(copy.settingsNotifications, { exact: true })).toHaveCount(0);
+});
+
+test('switches support keyboard input, visible focus and persisted state', async ({ page }) => {
+  await page.getByRole('button', { name: new RegExp(`^${copy.x8Appearance}`) }).click();
+  const sound = page.getByRole('switch', { name: copy.soundOn, exact: true });
+  await expect(sound).toBeEnabled();
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  await sound.focus();
+  await page.keyboard.press('Space');
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  expect(await sound.evaluate((node) => getComputedStyle(node).outlineStyle)).toBe('solid');
+  await page.keyboard.press('Enter');
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  await page.getByRole('button', { name: copy.x1Back, exact: true }).click();
+  await page.getByRole('button', { name: new RegExp(`^${copy.x8Appearance}`) }).click();
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
 });

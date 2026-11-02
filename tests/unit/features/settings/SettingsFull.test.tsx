@@ -53,36 +53,36 @@ it('persists every toggle through upsertMyProfile and applies feel flags', async
   const user = userEvent.setup();
   const original = (await me())!;
   mount('appearance');
-  await screen.findByRole('checkbox', { name: copy.soundOn });
+  await screen.findByRole('switch', { name: copy.soundOn });
 
-  await user.click(screen.getByRole('checkbox', { name: copy.soundOn }));
+  await user.click(screen.getByRole('switch', { name: copy.soundOn }));
   await waitFor(async () => expect((await me())?.sound_on).toBe(true));
   await waitFor(() => expect(soundEnabled()).toBe(true));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.hapticsOn }));
+  await user.click(screen.getByRole('switch', { name: copy.hapticsOn }));
   await waitFor(async () => expect((await me())?.haptics_on).toBe(false));
   await waitFor(() => expect(hapticsEnabled()).toBe(false));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.reduceMotionOn }));
+  await user.click(screen.getByRole('switch', { name: copy.reduceMotionOn }));
   await waitFor(async () => expect((await me())?.reduce_motion).toBe(true));
   await waitFor(() => expect(document.documentElement.dataset.reducedMotion).toBe('on'));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.batterySaverOn }));
+  await user.click(screen.getByRole('switch', { name: copy.batterySaverOn }));
   await waitFor(async () => expect((await me())?.battery_saver).toBe(true));
   await waitFor(() => expect(document.documentElement.dataset.batterySaver).toBe('on'));
 
   await go('training');
-  await user.click(await screen.findByRole('checkbox', { name: copy.bigJumps }));
+  await user.click(await screen.findByRole('switch', { name: copy.bigJumps }));
   await waitFor(async () => expect((await me())?.big_jumps).toBe(true));
 
   await go('privacy');
-  await user.click(await screen.findByRole('checkbox', { name: copy.shareBodyweight }));
+  await user.click(await screen.findByRole('switch', { name: copy.shareBodyweight }));
   await waitFor(async () => expect((await me())?.show_bodyweight).toBe(true));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.shareDots }));
+  await user.click(screen.getByRole('switch', { name: copy.shareDots }));
   await waitFor(async () => expect((await me())?.share_dots).toBe(true));
 
-  expect(screen.queryByRole('checkbox', { name: copy.notifyPartnerStart })).toBeNull();
+  expect(screen.queryByRole('switch', { name: copy.notifyPartnerStart })).toBeNull();
   expect((await me())?.notify).toEqual(original.notify);
   await go('appearance');
   await user.click(await screen.findByRole('radio', { name: copy.themeLight }));
@@ -90,10 +90,10 @@ it('persists every toggle through upsertMyProfile and applies feel flags', async
   await waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
 
   await go('training');
-  await screen.findByRole('checkbox', { name: /^kg$/ });
-  const units = screen.getByRole('checkbox', { name: /^kg$/ });
+  await screen.findByRole('switch', { name: /^kg$/ });
+  const units = screen.getByRole('switch', { name: /^kg$/ });
   expect(units.hasAttribute('disabled')).toBe(true);
-  expect((units as HTMLInputElement).checked).toBe(true);
+  expect(units.getAttribute('aria-checked')).toBe('true');
   expect(screen.getByText(copy.unitsFixed)).toBeTruthy();
   expect(screen.getByText(fill(copy.restCompoundLine, { seconds: 120 }))).toBeTruthy();
   expect(screen.getByText(fill(copy.restIsolationLine, { seconds: 90 }))).toBeTruthy();
@@ -119,7 +119,7 @@ it('saves name, colour, target, plates, bar and min label, preserving hidden qui
   await waitFor(async () => expect((await me())?.weekly_target).toBe(4));
 
   await go('training');
-  await user.click(await screen.findByRole('checkbox', { name: fill(copy.plateKg, { kg: 25 }) }));
+  await user.click(await screen.findByRole('switch', { name: fill(copy.plateKg, { kg: 25 }) }));
   await waitFor(async () => expect((await me())?.plates_kg).not.toContain(25));
   expect((await me())?.plates_kg).toContain(20);
 
