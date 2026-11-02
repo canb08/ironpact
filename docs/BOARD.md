@@ -49,7 +49,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | merged #28 |
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
-| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | running 2026-11-02 |
+| P3B | Duo data layer + realtime client (L10) | Codex Astra | E | pr #34 draft (data read in full; Lead approved adding `tests/unit/features/auth/mockRepo.ts` for Repo.duo; CI p90 353 ms; Codex fixing presence on the receiving client) |
 | P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
 | P3F | Progress S13: trend chart | Grok | E | merged #33 |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
