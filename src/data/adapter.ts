@@ -204,6 +204,19 @@ export interface PrEventFilter {
   since?: LocalDate;
 }
 
+/** L13: standing PRs after `recomputePrs`. `changed` is true when a row was tombstoned or inserted. */
+export interface PrRecompute {
+  changed: boolean;
+}
+
+/** Shown on S14/S15 after an edit. Absent means the write did not look. */
+export interface EditNotice {
+  prsChanged: boolean;
+  barAdjusted: boolean;
+}
+
+export type NotedResult<T, E extends string> = Result<T, E> & { notice?: EditNotice };
+
 export interface SessionPatch {
   started_at?: Instant;
   ended_at?: Instant | null;
@@ -307,27 +320,33 @@ export interface RepoWrites {
   finishSession(id: Uuid, note?: string | null): Promise<Result<Session, WriteError>>;
   discardSession(id: Uuid): Promise<Result<void, WriteError>>;
   logSet(input: LogSetInput): Promise<Result<SetRow, WriteError>>;
-  updateSet(id: Uuid, patch: SetPatch): Promise<Result<SetRow, WriteError>>;
+  updateSet(id: Uuid, patch: SetPatch): Promise<NotedResult<SetRow, WriteError>>;
   /** Quick logs (S11) each create their own session + child row in one transaction. */
   logRun(input: QuickRunInput): Promise<Result<CardioEntry, WriteError>>;
   logMartial(input: QuickMartialInput): Promise<Result<MartialEntry, WriteError>>;
   logMin(description?: string): Promise<Result<MinEntry, WriteError>>; // Floor MIN = 1 tap, "20m walk"
   logBodyweight(kg: number): Promise<Result<BodyweightEntry, WriteError>>; // same-day replaces (uuidv5)
   /** Soft delete through the outbox; a set's PR events go in the same batch (§4.6). */
-  softDelete(table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries', id: Uuid): Promise<Result<void, WriteError>>;
-  restore(table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries', id: Uuid): Promise<Result<void, WriteError>>;
+  softDelete(table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries', id: Uuid): Promise<NotedResult<void, WriteError>>;
+  restore(table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries', id: Uuid): Promise<NotedResult<void, WriteError>>;
   /** Insert PR drafts from `core/prs.ts` in one outbox transaction. Non-columns are dropped. */
   recordPrEvents(rows: readonly PrEventDraftRow[]): Promise<Result<PrEvent[], WriteError>>;
+  /**
+   * Re-run `core/prs.ts` over my live history for this exercise, or for every run
+   * when `exerciseId` is null. Tombstone `pr_events` that no longer hold and insert
+   * the ones that now hold, in one outbox batch (L13).
+   */
+  recomputePrs(exerciseId: Uuid | null): Promise<Result<PrRecompute, WriteError>>;
   /** Rest seconds only. Big jumps is `profiles.big_jumps` via `q.me()` / `upsertMyProfile`. */
   setExercisePref(exerciseId: Uuid, patch: { rest_s: number }): Promise<Result<ExercisePref, WriteError>>;
   /** `local_date` moves children in the same batch (E5.5). */
-  updateSession(id: Uuid, patch: SessionPatch): Promise<Result<Session, WriteError>>;
+  updateSession(id: Uuid, patch: SessionPatch): Promise<NotedResult<Session, WriteError>>;
   /**
    * Edit one quick-log or bodyweight row.
    * A `local_date` on a session child moves that session (and its other children).
    * A bodyweight date change soft-deletes the old id and writes the uuidv5 id for the new date (E4.6).
    */
-  updateEntry<T extends keyof EntryPatchMap>(table: T, id: Uuid, patch: EntryPatchMap[T]): Promise<Result<EntryRowMap[T], WriteError>>;
+  updateEntry<T extends keyof EntryPatchMap>(table: T, id: Uuid, patch: EntryPatchMap[T]): Promise<NotedResult<EntryRowMap[T], WriteError>>;
 }
 
 export interface RepoAuth {

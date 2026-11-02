@@ -62,14 +62,14 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | merged #22 (Lead: banner overlay fix) |
 | P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | merged #24 |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Grok | C | merged #40 |
-| P4C | PR takeover + partner shockwave hook | Grok | **E** (moved: owner's Grok ~95% weekly; nothing pushed — start fresh from main) | running 2026-11-02 (friend's Grok, fresh from main) |
+| P4C | PR takeover + partner shockwave hook | Grok | **E** (moved: owner's Grok ~95% weekly; nothing pushed — start fresh from main) | pr #52 (reviewed: scope ok, takeover demo / reduced motion / ≤3 flashes tests; local 660 green, 119 kB) |
 | P5B | S14 completed | Grok | C | merged #38 |
 | P5C | S16 Settings full | Grok | C | merged #42 |
 | P4G | Playwright Phase 4 | Codex Sol | **C** (owner's call 2026-11-02: owner's Codex) | claimed — fire when P4C merges (P4E merged #46) |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
-| P5F | Recompute PRs after an edit + edit notices (L13) | Codex Astra | C (back from E) | merged #44 (+ Lead migration 0009: PR tombstones via upsert) |
+| P5F | Recompute PRs after an edit + edit notices (L13) | Codex Astra | C (back from E) | merged #44 (+ Lead migration 0009, L15) |
 | P5G | S6 fits 375 px (kg/reps overflow, reported by friend's Lead) | Codex Sol | C | merged #50 |
 | P5A | S13 Progress full | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #37 |
 
@@ -78,10 +78,11 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 |---|---|---|---|---|
 | H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | merged #51 |
 | H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #47 (CI job report-only per L14; findings in Parked) |
-| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #48 (pgTAP read in full; gaps G1-G7 in Parked; PR opened by Lead) |
+| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | merged #48 (gaps G1-G7 in Parked) |
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | merged #45 |
 
 ## Parked / follow-ups
+- **Flaky e2e (seen twice, 2026-11-02, P3G #49 and H3 #48 PR runs):** `tests/e2e/p1-demo.spec.ts` + `p1-flight.spec.ts` on **Pixel 7** time out in `warmLazyRoutes` (`tests/e2e/helpers.ts:75`): the Floor `Weight` link is "detached from the DOM" while clicking, likely a Floor re-render (P3E/P4E duo moments, live data). Twin push runs pass. Fix: wait for the Floor to settle (e.g. `my-week` stable / moments idle) or navigate by URL in `warmLazyRoutes`. Until then: re-run failed jobs, don't merge on red. **Diagnosis (friend's Claude, 06:00):** `useRepoQuery` (`src/features/floor/useRepoQuery.ts`) builds a fresh store with `value = undefined` whenever its deps change; FloorScreen passes `crewTick` (P3E), so every crew delta pull blanks the Floor to its `aria-busy` shell and remounts the buttons (real UX flicker, and the detached `Weight` link in CI). Tried a keep-last-value fix: unit test proves it, and the detach failure stopped, but locally it produced a new p1-demo failure on Pixel 7 (MIN toast shown twice, strict-mode violation) that main does not show in 5/5 runs, so it was not pushed. Needs a proper ticket (Floor owner) that keeps the last value **and** guards the MIN double-tap/toast.
 - **H2 performance findings (L14):** LCP ~3.8 s on slow 4G (budget 2 s); `/settings` layout shift 0.799 (budget 0.05, a real bug); lhci measures `/install` for every URL until the mock gets an install-dismissed + signed-in seed. One perf ticket: fix seed + LCP + settings CLS, then make the `lighthouse` job blocking.
 - **H1 accessibility findings (13, listed as `test.fixme` in `tests/e2e/p6-a11y.spec.ts` with file:line once H1 merges):** session steppers overflow at 375 px / 200% text on S5/S6/S8/S9 (`session.css:22-26`, same as the earlier lane C note) and S14 heading (`progress.css:18`); S6 tab order vs visual order (Warm-up wraps into RPE row, `LoggingCard.tsx:125-132`); RACK IT hold button aria-label doesn't contain the visible text (`LoggingCard.tsx:137`); set list scroll region not keyboard-focusable (`SetList.tsx:26`); prohibited `aria-label` on a span (S15 `DayEditorScreen.tsx:111`) and a pre (S16 `VaultExport.tsx:145`). Mostly lane C screens: one small UI fix ticket, then delete each fixme as it passes.
 - **H3 security gaps (from `docs/SECURITY-AUDIT.md` once H3 merges; none is an open write today):** G1 `send_nudge`, G2 `settle_challenge`, G3 `save_push_subscription`, G4 `mark_seen` RPCs missing (G4: owners can still edit `pr_events.seen_by`); G5 CSP `connect-src` is `*.supabase.co`, `scripts/gen-headers.mjs` (E3.6) never written; G6 `push-dispatch` / `rest-alarm` have `verify_jwt = false` but no handler; G7 default privileges may grant client roles on future tables. **Needs tickets before G1 deploy; migrations/RLS → Codex Astra, not Grok.** Owner: whichever Lead has a free Codex first (friend's Codex is out until ~2026-11-08).

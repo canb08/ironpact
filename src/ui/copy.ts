@@ -596,6 +596,11 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   offlineBanner: "Saved on your phone. Syncs when you're back up.",
   serverAsleep: 'Server asleep — data safe on phone.',
   swUpdate: 'New version — tap to reload',
+
+  // ── H3: security audit; no user-facing strings ──
+
+  // ── P5F: add this ticket's strings directly below ──
+  prsRecalculated: 'PRs recalculated.',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
