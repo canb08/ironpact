@@ -49,6 +49,13 @@ begin
     return new;
   end if;
 
+  -- Receipt metadata is server-owned. An owner's stale outbox payload must
+  -- neither erase a partner's receipt nor block a legitimate tombstone.
+  -- 0008's nested account-cleanup removal bypasses this trigger function.
+  if tg_op = 'UPDATE' then
+    new.seen_by := old.seen_by;
+  end if;
+
   -- 0009: PostgREST upserts fire BEFORE INSERT even when the row exists (ON CONFLICT
   -- turns it into an UPDATE afterwards). Let an unchanged tombstone of an existing
   -- claim through here; the BEFORE UPDATE pass below re-checks it with OLD/NEW.
@@ -63,7 +70,6 @@ begin
       and existing.exercise_id is not distinct from new.exercise_id
       and existing.previous_value is not distinct from new.previous_value
       and existing.pct_over_previous is not distinct from new.pct_over_previous
-      and existing.seen_by is not distinct from new.seen_by
       and existing.local_date is not distinct from new.local_date then
       return new;
     end if;
@@ -79,7 +85,6 @@ begin
     and old.user_id = new.user_id
     and old.previous_value is not distinct from new.previous_value
     and old.pct_over_previous is not distinct from new.pct_over_previous
-    and old.seen_by is not distinct from new.seen_by
     and old.local_date is not distinct from new.local_date;
 
   if new.pr_type in ('e1rm', 'rep_max', 'volume') then

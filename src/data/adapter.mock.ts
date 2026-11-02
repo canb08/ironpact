@@ -210,6 +210,7 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
             if (row[ownerField] !== actor || existing[ownerField] !== actor) { tables.set(table, backup); return client('ownership'); }
             output.push(projection(table, existing)); continue;
           }
+          if (table === 'pr_events' && existing) row.seen_by = structuredClone(existing.seen_by ?? []);
           const error = validateWrite(table, row, actor);
           if (error) { tables.set(table, backup); return client(error); }
           const saved: RemoteRow = table === 'exercise_muscles' ? { exercise_id: row.exercise_id, muscle: row.muscle, weight: row.weight } : { ...row, updated_at: instant(), created_at: existing?.created_at ?? row.created_at ?? instant() };

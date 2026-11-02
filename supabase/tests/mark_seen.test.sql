@@ -71,5 +71,33 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002
 select public.mark_pr_events_seen(array['50000000-0000-4000-8000-000000000003']::uuid[]);
 reset role;
 select results_eq('select * from public.pr_events order by id', 'select * from acknowledged order by id', 'former member cannot mutate receipts');
+-- Owner's offline snapshot predates the partner receipt. Source deletion
+-- cascades a tombstone first; PostgREST then performs INSERT ... ON CONFLICT.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+update public.sets set deleted_at = now()
+  where id = '40000000-0000-4000-8000-000000000001';
+select lives_ok($q$
+  insert into public.pr_events (id, exercise_id, source_id, pr_type, reps, value,
+    previous_value, pct_over_previous, user_id, local_date, client_updated_at, deleted_at, seen_by)
+  select id, exercise_id, source_id, pr_type, reps, value,
+    previous_value, pct_over_previous, user_id, local_date, client_updated_at, now(), '{}'::uuid[]
+  from original where id = '50000000-0000-4000-8000-000000000001'
+  on conflict (id) do update set
+    exercise_id = excluded.exercise_id, source_id = excluded.source_id,
+    pr_type = excluded.pr_type, reps = excluded.reps, value = excluded.value,
+    previous_value = excluded.previous_value, pct_over_previous = excluded.pct_over_previous,
+    user_id = excluded.user_id, local_date = excluded.local_date,
+    client_updated_at = excluded.client_updated_at, deleted_at = excluded.deleted_at,
+    seen_by = excluded.seen_by
+$q$, 'owner can upsert a stale-receipt tombstone after source deletion');
+select is((select deleted_at from public.pr_events where id = '50000000-0000-4000-8000-000000000001'), now(), 'owner tombstone is stored');
+select is((select seen_by from public.pr_events where id = '50000000-0000-4000-8000-000000000001'), array['10000000-0000-4000-8000-000000000002']::uuid[], 'stale owner upsert preserves partner receipt');
+select lives_ok($q$update public.pr_events set seen_by = '{}'
+  where id = '50000000-0000-4000-8000-000000000001'$q$, 'ordinary tombstone update accepts stale receipt metadata');
+select is((select seen_by from public.pr_events where id = '50000000-0000-4000-8000-000000000001'), array['10000000-0000-4000-8000-000000000002']::uuid[], 'ordinary update also preserves partner receipt');
+reset role;
+select lives_ok($q$delete from auth.users where id = '10000000-0000-4000-8000-000000000002'$q$, 'account cleanup can still remove a real RPC receipt');
+select is((select seen_by from public.pr_events where id = '50000000-0000-4000-8000-000000000001'), '{}'::uuid[], 'deleted viewer is scrubbed from server-owned receipts');
 select * from finish();
 rollback;
