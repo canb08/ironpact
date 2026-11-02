@@ -81,6 +81,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
 
 ## Parked / follow-ups
+- **H3 security gaps (from `docs/SECURITY-AUDIT.md` once H3 merges; none is an open write today):** G1 `send_nudge`, G2 `settle_challenge`, G3 `save_push_subscription`, G4 `mark_seen` RPCs missing (G4: owners can still edit `pr_events.seen_by`); G5 CSP `connect-src` is `*.supabase.co`, `scripts/gen-headers.mjs` (E3.6) never written; G6 `push-dispatch` / `rest-alarm` have `verify_jwt = false` but no handler; G7 default privileges may grant client roles on future tables. **Needs tickets before G1 deploy; migrations/RLS → Codex Astra, not Grok.** Owner: whichever Lead has a free Codex first (friend's Codex is out until ~2026-11-08).
 - **For lane C (seen by friend's Claude, 2026-11-02, mock backend, 375 px wide):** on `/session` after choosing an exercise, the kg and reps inputs overflow the right edge (horizontal scroll). Belongs to the session screen (P2D / S6).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
