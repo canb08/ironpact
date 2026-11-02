@@ -35,6 +35,22 @@ export default function CrewSetupScreen() {
     if (next.length > 0) rememberJoinCode(next);
   }
 
+  async function recoverCrew() {
+    if (!repo) return;
+    try {
+      await repo.sync.pullNow();
+      // pullNow absorbs network errors; confirm the mirror actually recovered.
+      if (await repo.q.myCrew()) {
+        await navigate('/', { replace: true });
+        return;
+      }
+    } catch {
+      // Leave a retry available if sync or the local read fails.
+    }
+    setPending(false);
+    setError(copy.alreadyInCrew);
+  }
+
   async function lockIn() {
     if (!repo || !signedIn || pending || !nameOk) return;
     setPending(true);
@@ -42,6 +58,10 @@ export default function CrewSetupScreen() {
     if (!creating) {
       const joined = await repo.crew.redeem(normalizeInvite(code));
       if (!joined.ok) {
+        if (joined.error === 'already_in_crew') {
+          await recoverCrew();
+          return;
+        }
         setPending(false);
         setError(redeemCopy(joined.error));
         return;
@@ -49,8 +69,12 @@ export default function CrewSetupScreen() {
     } else {
       const created = await repo.crew.create(copy.defaultCrewName);
       if (!created.ok) {
+        if (created.error === 'already_in_crew') {
+          await recoverCrew();
+          return;
+        }
         setPending(false);
-        setError(created.error === 'already_in_crew' ? copy.alreadyInCrew : copy.joinOffline);
+        setError(copy.joinOffline);
         return;
       }
     }

@@ -67,6 +67,7 @@ export function mockRepo(partial: {
   crew?: Partial<RepoCrew>;
   q?: Partial<RepoQueries>;
   w?: Partial<RepoWrites>;
+  sync?: Partial<RepoSync>;
 } = {}): Repo {
   let userId = partial.userId === undefined ? null : partial.userId;
   const listeners = new Set<(id: Uuid | null) => void>();
@@ -161,6 +162,7 @@ export function mockRepo(partial: {
     pullNow: async () => {},
     retryDead: async () => {},
     discardDead: async () => {},
+    ...partial.sync,
   };
   const duo: Repo['duo'] = {
     weeks: async () => [],
