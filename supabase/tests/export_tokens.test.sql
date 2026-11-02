@@ -16,6 +16,8 @@ begin
 exception when insufficient_privilege then return true;
 end;
 $$;
+grant execute on function pg_temp.hash_hidden() to authenticated;
+grant execute on function pg_temp.hash_hidden() to anon;
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
