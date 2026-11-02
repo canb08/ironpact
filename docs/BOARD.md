@@ -105,9 +105,9 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — review fixes look right; 3 e2e failures (p7-shell focus, p3-demo flow, 200% wrap) sent back |
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
-| X7 | Crew centred on partner | Grok | E | running — friend's Codex (Sol High) |
+| X7 | Crew centred on partner | Grok | E | **running** — friend's Grok (re-fired 23:00: the Codex send didn't go through and Codex is at 10% until 00:43) |
 | X8 | Settings grouped sub-pages | Codex Sol High | C | PR #73 — Lead review: section headers + switches instead of checkboxes |
-| X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | running — owner's Codex |
+| X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
 
@@ -121,7 +121,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
-| Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | **running** — friend's Grok (parallel chat, run files only) |
+| Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
 | Y7 | Voice log (experimental) | Grok Build | E | queued (after Y3) |
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |

@@ -19,6 +19,8 @@ export type ScrubDialProps = {
   /** Keyboard fallback. Fires on a tap that did not cross a detent. */
   onTapNumber?: () => void;
   ariaValueText?: string;
+  /** Vertical picker: neighbours, a ruler, and a 56px numeral. Default stays a single numeral. */
+  wheel?: boolean;
 };
 
 type Gesture = {
@@ -84,6 +86,7 @@ export function ScrubDial({
   disabled = false,
   onTapNumber,
   ariaValueText,
+  wheel = false,
 }: ScrubDialProps) {
   const labelId = useId();
   const valueRef = useRef(value);
@@ -95,6 +98,14 @@ export function ScrubDial({
 
   const shown = format ? format(value) : String(roundToStep(value, step));
   const valueText = ariaValueText ?? (unit ? `${shown} ${unit}` : shown);
+  const neighbour = (steps: number): string => {
+    const next = roundToStep(value + steps * step, step);
+    if (next < min || next > max || next === value) return '';
+    return format ? format(next) : String(next);
+  };
+  const above = wheel ? neighbour(-1) : '';
+  const below = wheel ? neighbour(1) : '';
+  const unitBeside = wheel && !!unit && unit.length <= 4;
 
   const commit = (steps: number) => {
     if (disabled || steps === 0) return;
@@ -150,7 +161,7 @@ export function ScrubDial({
   };
 
   return (
-    <div className="ui-scrub">
+    <div className={wheel ? 'ui-scrub ui-scrub--wheel' : 'ui-scrub'}>
       <span className="ui-scrub__label" id={labelId}>{label}</span>
       <div
         className="ui-scrub__control"
@@ -169,8 +180,31 @@ export function ScrubDial({
         onPointerUp={(event) => endGesture(event, true)}
         onPointerCancel={(event) => endGesture(event, false)}
       >
-        <span className="ui-scrub__value">{shown}</span>
-        {unit ? <span className="ui-scrub__unit">{unit}</span> : null}
+        {wheel ? (
+          <>
+            <span className="ui-scrub__stack">
+              <span className="ui-scrub__neighbor" aria-hidden="true">{above || '\u00a0'}</span>
+              <span className="ui-scrub__figure">
+                <span className="ui-scrub__center">
+                  <span className="ui-scrub__value">{shown}</span>
+                  {unitBeside && unit ? <span className="ui-scrub__unit">{unit}</span> : null}
+                </span>
+                {unit && !unitBeside ? <span className="ui-scrub__unit">{unit}</span> : null}
+              </span>
+              <span className="ui-scrub__neighbor" aria-hidden="true">{below || '\u00a0'}</span>
+            </span>
+            <span className="ui-scrub__rail" aria-hidden="true">
+              {Array.from({ length: 15 }, (_, index) => (
+                <span key={index} className={index === 7 ? 'ui-scrub__tick is-center' : 'ui-scrub__tick'} />
+              ))}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="ui-scrub__value">{shown}</span>
+            {unit ? <span className="ui-scrub__unit">{unit}</span> : null}
+          </>
+        )}
       </div>
     </div>
   );
