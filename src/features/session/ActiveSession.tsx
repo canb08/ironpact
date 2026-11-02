@@ -1,61 +1,206 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
-import type { Exercise, Session } from '../../core/types.ts';
-import { Button, HoldButton, copy, fill } from '../../ui';
+import { guessNextExercise, guessOpeningExercise, prefillForExercise } from '../../core/prefill.ts';
+import { progressionForExercise } from '../../core/progression.ts';
+import { detectSessionVolumePrs, detectSetPr, type PrEventDraft, type PrHistory } from '../../core/prs.ts';
+import { doMinPlan } from '../../core/readiness.ts';
+import type { Exercise, Readiness, Session, SetRow } from '../../core/types.ts';
+import { haptic, setHapticsOn } from '../../platform/haptics.ts';
+import { keepAwake, releaseKeepAwake } from '../../platform/wakeLock.ts';
+import { Button, HoldButton, copy, fill, useToast } from '../../ui';
+import { PrCard } from '../prs/PrCard.tsx';
+import { prEyebrow } from '../prs/label.ts';
+import { defaultRestSeconds } from '../timer/restTimer.ts';
+import { RestTimerOverlay } from '../timer/RestTimerOverlay.tsx';
 import { ExercisePicker } from './ExercisePicker.tsx';
 import { LoggingCard } from './LoggingCard.tsx';
+import { ReadinessPanel } from './ReadinessPanel.tsx';
 import { SessionClock } from './SessionClock.tsx';
+import { clearReadinessSkips, readinessSuppressed, recordReadinessSkip } from './readinessGate.ts';
+import { idleEndedAt, toPrRow } from './sessionModel.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
-export function ActiveSession({ session, onFinish }: { session: Session; onFinish: () => void }) {
+function historyOf(session: Session, sessions: readonly Session[], sets: readonly SetRow[], extra: readonly SetRow[], cardio: PrHistory['cardio'], bodyweights: PrHistory['bodyweights'], exercises: readonly Exercise[]): PrHistory {
+  const setMap = new Map<string, SetRow>();
+  for (const set of [...sets, ...extra]) setMap.set(set.id, set);
+  return {
+    sessions: sessions.some((row) => row.id === session.id) ? [...sessions] : [...sessions, session],
+    sets: [...setMap.values()],
+    cardio: [...cardio],
+    bodyweights: [...bodyweights],
+    exercises: [...exercises],
+  };
+}
+
+export function ActiveSession({ session, onFinish, onReplace }: {
+  session: Session;
+  onFinish: (session: Session) => void;
+  onReplace: (session: Session) => void;
+}) {
   const repo = useRepo();
   const write = useSessionWrite();
+  const { showToast } = useToast();
   const [selection, setSelection] = useState<Exercise>();
   const [pickerOpen, setPickerOpen] = useState<boolean | null>(null);
+  const [card, setCard] = useState<PrEventDraft | null>(null);
+  const [baseline, setBaseline] = useState(false);
+  const [readinessDone, setReadinessDone] = useState(session.readiness != null);
+  const closing = useRef(false);
+  const seen = useRef(new Set<string>());
+  const taken = useRef(new Set<string>());
+  const setsRef = useRef<SetRow[]>([]);
+  const finishRef = useRef(onFinish);
   const snapshot = useLiveQuery(async () => {
-    const [exercises, sets, history] = await Promise.all([
-      repo.q.exercises(), repo.q.setsOfSession(session.id),
-      repo.q.entriesBetween(session.user_id, '0000-01-01', session.local_date),
+    const [exercises, sets, history, profile] = await Promise.all([
+      repo.q.exercises(),
+      repo.q.setsOfSession(session.id),
+      repo.q.entriesBetween(session.user_id, '0000-01-01', '9999-12-31'),
+      repo.q.me(),
     ]);
-    const previousSessions = history.sessions.filter((row) => row.kind === 'gym' && row.id !== session.id)
-      .sort((a, b) => b.started_at.localeCompare(a.started_at));
-    const previousSets = previousSessions.flatMap((row) => history.sets.filter((set) => set.session_id === row.id)
-      .sort((a, b) => a.set_index - b.set_index));
     const pending = new Map(await Promise.all(sets.map(async (row) => [row.id, await repo.q.isPending(row.id)] as const)));
-    return { exercises, sets, previousSets, pending };
-  }, [repo, session.id, session.user_id, session.local_date]);
+    return { exercises, sets, history, profile, pending };
+  }, [repo, session.id, session.user_id]);
+  const logged = snapshot?.sets;
+  const plan = snapshot && session.mode === 'min' ? doMinPlan({
+    sessions: snapshot.history.sessions, sets: snapshot.history.sets, userId: session.user_id,
+    excludeSessionId: session.id, exercises: snapshot.exercises,
+    barKg: snapshot.profile?.bar_kg, platesKg: snapshot.profile?.plates_kg,
+  }) : null;
+  const opening = snapshot ? guessOpeningExercise({
+    sessions: snapshot.history.sessions, sets: snapshot.history.sets, userId: session.user_id,
+    excludeSessionId: session.id, today: session.local_date,
+  }) : null;
+  const initialId = logged?.at(-1)?.exercise_id ?? plan?.blocks[0]?.exercise_id ?? opening;
+  const exerciseId = selection?.id ?? (snapshot ? initialId : null);
+  const pref = useLiveQuery(async () => exerciseId ? repo.q.exercisePref(exerciseId) : undefined, [repo, exerciseId]);
 
-  if (!snapshot) return <main className="session-entry"><p role="status">{copy.sessionLoading}</p></main>;
-  const initialId = snapshot.sets.at(-1)?.exercise_id ?? snapshot.previousSets[0]?.exercise_id;
-  const selected = selection ?? snapshot.exercises.find((exercise) => exercise.id === initialId);
-  const exercise = selected && snapshot.exercises.find((row) => row.id === selected.id);
-  const currentSets = snapshot.sets.filter((row) => row.exercise_id === exercise?.id);
-  const previous = snapshot.previousSets.filter((row) => row.exercise_id === exercise?.id);
-  const lastSessionId = previous[0]?.session_id;
+  useEffect(() => { finishRef.current = onFinish; }, [onFinish]);
+  useEffect(() => { setsRef.current = logged ?? []; }, [logged]);
+  useEffect(() => { void keepAwake(); return () => releaseKeepAwake(); }, []);
+  useEffect(() => {
+    if (!baseline) return;
+    const timer = window.setTimeout(() => setBaseline(false), 4000);
+    return () => window.clearTimeout(timer);
+  }, [baseline]);
+  useEffect(() => {
+    if (snapshot?.profile) setHapticsOn(snapshot.profile.haptics_on);
+  }, [snapshot?.profile]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const ended = idleEndedAt(session.started_at, setsRef.current.map((set) => set.logged_at), Date.now());
+      if (!ended || closing.current) return;
+      closing.current = true;
+      void repo.w.updateSession(session.id, { ended_at: ended }).then((result) => {
+        if (result.ok) finishRef.current(result.value);
+        else closing.current = false;
+      });
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [repo, session.id, session.started_at]);
+
+  if (!snapshot) return <main className="session-active"><p role="status">{copy.sessionLoading}</p></main>;
+  const exercise = selection ?? snapshot.exercises.find((row) => row.id === initialId);
+  const focus = exercise && snapshot.exercises.find((row) => row.id === exercise.id);
+  const history = historyOf(session, snapshot.history.sessions, snapshot.history.sets, snapshot.sets, snapshot.history.cardio, snapshot.history.bodyweight, snapshot.exercises);
+  const nudge = focus == null ? null : progressionForExercise({
+    exercise: focus, today: session.local_date, bigJumps: snapshot.profile?.big_jumps ?? false,
+    sessions: history.sessions, sets: history.sets, userId: session.user_id, excludeSessionId: session.id,
+  });
+  const scripted = focus == null ? null : plan?.blocks.find((block) => block.exercise_id === focus.id)?.sets;
+  const prefillSets = scripted ?? (focus == null ? [] : prefillForExercise({
+    sessions: history.sessions, sets: history.sets, userId: session.user_id, excludeSessionId: session.id,
+    exerciseId: focus.id, count: 20,
+  }));
+  const restSeconds = pref?.rest_s ?? defaultRestSeconds(focus?.category === 'isolation' ? 'isolation' : 'compound');
+  const shown = card && snapshot.sets.some((set) => set.id === card.source_id) ? card : null;
+  const showReadiness = !readinessDone && !readinessSuppressed() && session.readiness == null && snapshot.sets.length === 0;
+
+  const noteSet = (row: SetRow) => {
+    if (seen.current.has(row.id)) return;
+    seen.current.add(row.id);
+    const withRow: PrHistory = {
+      ...history,
+      sets: history.sets.some((set) => set.id === row.id) ? history.sets : [...history.sets, row],
+    };
+    const detected = detectSetPr(withRow, row.id);
+    if (detected.kind === 'baseline') {
+      setBaseline(true);
+      return;
+    }
+    if (detected.kind !== 'pr' || detected.event.pr_type === 'volume') return;
+    const event = detected.event;
+    void repo.w.recordPrEvents([toPrRow(event)]).then((result) => {
+      if (!result.ok) return;
+      const exerciseKey = event.exercise_id ?? row.exercise_id;
+      if (taken.current.has(exerciseKey)) {
+        showToast({ message: prEyebrow(event), timeoutMs: 4000 });
+        return;
+      }
+      taken.current.add(exerciseKey);
+      setCard(event);
+      haptic('pr');
+    });
+  };
+
+  const goNext = () => {
+    if (!focus) { setPickerOpen(true); return; }
+    const minNext = plan?.blocks.map((block) => block.exercise_id) ?? [];
+    const scriptedNext = minNext[minNext.indexOf(focus.id) + 1];
+    const guessed = scriptedNext ?? guessNextExercise({
+      sessions: history.sessions, sets: history.sets, userId: session.user_id, excludeSessionId: session.id,
+      currentExerciseId: focus.id, today: session.local_date,
+    });
+    const next = guessed ? snapshot.exercises.find((row) => row.id === guessed) : undefined;
+    if (next && next.id !== focus.id) setSelection(next);
+    else setPickerOpen(true);
+  };
+
+  const saveReadiness = (value: Readiness) => {
+    clearReadinessSkips();
+    void write.run(() => repo.w.updateSession(session.id, { readiness: value }), () => setReadinessDone(true));
+  };
 
   return <main className="session-active">
     <header className="session-header">
       <h1>{copy.sessionTitle}</h1>
       <SessionClock startedAt={session.started_at} />
       <span>{fill(copy.sessionSetCount, { count: snapshot.sets.length })}</span>
+      {baseline && <p role="status">{copy.firstSession}</p>}
+      <RestTimerOverlay part="readout" reduceMotion={snapshot.profile?.reduce_motion} />
     </header>
     <Button className="session-exercise" size="xl" variant="secondary" onClick={() => setPickerOpen(true)}>
-      {exercise?.name ?? copy.sessionPickExercise}
+      {focus?.name ?? copy.sessionPickExercise}
     </Button>
-    {exercise ? <LoggingCard key={exercise.id} session={session} exercise={exercise} sets={currentSets}
-      previousSets={previous.filter((row) => row.session_id === lastSessionId)} pending={snapshot.pending}
-      onNext={() => setPickerOpen(true)} onFinish={onFinish} />
+    {showReadiness && <ReadinessPanel busy={write.busy} onSkip={() => { recordReadinessSkip(); setReadinessDone(true); }}
+      onGo={saveReadiness} onFullSend={saveReadiness}
+      onDoMin={(value) => {
+        clearReadinessSkips();
+        void write.run(async () => {
+          const discarded = await repo.w.discardSession(session.id);
+          if (!discarded.ok) return { ok: false, error: discarded.error };
+          return repo.w.startSession({ kind: 'gym', mode: 'min', readiness: value });
+        }, onReplace);
+      }} />}
+    {shown && <PrCard event={shown} onClose={() => setCard(null)} />}
+    {focus ? <LoggingCard key={focus.id} session={session} exercise={focus} sets={snapshot.sets.filter((row) => row.exercise_id === focus.id)}
+      prefillSets={prefillSets} pending={snapshot.pending} restSeconds={restSeconds} nudge={nudge}
+      onNext={goNext} onFinish={onFinish} onLogged={noteSet}
+      onRack={() => {
+        const badges = detectSessionVolumePrs(history, session.id).map(toPrRow);
+        if (badges.length > 0) void repo.w.recordPrEvents(badges);
+        return repo.w.finishSession(session.id);
+      }} />
       : <>
         <div className="session-empty"><p>{copy.emptyFloor}</p></div>
         <HoldButton size="xl" variant="secondary" holdMs={600} aria-label={copy.finish} disabled={write.busy}
           onHoldComplete={() => { void write.run(() => repo.w.finishSession(session.id), onFinish); }}>
-          {copy.finish}
+          {copy.rackIt}
         </HoldButton>
         <WriteFeedback error={write.error} retry={write.retry} />
       </>}
-    <ExercisePicker open={pickerOpen ?? !exercise} onClose={() => setPickerOpen(false)}
+    <ExercisePicker open={pickerOpen ?? !focus} onClose={() => setPickerOpen(false)}
       onSelect={(row) => { setSelection(row); setPickerOpen(false); }} />
   </main>;
 }

@@ -327,6 +327,27 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   restOverChip: '+{time} over',
 
   // ── P2D: add this ticket's strings directly below ──
+  readinessTitle: "How's the tank?",
+  readinessGo: 'Go',
+  readinessSleep: 'Sleep',
+  readinessSoreness: 'Soreness',
+  readinessEnergy: 'Energy',
+  readinessLow: 'Low',
+  readinessMid: 'Mid',
+  readinessHigh: 'High',
+  readinessChoice: '{row} {level}',
+  minDayStill: 'MIN day — still counts',
+  backToWork: 'Back to work',
+  prCardLabel: 'Personal record',
+  summaryTitle: 'Session summary',
+  summaryDuration: 'Duration',
+  summaryTonnes: 'Tonnes',
+  summarySets: 'Working sets',
+  summaryPrs: 'PRs',
+  summaryDone: 'Done',
+  summaryMore: '+{count} more',
+  summaryDropped: 'Nothing logged — session dropped.',
+  summarySaved: 'Saved on your phone.',
 
   // ── P2E: add this ticket's strings directly below ──
 
