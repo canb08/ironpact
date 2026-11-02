@@ -759,6 +759,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   y6DistanceKm: 'Kilometres',
   y6DurationClock: 'Duration as mm:ss',
   y6More: 'Add RPE and a note',
+  y6MinSec: 'min:sec',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`

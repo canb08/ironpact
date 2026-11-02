@@ -47,6 +47,128 @@
   cursor: default;
 }
 
+/* Opt-in wheel. Run logging uses it; other dials stay a single numeral. */
+.ui-scrub--wheel {
+  width: 100%;
+  height: 100%;
+  align-content: stretch;
+}
+
+.ui-scrub--wheel .ui-scrub__control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 160px;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  justify-items: stretch;
+  gap: 0;
+  padding: 0 0 0 2px;
+}
+
+.ui-scrub--wheel .ui-scrub__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.ui-scrub--wheel .ui-scrub__neighbor {
+  font-family: var(--font-number);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  color: var(--steel);
+  opacity: 0.4;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 100%;
+}
+
+.ui-scrub--wheel .ui-scrub__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-scrub--wheel .ui-scrub__center {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding-block: 4px;
+  border-block: 1px solid color-mix(in oklch, var(--steel) 50%, transparent);
+}
+
+.ui-scrub--wheel .ui-scrub__value {
+  font-size: 56px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ui-scrub--wheel .ui-scrub__unit {
+  font: 600 17px/1 var(--font-body);
+  color: var(--steel);
+  white-space: nowrap;
+}
+
+.ui-scrub--wheel .ui-scrub__rail {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: stretch;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 16px;
+  height: 100%;
+  padding-block: 8px;
+  position: relative;
+  pointer-events: none;
+}
+
+.ui-scrub--wheel .ui-scrub__rail::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 0;
+  width: 1px;
+  background: var(--steel);
+  opacity: 0.45;
+}
+
+.ui-scrub--wheel .ui-scrub__tick {
+  display: block;
+  height: 1px;
+  width: 7px;
+  margin-left: auto;
+  background: var(--steel);
+  opacity: 0.8;
+  position: relative;
+}
+
+.ui-scrub--wheel .ui-scrub__tick:nth-child(3n) {
+  width: 11px;
+}
+
+.ui-scrub--wheel .ui-scrub__tick.is-center {
+  width: 16px;
+  height: 2px;
+  opacity: 1;
+}
+
 .ui-feel-dock {
   height: 8px;
   width: 100%;

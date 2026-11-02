@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'rea
 import { cardioEntrySchema, uiSchemas } from '../../core/validate.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, copy, fill, ScrubDial } from '../../ui';
+import { StopwatchGlyph } from '../../ui/icons';
 import { feel } from '../../ui/feel/feel.ts';
 import { useRepoQuery } from '../floor/useRepoQuery.ts';
 import { formatClock, formatKm, formatPace, parseDecimal, parseDuration } from './time.ts';
@@ -116,6 +117,38 @@ export function RunForm() {
 
   return (
     <form className="ql-run" data-testid="run-form" data-last={last ? 'yes' : last === null ? 'no' : 'loading'} onSubmit={(event) => { void onSubmit(event); }}>
+      {pace ? <p className="ql-run-pace" data-testid="pace" aria-live="polite"><span className="ql-run-pace__time">{pace}</span><span className="ql-run-pace__unit">{' /km'}</span></p> : null}
+      {last ? <button type="button" className="ql-run-chip" onClick={applyLast}>{copy.y6SameAsLast}</button> : null}
+      <div className="ql-run-dials">
+        <div ref={distanceDial}>
+          <ScrubDial
+            wheel
+            label={copy.distance}
+            value={km}
+            onChange={(next) => { setKm(next); setKmText(null); }}
+            min={KM_MIN}
+            max={KM_MAX}
+            step={KM_STEP}
+            unit={copy.km}
+            format={formatKm}
+            onTapNumber={() => setKmText(formatKm(km))}
+          />
+        </div>
+        <div>
+          <ScrubDial
+            wheel
+            label={copy.duration}
+            value={durationS}
+            onChange={(next) => { setDurationS(next); setDurationText(null); }}
+            min={DURATION_MIN_S}
+            max={DURATION_MAX_S}
+            step={DURATION_STEP_S}
+            unit={copy.y6MinSec}
+            format={formatClock}
+            onTapNumber={() => setDurationText(formatClock(durationS))}
+          />
+        </div>
+      </div>
       {more ? (
         <div className="ql-run-more">
           <div>
@@ -135,37 +168,13 @@ export function RunForm() {
           </div>
         </div>
       ) : (
-        <Button variant="quiet" onClick={() => setMore(true)}>{copy.y6More}</Button>
+        <Button variant="quiet" className="ql-run-more-btn" onClick={() => setMore(true)}>{copy.y6More}</Button>
       )}
-      {pace ? <p className="ql-run-pace" data-testid="pace" aria-live="polite"><span className="ql-run-pace__time">{pace}</span><span className="ql-run-pace__unit">{' /km'}</span></p> : null}
       <div className="ql-run-dock">
-        {last ? <Button variant="secondary" className="ql-run-hot" onClick={applyLast}>{copy.y6SameAsLast}</Button> : null}
-        <div className="ql-run-dials">
-          <div ref={distanceDial}>
-            <ScrubDial
-              label={copy.distance}
-              value={km}
-              onChange={(next) => { setKm(next); setKmText(null); }}
-              min={KM_MIN}
-              max={KM_MAX}
-              step={KM_STEP}
-              unit={copy.km}
-              format={formatKm}
-              onTapNumber={() => setKmText(formatKm(km))}
-            />
-          </div>
-          <ScrubDial
-            label={copy.duration}
-            value={durationS}
-            onChange={(next) => { setDurationS(next); setDurationText(null); }}
-            min={DURATION_MIN_S}
-            max={DURATION_MAX_S}
-            step={DURATION_STEP_S}
-            format={formatClock}
-            ariaValueText={formatClock(durationS)}
-            onTapNumber={() => setDurationText(formatClock(durationS))}
-          />
-        </div>
+        <Button variant="secondary" className="ql-run-live-btn" onClick={() => setLive(true)}>
+          <StopwatchGlyph width={18} height={18} />
+          {copy.y6LiveRun}
+        </Button>
         <div className="ql-run-type">
           {kmText === null ? (
             <Button variant="quiet" onClick={() => setKmText(formatKm(km))}>{copy.y6TypeDistance}</Button>
@@ -211,7 +220,6 @@ export function RunForm() {
         {attempted && !distanceOk ? <p className="ql-error" role="alert" data-testid="error-distance">{copy.outOfRange}</p> : null}
         {attempted && !durationOk ? <p className="ql-error" role="alert" data-testid="error-duration">{copy.outOfRange}</p> : null}
         {serverError ? <p className="ql-error" role="alert">{serverError}</p> : null}
-        <Button className="ql-run-hot" onClick={() => setLive(true)}>{copy.y6LiveRun}</Button>
         <Button type="submit" size="xl" className="ql-save" disabled={saving}>{copy.save}</Button>
       </div>
     </form>
