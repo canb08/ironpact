@@ -45,7 +45,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P2C | Rest timer engine + Wake Lock + haptics | Grok | C | merged #20 |
 | P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Grok | C | merged #30 (Lead: RACK IT during rest) |
 | P2E | S14 exercise detail + S15 day editor | Grok | C | merged #26 |
-| P2G | Playwright Phase 2 | Grok | C | running 2026-11-02 03:33 |
+| P2G | Playwright Phase 2 | Grok | C | merged #41 |
 | P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | merged #28 |
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
