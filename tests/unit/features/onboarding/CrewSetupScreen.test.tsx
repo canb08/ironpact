@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
 import CrewSetupScreen from '../../../../src/features/onboarding/CrewSetupScreen.tsx';
@@ -23,7 +23,16 @@ function renderCrew(path: string, repo: ReturnType<typeof mockRepo>) {
   );
 }
 
+function openProfile() {
+  fireEvent.click(screen.getByRole('button', { name: copy.x9Continue }));
+}
+function submitProfile() {
+  fireEvent.click(screen.getByRole('button', { name: copy.x9Continue }));
+  fireEvent.click(screen.getByRole('button', { name: copy.x9Skip }));
+}
+
 describe('S3 crew', () => {
+  beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
   it('prefills /join/ABCDEFGHJK and joins with that code', async () => {
     const redeem = vi.fn(async () => ({ ok: true as const, value: testCrew() }));
     const upsertMyProfile = vi.fn(async () => ({ ok: true as const, value: testProfile() }));
@@ -38,8 +47,9 @@ describe('S3 crew', () => {
     );
     expect((screen.getByLabelText('Invite character 1') as HTMLInputElement).value).toBe('A');
     expect((screen.getByLabelText('Invite character 10') as HTMLInputElement).value).toBe('K');
-    fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'Alex' } });
-    fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+    submitProfile();
     expect(redeem).toHaveBeenCalledWith('ABCDEFGHJK');
   });
 
@@ -50,8 +60,9 @@ describe('S3 crew', () => {
   ] as const)('shows the string for %s', async (error, text) => {
     const redeem = vi.fn(async () => ({ ok: false as const, error }));
     renderCrew('/join/ABCDEFGHJK', mockRepo({ userId: 'user-1', crew: { redeem } }));
-    fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'Alex' } });
-    fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+    submitProfile();
     expect(await screen.findByText(text)).toBeTruthy();
     expect(redeem).toHaveBeenCalledOnce();
   });
@@ -72,8 +83,9 @@ describe('S3 crew', () => {
         userId: 'user-1', crew: { create: already, redeem: already },
         q: { myCrew: async () => membership }, sync: { pullNow }, w: { upsertMyProfile },
       }));
-      fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'Alex' } });
-      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      openProfile();
+      fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+      submitProfile();
       await waitFor(() => { expect(pullNow).toHaveBeenCalledOnce(); });
       expect(screen.queryByText('floor')).toBeNull();
       expect(screen.queryByText(copy.alreadyInCrew)).toBeNull();
@@ -94,12 +106,13 @@ describe('S3 crew', () => {
         crew: { create: async () => ({ ok: false, error: 'already_in_crew' }) },
         sync: { pullNow },
       }));
-      fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'Alex' } });
-      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      openProfile();
+      fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+      submitProfile();
       expect(await screen.findByText(copy.alreadyInCrew)).toBeTruthy();
-      expect(screen.getByRole('button', { name: copy.lockIn }).hasAttribute('disabled')).toBe(false);
+      expect(screen.getByRole('button', { name: copy.x9Skip }).hasAttribute('disabled')).toBe(false);
       expect(screen.queryByText('floor')).toBeNull();
-      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      fireEvent.click(screen.getByRole('button', { name: copy.x9Skip }));
       await waitFor(() => { expect(pullNow).toHaveBeenCalledTimes(2); });
     },
   );
@@ -107,9 +120,86 @@ describe('S3 crew', () => {
   it('blocks a name over 16 characters', () => {
     const create = vi.fn();
     renderCrew('/crew/new', mockRepo({ userId: 'user-1', crew: { create } }));
-    fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'ABCDEFGHIJKLMNOPQ' } });
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'ABCDEFGHIJKLMNOPQ' } });
     expect(screen.getByText(copy.nameLength)).toBeTruthy();
-    expect(screen.getByRole('button', { name: copy.lockIn }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: copy.x9Continue }).hasAttribute('disabled')).toBe(true);
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('X9 setup', () => {
+  beforeEach(() => { localStorage.clear(); });
+
+  it.each([
+    ['/crew/new', 353], ['/join/ABCDEFGHJK', 217],
+  ])('saves the name, seat colour and default target from %s', async (path, hue) => {
+    const save = vi.fn(async () => ({ ok: true as const, value: testProfile({ id: 'user-1' }) }));
+    renderCrew(String(path), mockRepo({ userId: 'user-1', w: { upsertMyProfile: save } }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: '  Lifter  ' } });
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Continue }));
+    expect(screen.getByRole('heading', { name: copy.x9Sessions })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Next }));
+    expect(screen.getByRole('heading', { name: copy.x9Bar })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Next }));
+    expect(screen.getByRole('heading', { name: copy.x9Prs })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Finish }));
+    expect(await screen.findByText('floor')).toBeTruthy();
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ display_name: 'Lifter', initial: 'L', color_hue: hue, weekly_target: 3 }));
+    expect(localStorage.getItem('ironpact.x9.guide.user-1')).toBe('1');
+  });
+
+  it('does not redeem twice after a failed profile save and allows a retry', async () => {
+    const redeem = vi.fn(async () => ({ ok: true as const, value: testCrew() }));
+    const save = vi.fn().mockResolvedValueOnce({ ok: false, error: 'storage_full' })
+      .mockResolvedValueOnce({ ok: true, value: testProfile() });
+    renderCrew('/join/ABCDEFGHJK', mockRepo({ userId: 'user-1', crew: { redeem }, w: { upsertMyProfile: save } }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+    submitProfile();
+    expect(await screen.findByText(copy.x9SaveError)).toBeTruthy();
+    expect(localStorage.getItem('ironpact.x9.guide.user-1')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Skip }));
+    expect(await screen.findByText('floor')).toBeTruthy();
+    expect(redeem).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledTimes(2);
+  });
+
+  it('remembers skipping per account and allows another account to see the guide', () => {
+    localStorage.setItem('ironpact.x9.guide.user-other', '1');
+    renderCrew('/crew/new', mockRepo({ userId: 'user-1' }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Continue }));
+    expect(screen.getByRole('heading', { name: copy.x9Sessions })).toBeTruthy();
+  });
+
+  it('does not show a completed guide again', async () => {
+    localStorage.setItem('ironpact.x9.guide.user-1', '1');
+    renderCrew('/crew/new', mockRepo({ userId: 'user-1' }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Continue }));
+    expect(await screen.findByText('floor')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: copy.x9Explainer })).toBeNull();
+  });
+
+  it('keeps a duplicate name editable without redeeming a used invite again', async () => {
+    const redeem = vi.fn(async () => ({ ok: true as const, value: testCrew() }));
+    const save = vi.fn(async () => ({ ok: true as const, value: testProfile() }));
+    renderCrew('/join/ABCDEFGHJK', mockRepo({ userId: 'user-1', crew: { redeem }, w: { upsertMyProfile: save }, q: {
+      myCrew: async () => ({ crew: testCrew(), members: [testMember(), testMember('partner')] }),
+      profiles: async () => [testProfile({ id: 'partner', display_name: 'Lifter' })],
+    } }));
+    openProfile();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'lifter' } });
+    submitProfile();
+    expect(await screen.findByText(copy.nameTaken)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(copy.x9Name), { target: { value: 'Spotter' } });
+    submitProfile();
+    expect(await screen.findByText('floor')).toBeTruthy();
+    expect(redeem).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledOnce();
   });
 });

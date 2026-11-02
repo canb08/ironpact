@@ -1,18 +1,17 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { RepoContext } from '../../app/repoContext.ts';
 import { Button } from '../../ui/Button.tsx';
-import { Stepper } from '../../ui/Stepper.tsx';
-import { copy, fill } from '../../ui/copy.ts';
+import { copy } from '../../ui/copy.ts';
 import { CodeBoxes } from '../auth/CodeBoxes.tsx';
 import { normalizeInvite, rememberJoinCode } from '../auth/joinCode.ts';
-import { ICE_HUE, MEMBER_HUES, VOLT_HUE } from './hues.ts';
+import { BLUE_HUE, RED_HUE } from './hues.ts';
+import { ProfileFields } from './ProfileFields.tsx';
+import { Explainer } from './Explainer.tsx';
+import { hintSeen, rememberHint } from './storage.ts';
+import './onboarding.css';
 
-function hueLabel(hue: number): string {
-  if (hue === VOLT_HUE) return copy.colourVolt;
-  if (hue === ICE_HUE) return copy.colourIce;
-  return fill(copy.colourHue, { hue });
-}
+type Step = 'crew' | 'profile' | 'guide';
 
 export default function CrewSetupScreen() {
   const repo = useContext(RepoContext);
@@ -21,178 +20,123 @@ export default function CrewSetupScreen() {
   const fromUrl = typeof params.code === 'string' ? normalizeInvite(params.code) : '';
   const [code, setCode] = useState(fromUrl);
   const [creating, setCreating] = useState(fromUrl.length === 0);
+  const [step, setStep] = useState<Step>('crew');
   const [name, setName] = useState('');
-  const [hue, setHue] = useState(fromUrl.length === 0 ? VOLT_HUE : ICE_HUE);
+  const [hue, setHue] = useState(fromUrl.length === 0 ? RED_HUE : BLUE_HUE);
   const [target, setTarget] = useState(3);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const busy = useRef(false);
+  const [crewReady, setCrewReady] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
   const signedIn = repo?.auth.userId() != null;
   const trimmed = name.trim();
   const nameOk = trimmed.length >= 1 && trimmed.length <= 16;
-
-  function onCode(next: string) {
-    setCode(next);
-    if (next.length > 0) rememberJoinCode(next);
-  }
+  useEffect(() => { heading.current?.focus(); }, [step]);
 
   async function recoverCrew() {
     if (!repo) return;
     try {
       await repo.sync.pullNow();
-      // pullNow absorbs network errors; confirm the mirror actually recovered.
       if (await repo.q.myCrew()) {
         await navigate('/', { replace: true });
         return;
       }
-    } catch {
-      // Leave a retry available if sync or the local read fails.
-    }
-    setPending(false);
+    } catch { /* Keep the existing H10 recovery retryable. */ }
     setError(copy.alreadyInCrew);
   }
 
-  async function lockIn() {
-    if (!repo || !signedIn || pending || !nameOk) return;
+  async function finish() {
+    if (!repo || !signedIn || busy.current || !nameOk) return;
+    busy.current = true;
     setPending(true);
     setError(null);
-    if (!creating) {
-      const joined = await repo.crew.redeem(normalizeInvite(code));
-      if (!joined.ok) {
-        if (joined.error === 'already_in_crew') {
-          await recoverCrew();
+    let membershipReady = crewReady;
+    try {
+      // Do not change a returning user's profile if the server recovers their crew.
+      if (!crewReady) {
+        const result = creating ? await repo.crew.create(copy.defaultCrewName) : await repo.crew.redeem(normalizeInvite(code));
+        if (!result.ok) {
+          if (result.error === 'already_in_crew') await recoverCrew();
+          else setError(redeemCopy(result.error));
           return;
         }
-        setPending(false);
-        setError(redeemCopy(joined.error));
-        return;
+        membershipReady = true;
+        setCrewReady(true);
       }
-    } else {
-      const created = await repo.crew.create(copy.defaultCrewName);
-      if (!created.ok) {
-        if (created.error === 'already_in_crew') {
-          await recoverCrew();
+      const crew = await repo.q.myCrew();
+      if (crew) {
+        const profiles = await repo.q.profiles(crew.members.map((member) => member.user_id));
+        if (profiles.some((profile) => profile.id !== repo.auth.userId()
+          && profile.display_name.toLowerCase() === trimmed.toLowerCase())) {
+          setError(copy.nameTaken);
+          setStep('profile');
           return;
         }
-        setPending(false);
-        setError(copy.joinOffline);
-        return;
       }
+      const saved = await repo.w.upsertMyProfile({
+        display_name: trimmed, initial: trimmed.slice(0, 1).toUpperCase(), color_hue: hue,
+        weekly_target: target, tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      if (!saved.ok) { setError(copy.x9SaveError); return; }
+      rememberHint('guide', saved.value.id);
+      rememberHint('name', saved.value.id);
+      await navigate('/', { replace: true });
+    } catch {
+      setError(membershipReady ? copy.x9SaveError : copy.joinOffline);
+    } finally {
+      busy.current = false;
+      setPending(false);
     }
-    const crew = await repo.q.myCrew();
-    if (crew) {
-      const profiles = await repo.q.profiles(crew.members.map((member) => member.user_id));
-      const mine = repo.auth.userId();
-      const taken = profiles.some(
-        (profile) => profile.id !== mine && profile.display_name.toLowerCase() === trimmed.toLowerCase(),
-      );
-      if (taken) {
-        setPending(false);
-        setError(copy.nameTaken);
-        return;
-      }
-    }
-    const saved = await repo.w.upsertMyProfile({
-      display_name: trimmed,
-      initial: trimmed.slice(0, 1).toUpperCase(),
-      color_hue: hue,
-      weekly_target: target,
-      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    });
-    setPending(false);
-    if (!saved.ok) {
-      setError(copy.joinOffline);
-      return;
-    }
-    await navigate('/', { replace: true });
   }
 
-  return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col gap-4 px-4 py-8">
-      <p className="text-lg font-semibold tracking-wide">{copy.appName}</p>
-      {!creating ? (
-        <>
-          <CodeBoxes mode="invite" length={10} value={code} onChange={onCode} disabled={!repo || pending} />
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              size="xl"
-              variant="secondary"
-              disabled={!repo || code.length === 0}
-              onClick={() => {
-                const text = code;
-                void navigator.clipboard.writeText(text);
-              }}
-            >
-              {copy.copyCode}
-            </Button>
-            <Button
-              size="xl"
-              variant="secondary"
-              disabled={!repo || pending}
-              onClick={() => {
-                void navigator.clipboard.readText().then((text) => onCode(normalizeInvite(text)));
-              }}
-            >
-              {copy.pasteCode}
-            </Button>
-          </div>
-          <Button variant="ghost" disabled={pending} onClick={() => { setCreating(true); setHue(VOLT_HUE); }}>
-            {copy.startCrew}
-          </Button>
-        </>
-      ) : (
-        <Button variant="ghost" disabled={pending} onClick={() => { setCreating(false); setHue(ICE_HUE); }}>
-          {copy.join}
-        </Button>
-      )}
-      <label className="grid gap-2" htmlFor="display-name">
-        {copy.displayName}
-      </label>
-      <input
-        id="display-name"
-        value={name}
-        aria-invalid={trimmed.length > 16}
-        autoComplete="nickname"
-        className="min-h-12 rounded-md border border-line bg-surface-1 px-3 text-text"
-        onChange={(event) => setName(event.target.value)}
-      />
-      <p className="text-sm text-text-muted">{copy.noSurnames}</p>
-      {trimmed.length > 16 ? <p>{copy.nameLength}</p> : null}
-      <div role="group" aria-label={copy.colour} className="flex flex-wrap gap-2">
-        {MEMBER_HUES.map((swatch) => (
-          <button
-            key={swatch}
-            type="button"
-            aria-pressed={hue === swatch}
-            aria-label={hueLabel(swatch)}
-            className="h-14 w-14 rounded-full border border-line-steel-b"
-            style={{ background: `oklch(0.8 0.15 ${swatch})` }}
-            onClick={() => setHue(swatch)}
-          />
-        ))}
-      </div>
-      <Stepper label={copy.weeklyTarget} value={target} min={1} max={7} onChange={setTarget} />
-      {!signedIn ? (
-        <Button
-          size="xl"
-          onClick={() => {
-            if (code) rememberJoinCode(code);
-            void navigate('/sign-in');
-          }}
-        >
-          {copy.signInToJoin}
-        </Button>
-      ) : (
-        <Button
-          size="xl"
-          disabled={!repo || pending || !nameOk || (!creating && code.length !== 10)}
-          onClick={() => void lockIn()}
-        >
-          {pending ? copy.checking : copy.lockIn}
-        </Button>
-      )}
-      {error ? <p>{error}</p> : null}
-    </main>
-  );
+  function continueProfile() {
+    if (!nameOk || pending) return;
+    const id = repo?.auth.userId();
+    if (id && hintSeen('guide', id)) void finish();
+    else { setError(null); setStep('guide'); }
+  }
+
+  return <main className="onboarding">
+    <p className="onboarding-mark">{copy.appName}</p>
+    {step === 'guide' ? <Explainer onFinish={() => void finish()} pending={pending} error={error} /> : <>
+      <header>
+        <h1 ref={heading} tabIndex={-1}>{step === 'crew' ? copy.x9CrewTitle : copy.x9ProfileTitle}</h1>
+        {step === 'crew' && <p className="onboarding-hint">{copy.x9CrewHint}</p>}
+      </header>
+      {step === 'crew' ? <>
+        <div className="onboarding-choice" role="group" aria-label={copy.crew}>
+          <Button variant="secondary" aria-pressed={creating} onClick={() => { setCreating(true); setHue(RED_HUE); }}>{copy.x9Create}</Button>
+          <Button variant="secondary" aria-pressed={!creating} onClick={() => { setCreating(false); setHue(BLUE_HUE); }}>{copy.x9Join}</Button>
+        </div>
+        {!creating && <>
+          <p className="onboarding-hint">{copy.x9InviteHint}</p>
+          <div className="onboarding-code"><CodeBoxes mode="invite" length={10} value={code} onChange={(next) => {
+            setCode(next);
+            try { if (next) rememberJoinCode(next); } catch { /* Paste still works without storage. */ }
+          }} disabled={!repo || pending} /></div>
+          <Button variant="secondary" disabled={!code} onClick={() => {
+            void navigator.clipboard?.writeText(code).catch(() => {});
+          }}>{copy.copyCode}</Button>
+        </>}
+        <div className="onboarding-actions">
+          <Button size="xl" disabled={!creating && code.length !== 10} onClick={() => {
+            if (!signedIn) {
+              try { if (code) rememberJoinCode(code); } catch { /* Gate also retains the URL. */ }
+              void navigate('/sign-in');
+            } else setStep('profile');
+          }}>{signedIn ? copy.x9Continue : copy.signInToJoin}</Button>
+        </div>
+      </> : <form className="onboarding-form" onSubmit={(event) => { event.preventDefault(); continueProfile(); }}>
+        <ProfileFields name={name} setName={setName} hue={hue} setHue={setHue} target={target} setTarget={setTarget} disabled={pending} />
+        <p role="alert">{error}</p>
+        <div className="onboarding-actions">
+          <Button size="xl" type="submit" disabled={!repo || pending || !nameOk}>{pending ? copy.x9Saving : copy.x9Continue}</Button>
+          <Button variant="quiet" disabled={pending || crewReady} onClick={() => { setStep('crew'); setError(null); }}>{copy.x9Back}</Button>
+        </div>
+      </form>}
+    </>}
+  </main>;
 }
 
 function redeemCopy(error: 'code_dead' | 'crew_full' | 'slow_down' | 'already_in_crew' | 'network'): string {
