@@ -106,8 +106,8 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
 | X7 | Crew centred on partner | Grok | E | running — friend's Codex (Sol High) |
-| X8 | Settings grouped sub-pages | Codex Sol High | C | running — owner's Codex |
-| X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
+| X8 | Settings grouped sub-pages | Codex Sol High | C | PR #73 — CI running |
+| X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | running — owner's Codex |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
 
