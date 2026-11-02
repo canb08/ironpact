@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createMockRemote, MOCK_USER_IDS } from '../../src/data/adapter.mock.ts';
+import { createMockRemote, MOCK_USER_IDS, MOCK_CREW_ID } from '../../src/data/adapter.mock.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseRemote } from '../../src/data/adapter.supabase.ts';
 import { IronpactDB } from '../../src/data/db.ts';
@@ -32,12 +32,15 @@ describe('P5D account deletion through Repo', () => {
   });
   it('erases the mirror and outbox only after success; a new sign-in gets a new ID', async () => {
     environment.setOnline(true);
+    const invite = await remote.createInvite(MOCK_CREW_ID);
+    expect(invite.ok).toBe(true);
     expect((await repo.auth.deleteAccount()).ok).toBe(true);
     expect(repo.auth.userId()).toBeNull();
     expect(await Promise.all(db.tables.map((table) => table.count()))).toEqual(db.tables.map(() => 0));
     expect(remote.inspect('profiles').some((row) => row.id === MOCK_USER_IDS.alice)).toBe(false);
     expect(remote.inspect('profiles').some((row) => row.id === MOCK_USER_IDS.bob)).toBe(true);
     expect((await repo.auth.verifyCode('alice@example.test', '123456'))).not.toEqual({ ok: true, value: MOCK_USER_IDS.alice });
+    if (invite.ok) expect(await remote.redeemInvite(invite.value)).toEqual({ ok: false, error: 'code_dead' });
   });
   it('does not erase a new account when deletion returns after an account switch', async () => {
     environment.setOnline(true);

@@ -123,6 +123,7 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
     async deleteAccount() {
       const actor = userId; await pause();
       if (!actor || actor !== userId) return { ok: false, error: 'network' };
+      const ownedCrews = new Set(rows('crews').filter((row) => row.created_by === actor).map((row) => row.id));
       const exercises = new Set(rows('exercises').filter((row) => row.owner_id === actor).map((row) => row.id));
       const challenges = new Set(rows('challenges').filter((row) => row.created_by === actor).map((row) => row.id));
       for (const [table, records] of tables) for (const [key, row] of records) {
@@ -152,6 +153,7 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
             aliases: [], equipment: null, deleted_at: instant(), updated_at: instant() });
         }
       }
+      for (const [code, invitation] of invitations) if (ownedCrews.has(invitation.crew)) invitations.delete(code);
       for (const [id, token] of tokens) if (token.user === actor) tokens.delete(id);
       for (const [email, id] of emails) if (id === actor) emails.delete(email);
       attempts.delete(actor);
