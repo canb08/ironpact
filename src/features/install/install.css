@@ -1,0 +1,170 @@
+.install {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  width: min(40rem, 100%);
+  margin: 0 auto;
+  padding: var(--s-4);
+  padding-top: max(var(--s-6), env(safe-area-inset-top));
+  padding-bottom: max(var(--s-4), env(safe-area-inset-bottom));
+  background: var(--bg);
+  color: var(--text);
+}
+
+.install *,
+.install *::before,
+.install *::after {
+  box-sizing: border-box;
+}
+
+.install h1,
+.install h2,
+.install p {
+  margin: 0;
+}
+
+.install-mark {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.install h1,
+.install h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.install h1 {
+  font-size: var(--t-xl);
+  max-width: 16ch;
+}
+
+.install h2 {
+  font-size: var(--t-lg);
+}
+
+.install-body {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.install-keep,
+.install-detail {
+  color: var(--text-muted);
+}
+
+.install-steps {
+  display: grid;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.install-step {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-3);
+  min-height: 8.5rem;
+  padding: var(--s-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  text-align: center;
+}
+
+.install-walk[data-motion='loop'] .install-step {
+  animation: install-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.install-add {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.install-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 2.75rem);
+  gap: var(--s-2);
+}
+
+.install-grid span {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--on-molten);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.install-grid .is-app {
+  background: var(--molten);
+}
+
+.install-url {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font: var(--t-sm) / 1.4 var(--font-data);
+}
+
+.install-thumb {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: auto;
+}
+
+.install-thumb .ui-button {
+  width: 100%;
+}
+
+.install-skip {
+  justify-self: center;
+  padding: var(--s-3);
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+@keyframes install-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-step {
+    animation: none;
+  }
+}
+
+html[data-reduced-motion='on'] .install-step {
+  animation: none;
+}
