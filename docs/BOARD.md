@@ -77,7 +77,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 |---|---|---|---|---|
 | H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
 | H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
-| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
+| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #48 (pgTAP read in full; gaps G1-G7 in Parked; PR opened by Lead) |
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
 
 ## Parked / follow-ups
