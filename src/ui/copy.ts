@@ -480,6 +480,9 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   devSoundPlate: 'Plate',
 
   // ── P4E: add this ticket's strings directly below ──
+  ringClosedCentre: 'CLOSED',
+  shockwaveStamp: 'NEW PR',
+  shockwaveLine: '{name} · {exercise} · {detail}',
 
   // ── P4F: add this ticket's strings directly below ──
   installKeepData: 'Installed apps keep your data. Browser tabs can lose it after 7 days.',

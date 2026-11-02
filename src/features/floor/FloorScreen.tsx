@@ -6,12 +6,13 @@ import type { Repo } from '../../data/adapter.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, Ring, ToastProvider, copy, fill, useToast } from '../../ui';
 import { BarStrip } from '../duo/BarStrip.tsx';
+import { DuoMoments } from '../duo/DuoMoments.tsx';
 import { loadDuo } from '../duo/load.ts';
 import { PresenceBanner } from '../duo/PresenceBanner.tsx';
 import { useCrewTick } from '../duo/useCrewTick.ts';
 import { useDebugWeek } from '../duo/useDebugWeek.ts';
 import { usePresence } from '../duo/usePresence.ts';
-import { partnerStatus } from '../duo/view.ts';
+import { barTier, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
 import { useRepoQuery } from './useRepoQuery.ts';
 import { InstallChip } from './InstallChip.tsx';
 import '../duo/duo.css';
@@ -120,6 +121,7 @@ function FloorBody() {
   const colors = new Map(duo.partners.map((partner) => [partner.id, partner.color]));
   const liveIds = new Set(presence.rows.map((row) => row.user_id));
   const top = data.last ? heaviestWorkingSet(data.last.sets) : undefined;
+  const shownPlates = debugClose ? platesAfterDebugClose(duo.plates) : duo.plates;
   const meRing = {
     id: duo.me.id, name: duo.me.name, initial: duo.me.initial, color: duo.me.color,
     target: duo.me.target, credits: duo.me.credits, minCount: duo.me.minCount,
@@ -132,6 +134,18 @@ function FloorBody() {
   return (
     <main className="floor">
       <InstallChip />
+      <DuoMoments
+        screen="floor"
+        crewId={duo.crewId}
+        weekStart={duo.me.weekStart}
+        members={coop}
+        weekFull={duo.weekFull}
+        plates={shownPlates}
+        tier={barTier(shownPlates)}
+        reduced={duo.reduceMotion}
+        archived={duo.archived}
+        inSession={duo.openSession}
+      />
       <h1>{copy.floor}</h1>
       <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} />
       {data.comeback ? (
@@ -145,8 +159,8 @@ function FloorBody() {
           <section className="floor-card" aria-labelledby="my-week-heading">
             <h2 id="my-week-heading">{copy.myWeek}</h2>
             <p className="floor-week" data-testid="my-week">{duo.me.line}</p>
-            <Ring members={[meRing]} size="personal" />
-            <p className="floor-status">{fill(copy.weeksOn, { count: debugClose ? duo.plates + 1 : duo.plates })}</p>
+            <Ring members={[meRing]} size="personal" reduced={duo.reduceMotion} announceMin />
+            <p className="floor-status">{fill(copy.weeksOn, { count: shownPlates })}</p>
           </section>
           {duo.partners.length === 0 ? (
             <section className="floor-card" aria-labelledby="partner-week-heading">
@@ -158,7 +172,7 @@ function FloorBody() {
             <section className="floor-card" aria-labelledby="partner-week-heading">
               <h2 id="partner-week-heading">{copy.partnerWeek}</h2>
               {duo.archived ? <p className="is-archived">{copy.archived}</p> : (
-                <Ring members={coop} size="coop" />
+                <Ring members={coop} size="coop" reduced={duo.reduceMotion} />
               )}
               {duo.partners.map((partner) => (
                 <div key={partner.id}>
@@ -179,6 +193,8 @@ function FloorBody() {
         debugClose={debugClose}
         onDismissAdjusted={() => setHideAdjusted(true)}
         platesTestId="bar-plates"
+        reduced={duo.reduceMotion}
+        batterySaver={duo.batterySaver}
       />
       <section className="floor-card" aria-labelledby="last-time-heading">
         <h2 id="last-time-heading">{copy.lastTime}</h2>
