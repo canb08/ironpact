@@ -189,4 +189,21 @@ describe('duo mirror and mock realtime', () => {
     b.close(); expect(seen.mock.lastCall?.[0]).toHaveLength(2);
     a.close(); c.close(); d.close();
   });
+
+  it('flushes earned credits before the spot RPC, pulls its canonical token and rejects offline use', async () => {
+    const { repo, remote, environment } = await setup();
+    remote.seed('crew_members', Object.values(MOCK_USER_IDS).map((id) => ({ crew_id: MOCK_CREW_ID,
+      user_id: id, role: id === MOCK_USER_IDS.alice ? 'owner' : 'member', joined_at: '2026-10-01T00:00:00Z', left_at: null })));
+    for (let i = 0; i < 4; i++) {
+      const entry = unwrap(await repo.w.logRun({ distance_m: 3000, duration_s: 1200 }));
+      unwrap(await repo.w.updateSession(entry.session_id, { local_date: `2026-11-0${2 + i}` }));
+    }
+    const useSpot = vi.spyOn(remote, 'useSpot');
+    const id = unwrap(await repo.duo.useSpot('2026-11-02'));
+    expect((await repo.duo.spots()).map((row) => row.id)).toEqual([id]);
+    expect(repo.sync.status().pendingCount).toBe(0);
+    environment.setOnline(false);
+    expect(await repo.duo.useSpot('2026-11-02')).toEqual({ ok: false, error: 'network' });
+    expect(useSpot).toHaveBeenCalledTimes(1);
+  });
 });
