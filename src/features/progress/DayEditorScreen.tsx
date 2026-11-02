@@ -3,11 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
 import { localDateSchema } from '../../core/validate.ts';
-import type { DayEntries } from '../../data/adapter.ts';
+import type { DayEntries, EditNotice } from '../../data/adapter.ts';
 import { Button, copy } from '../../ui';
 import { windowDates } from './dates.ts';
 import { GymSession, MartialSession, MinSession, RunSession, WeightCard, type TrashItem } from './editors.tsx';
 import { writeErrorCopy } from './form.ts';
+import { EditNotices } from './notices.tsx';
+import { mergeNotice, shownNotice } from './notices.ts';
 import './progress.css';
 
 const EMPTY: DayEntries = { sessions: [], sets: [], cardio: [], martial: [], min: [], bodyweight: [] };
@@ -30,6 +32,7 @@ export default function DayEditorScreen() {
   const [revision, setRevision] = useState(0);
   const [undo, setUndo] = useState<TrashItem[] | null>(null);
   const [trashError, setTrashError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<EditNotice | null>(null);
   const days = valid ? windowDates(date) : [];
   const from = days[0] ?? date;
   const to = days[days.length - 1] ?? date;
@@ -63,19 +66,27 @@ export default function DayEditorScreen() {
     void navigate(`/day/${next}`);
   }
 
+  function publish(next: EditNotice) {
+    setNotice(shownNotice(next));
+  }
+
   async function trash(items: TrashItem[]) {
     setTrashError(null);
     const done: TrashItem[] = [];
+    let folded: EditNotice = { prsChanged: false, barAdjusted: false };
     for (const item of items) {
       const result = await repo.w.softDelete(item.table, item.id);
       if (!result.ok) {
         setTrashError(writeErrorCopy(result.error));
         setUndo(done.length > 0 ? done : null);
+        setNotice(shownNotice(folded));
         refresh();
         return;
       }
+      folded = mergeNotice(folded, result.notice);
       done.push(item);
     }
+    setNotice(shownNotice(folded));
     setUndo(done);
     refresh();
   }
@@ -84,14 +95,18 @@ export default function DayEditorScreen() {
     const items = undo;
     if (!items) return;
     setUndo(null);
+    let folded: EditNotice = { prsChanged: false, barAdjusted: false };
     for (const item of [...items].reverse()) {
       const result = await repo.w.restore(item.table, item.id);
       if (!result.ok) {
         setTrashError(writeErrorCopy(result.error));
+        setNotice(shownNotice(folded));
         refresh();
         return;
       }
+      folded = mergeNotice(folded, result.notice);
     }
+    setNotice(shownNotice(folded));
     refresh();
   }
 
@@ -103,6 +118,7 @@ export default function DayEditorScreen() {
   return (
     <main className="progress">
       <h1>{date}</h1>
+      <EditNotices notice={notice} />
       <nav className="progress-days" aria-label={copy.recentDays}>
         {days.map((dayKey) => {
           const dots = dotsFor(dayKey, span);
@@ -126,13 +142,13 @@ export default function DayEditorScreen() {
         const min = day.min.filter((row) => row.session_id === session.id);
         const stamp = `${session.client_updated_at}:${sets.map((row) => row.client_updated_at).join()}`;
         if (session.kind === 'run' && cardio.length > 0) {
-          return <RunSession key={stamp} session={session} rows={cardio} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} />;
+          return <RunSession key={stamp} session={session} rows={cardio} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} onNotice={publish} />;
         }
         if (session.kind === 'martial' && martial.length > 0) {
-          return <MartialSession key={stamp} session={session} rows={martial} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} />;
+          return <MartialSession key={stamp} session={session} rows={martial} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} onNotice={publish} />;
         }
         if (session.kind === 'min' && min.length > 0) {
-          return <MinSession key={stamp} session={session} rows={min} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} />;
+          return <MinSession key={stamp} session={session} rows={min} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} onNotice={publish} />;
         }
         const label = session.kind === 'gym' ? copy.gym : session.kind === 'run' ? copy.run : session.kind === 'martial' ? copy.martialArts : copy.min;
         return (
@@ -146,11 +162,12 @@ export default function DayEditorScreen() {
             onMoved={moved}
             onRefresh={refresh}
             onTrash={(items) => { void trash(items); }}
+            onNotice={publish}
           />
         );
       })}
       {day.bodyweight.map((row) => (
-        <WeightCard key={`${row.id}:${row.client_updated_at}`} row={row} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} />
+        <WeightCard key={`${row.id}:${row.client_updated_at}`} row={row} routeDate={date} onMoved={moved} onRefresh={refresh} onTrash={(items) => { void trash(items); }} onNotice={publish} />
       ))}
       {data !== undefined && !hasEntries && day.sessions.length === 0 ? <p>{copy.emptyDay}</p> : null}
       {trashError ? <p className="progress-error" role="alert">{trashError}</p> : null}

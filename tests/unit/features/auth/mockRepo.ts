@@ -140,6 +140,7 @@ export function mockRepo(partial: {
     softDelete: async () => ({ ok: false, error: 'storage_full' }),
     restore: async () => ({ ok: false, error: 'storage_full' }),
     recordPrEvents: async () => ({ ok: true, value: [] }),
+    recomputePrs: async () => ({ ok: true, value: { changed: false } }),
     setExercisePref: async () => ({ ok: false, error: 'storage_full' }),
     updateSession: async () => ({ ok: false, error: 'storage_full' }),
     updateEntry: async () => ({ ok: false, error: 'storage_full' }),

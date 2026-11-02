@@ -132,3 +132,52 @@ it('soft-deletes a set and restores it onto the list and the export preview', as
   const back = await loadPreview(harness.repo, me, new Date('2026-10-24T12:00:00.000Z'));
   expect(back.body).toContain('1×5×80kg');
 });
+
+it('shows PRs recalculated only when an edit changes the standing PR', async () => {
+  harness = await progressHarness();
+  const exercise = await harness.repo.w.createExercise({
+    name: 'Bench press', export_label: 'Bench press', kind: 'lift', category: 'compound', lower_body: false,
+  });
+  expect(exercise.ok).toBe(true);
+  if (!exercise.ok) return;
+  const started = await harness.repo.w.startSession({ kind: 'gym' });
+  expect(started.ok).toBe(true);
+  if (!started.ok) return;
+  await harness.repo.w.logSet({ session_id: started.value.id, exercise_id: exercise.value.id, reps: 5, weight_kg: 80 });
+  await harness.repo.w.finishSession(started.value.id);
+  await harness.repo.w.updateSession(started.value.id, { started_at: '2026-10-20T08:00:00.000Z' });
+  const later = await harness.repo.w.startSession({ kind: 'gym' });
+  expect(later.ok).toBe(true);
+  if (!later.ok) return;
+  await harness.repo.w.logSet({ session_id: later.value.id, exercise_id: exercise.value.id, reps: 5, weight_kg: 100 });
+  await harness.repo.w.logSet({ session_id: later.value.id, exercise_id: exercise.value.id, reps: 5, weight_kg: 90 });
+  await harness.repo.w.finishSession(later.value.id);
+  expect((await harness.repo.w.recomputePrs(exercise.value.id)).ok).toBe(true);
+  harness.render(`/exercise/${exercise.value.id}`);
+  await screen.findByText(fill(copy.setLine, { index: 1, reps: 5, kg: 100 }));
+
+  const regionNamed = (index: number, kg: number) => {
+    const name = fill(copy.sessionSet, { index });
+    const line = fill(copy.setLine, { index, reps: 5, kg });
+    const match = screen.getAllByRole('region', { name }).find((node) => within(node).queryByText(line));
+    if (!match) throw new Error(`missing set ${line}`);
+    return within(match);
+  };
+  const lesser = regionNamed(2, 90);
+  fireEvent.click(lesser.getByRole('button', { name: fill(copy.editSet, { index: 2 }) }));
+  fireEvent.click(lesser.getByRole('button', { name: copy.save }));
+  await waitFor(() => {
+    expect(screen.queryByRole('button', { name: copy.save })).toBeNull();
+  });
+  expect(screen.queryByText(copy.prsRecalculated)).toBeNull();
+  expect(screen.queryByText(copy.barAdjusted)).toBeNull();
+
+  const champion = regionNamed(1, 100);
+  fireEvent.click(champion.getByRole('button', { name: fill(copy.editSet, { index: 1 }) }));
+  fireEvent.change(champion.getByLabelText(copy.kg), { target: { value: '70' } });
+  fireEvent.click(champion.getByRole('button', { name: copy.save }));
+  expect(await screen.findByText(copy.prsRecalculated)).toBeTruthy();
+  expect(screen.queryByText(copy.barAdjusted)).toBeNull();
+  const events = await harness.repo.q.prEvents({ exerciseId: exercise.value.id });
+  expect(events.find((row) => row.pr_type === 'e1rm')?.value).toBeCloseTo(90 * (1 + 5 / 30), 5);
+});

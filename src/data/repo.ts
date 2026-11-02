@@ -2,8 +2,10 @@ import type { Table } from 'dexie';
 import type { z } from 'zod';
 import { v5 } from 'uuid';
 import type { BodyweightEntry, CardioEntry, MartialEntry, MinEntry, Result, Session, SetRow, SyncedTable, SyncFields } from '../core/types.ts';
+import { recomputePrs as standingPrs, type PrEventDraft, type PrHistory } from '../core/prs.ts';
+import { weekStartOf } from '../core/weeks.ts';
 import { bodyweightFormSchema, cardioFormSchema, disciplineInNamespaceSchema, exercisePrefSchema, exerciseSchema, martialFormSchema, minEntrySchema, prEventSchema, profileFormSchema, sessionSchema, setFormSchema } from '../core/validate.ts';
-import type { ExercisePref, FeedItem, PrEvent, Repo, RepoQueries, RepoWrites, SessionPatch, SessionWithSets, StartSessionInput, WriteError } from './adapter.ts';
+import type { EditNotice, ExercisePref, FeedItem, PrEvent, Repo, RepoQueries, RepoWrites, SessionPatch, SessionWithSets, StartSessionInput, WriteError } from './adapter.ts';
 import { compareInstant, createClock, localDateIn, type Clock } from './clock.ts';
 import { asRemote, IronpactDB } from './db.ts';
 import { defaultProfile } from './defaults.ts';
@@ -83,6 +85,11 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     const result = await write(fn);
     if (result.ok) return result;
     return { ok: false, error: result.error === 'label_taken' ? 'world_record' : result.error };
+  }
+  async function noted<T>(fn: (user: string) => Promise<{ value: T; notice: EditNotice }>): Promise<Result<T, WriteError> & { notice?: EditNotice }> {
+    const result = await write(fn);
+    if (!result.ok) return { ok: false, error: result.error === 'label_taken' ? 'world_record' : result.error };
+    return { ok: true, value: result.value.value, notice: result.value.notice };
   }
   async function ownedSession(id: string, user: string, open = false): Promise<Session> {
     const row = await db.sessions.get(id);
@@ -259,7 +266,107 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     }),
   };
 
-  async function deletion(table: Parameters<RepoWrites['softDelete']>[0], id: string, deleted: boolean, user: string): Promise<void> {
+  async function weekIsClosed(dates: readonly string[]): Promise<boolean> {
+    const user = remote.currentUserId();
+    if (!user) return false;
+    const membership = await db.crew_members.where('user_id').equals(user).filter((row) => row.left_at === null).first();
+    if (!membership) return false;
+    for (const date of dates) {
+      if (!date) continue;
+      const row = await db.table('crew_weeks').get([membership.crew_id, weekStartOf(date)]);
+      if (row) return true;
+    }
+    return false;
+  }
+  function noticeFor(prsChanged: boolean, dates: readonly string[]): Promise<EditNotice> {
+    return weekIsClosed(dates).then((barAdjusted) => ({ prsChanged, barAdjusted }));
+  }
+  function overlay<T extends { id?: string }>(rows: readonly T[], pending: readonly Mutation[], table: SyncedTable): T[] {
+    const map = new Map<string, T>();
+    for (const row of rows) if (row.id) map.set(row.id, row);
+    for (const mutation of pending) {
+      if (mutation.table !== table || typeof mutation.row.id !== 'string') continue;
+      const previous = map.get(mutation.row.id);
+      map.set(mutation.row.id, { ...(previous ?? {}), ...mutation.row } as T);
+    }
+    return [...map.values()];
+  }
+  async function historyFor(user: string, pending: readonly Mutation[]): Promise<PrHistory> {
+    const [sessions, sets, cardio, bodyweights, exercises] = await Promise.all([
+      db.sessions.filter((row) => row.user_id === user).toArray(),
+      db.sets.filter((row) => row.user_id === user).toArray(),
+      db.cardio_entries.filter((row) => row.user_id === user).toArray(),
+      db.bodyweight_entries.filter((row) => row.user_id === user).toArray(),
+      db.exercises.toArray(),
+    ]);
+    return {
+      sessions: overlay(sessions, pending, 'sessions'),
+      sets: overlay(sets, pending, 'sets'),
+      cardio: overlay(cardio, pending, 'cardio_entries'),
+      bodyweights: overlay(bodyweights, pending, 'bodyweight_entries'),
+      exercises,
+    };
+  }
+  function sameNumber(left: number | null, right: number | null): boolean {
+    if (left == null || right == null) return left === right;
+    return Math.abs(left - right) <= 0.000001;
+  }
+  function holds(row: { [key: string]: unknown }, draft: PrEventDraft): boolean {
+    const reps = row.reps == null ? null : Number(row.reps);
+    const previous = row.previous_value == null ? null : Number(row.previous_value);
+    const pct = row.pct_over_previous == null ? null : Number(row.pct_over_previous);
+    return row.source_id === draft.source_id
+      && row.pr_type === draft.pr_type
+      && (row.exercise_id ?? null) === draft.exercise_id
+      && reps === draft.reps
+      && sameNumber(Number(row.value), draft.value)
+      && sameNumber(previous, draft.previous_value)
+      && sameNumber(pct, draft.pct_over_previous)
+      && row.local_date === draft.local_date
+      && row.user_id === draft.user_id;
+  }
+  function inPrScope(exercise: unknown, prType: unknown, exerciseId: string | null): boolean {
+    if (exerciseId === null) return exercise == null && (prType === 'distance' || prType === 'pace');
+    return exercise === exerciseId && (prType === 'e1rm' || prType === 'rep_max' || prType === 'volume');
+  }
+  /** Tombstones and inserts for one exercise, or for every run when `exerciseId` is null. */
+  async function planPrs(user: string, exerciseId: string | null, now: string, pending: readonly Mutation[]): Promise<{ mutations: Mutation[]; changed: boolean }> {
+    const history = await historyFor(user, pending);
+    if (exerciseId === null) history.sets = [];
+    else {
+      history.sets = history.sets.filter((set) => set.exercise_id === exerciseId);
+      history.cardio = [];
+    }
+    const drafts = standingPrs(history).filter((draft) => inPrScope(draft.exercise_id, draft.pr_type, exerciseId));
+    const stored = overlay(await db.mirror('pr_events').where('user_id').equals(user).toArray(), pending, 'pr_events')
+      .filter((row) => !row.deleted_at && row.user_id === user && inPrScope(row.exercise_id, row.pr_type, exerciseId));
+    const used = new Set<string>();
+    const fresh: PrEventDraft[] = [];
+    for (const draft of drafts) {
+      const match = stored.find((row) => typeof row.id === 'string' && !used.has(row.id) && holds(row, draft));
+      if (match && typeof match.id === 'string') used.add(match.id);
+      else fresh.push(draft);
+    }
+    const mutations: Mutation[] = [];
+    for (const row of stored) {
+      if (typeof row.id !== 'string' || used.has(row.id)) continue;
+      const stamp = typeof row.client_updated_at === 'string' && compareInstant(row.client_updated_at, now) > 0 ? row.client_updated_at : now;
+      mutations.push({ table: 'pr_events', row: { ...row, deleted_at: now, client_updated_at: stamp } });
+    }
+    for (const draft of fresh) {
+      if (draft.user_id !== user) throw new WriteFailure('world_record');
+      const row = validate(prEventSchema, {
+        id: newId(), user_id: user, exercise_id: draft.exercise_id, source_id: draft.source_id,
+        pr_type: draft.pr_type, reps: draft.reps, value: draft.value, previous_value: draft.previous_value,
+        pct_over_previous: draft.pct_over_previous, seen_by: [], local_date: draft.local_date,
+        client_updated_at: now, deleted_at: null,
+      });
+      mutations.push({ table: 'pr_events', row: asRemote(row) });
+    }
+    const already = pending.some((mutation) => mutation.table === 'pr_events' && inPrScope(mutation.row.exercise_id, mutation.row.pr_type, exerciseId));
+    return { mutations, changed: already || mutations.length > 0 };
+  }
+  async function deletionMutations(table: Parameters<RepoWrites['softDelete']>[0], id: string, deleted: boolean, user: string): Promise<{ mutations: Mutation[]; now: string; localDate: string }> {
     const row = await db.mirror(table).get(id);
     if (!row || row.user_id !== user) throw new WriteFailure('no_open_session');
     const now = clock.now();
@@ -268,8 +375,23 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       const prs = await db.mirror('pr_events').where('source_id').equals(id).toArray();
       mutations.push(...prs.filter((pr) => pr.user_id === user).map((pr) => ({ table: 'pr_events' as const, row: { ...pr, deleted_at: now, client_updated_at: typeof pr.client_updated_at === 'string' && compareInstant(pr.client_updated_at, now) > 0 ? pr.client_updated_at : now } })));
     }
-    await enqueue(db, mutations, now);
+    return { mutations, now, localDate: typeof row.local_date === 'string' ? row.local_date : '' };
+  }
+  async function deletion(table: Parameters<RepoWrites['softDelete']>[0], id: string, deleted: boolean, user: string): Promise<void> {
+    const built = await deletionMutations(table, id, deleted, user);
+    await enqueue(db, built.mutations, built.now);
     if (table === 'sessions' && deleted) await db.meta.delete('active_session_id');
+  }
+  async function recomputeInto(user: string, exerciseId: string | null, now: string, mutations: Mutation[]): Promise<boolean> {
+    const plan = await planPrs(user, exerciseId, now, mutations);
+    mutations.push(...plan.mutations);
+    return plan.changed;
+  }
+  async function attachPrs(user: string, table: Parameters<RepoWrites['softDelete']>[0], id: string, now: string, mutations: Mutation[]): Promise<boolean> {
+    if (table === 'cardio_entries') return recomputeInto(user, null, now, mutations);
+    if (table !== 'sets') return false;
+    const row = mutations.find((mutation) => mutation.table === 'sets' && mutation.row.id === id);
+    return typeof row?.row.exercise_id === 'string' ? recomputeInto(user, row.row.exercise_id, now, mutations) : false;
   }
   async function syncActive(session: Session): Promise<void> {
     if (session.ended_at !== null) {
@@ -360,13 +482,17 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
         set_index: 1 + siblings.reduce((max, set) => Math.max(max, set.set_index), 0), rpe: input.rpe ?? null, note: input.note ?? null, is_warmup: input.is_warmup ?? false, logged_at: now });
       await save('sets', row); return row;
     }),
-    updateSet: (id, patch) => ordinary(async (user) => {
+    updateSet: (id, patch) => noted(async (user) => {
       const old = await db.sets.get(id);
       if (!old || old.user_id !== user || !active(old)) throw new WriteFailure('no_open_session');
       const exercise = await db.exercises.get(old.exercise_id);
       if (!exercise || !['lift', 'bw_lift'].includes(exercise.kind)) throw new WriteFailure('world_record');
-      const row = validate(setFormSchema(exercise.kind === 'bw_lift' ? 'bw_lift' : 'lift'), { ...old, ...patch, id, user_id: user, client_updated_at: clock.now() });
-      await save('sets', row); return row;
+      const now = clock.now();
+      const row = validate(setFormSchema(exercise.kind === 'bw_lift' ? 'bw_lift' : 'lift'), { ...old, ...patch, id, user_id: user, client_updated_at: now });
+      const mutations: Mutation[] = [{ table: 'sets', row: asRemote(row) }];
+      const prsChanged = await recomputeInto(user, old.exercise_id, now, mutations);
+      await enqueue(db, mutations, now);
+      return { value: row, notice: await noticeFor(prsChanged, [row.local_date]) };
     }),
     logRun: (input) => ordinary(async (user) => {
       const session = sessionRow(user, { kind: 'run' }, true);
@@ -390,8 +516,19 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       const row: BodyweightEntry = validate(bodyweightFormSchema, { ...fields(user, now, date), id: bodyweightId(user, date), weight_kg: kg, measured_at: now });
       await save('bodyweight_entries', row); return row;
     }),
-    softDelete: (table, id) => ordinary((user) => deletion(table, id, true, user)),
-    restore: (table, id) => ordinary((user) => deletion(table, id, false, user)),
+    softDelete: (table, id) => noted(async (user) => {
+      const built = await deletionMutations(table, id, true, user);
+      const prsChanged = await attachPrs(user, table, id, built.now, built.mutations);
+      await enqueue(db, built.mutations, built.now);
+      if (table === 'sessions') await db.meta.delete('active_session_id');
+      return { value: undefined, notice: await noticeFor(prsChanged, [built.localDate]) };
+    }),
+    restore: (table, id) => noted(async (user) => {
+      const built = await deletionMutations(table, id, false, user);
+      const prsChanged = await attachPrs(user, table, id, built.now, built.mutations);
+      await enqueue(db, built.mutations, built.now);
+      return { value: undefined, notice: await noticeFor(prsChanged, [built.localDate]) };
+    }),
     recordPrEvents: (rows) => ordinary(async (user) => {
       const now = clock.now();
       const saved: PrEvent[] = [];
@@ -415,6 +552,12 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       if (mutations.length > 0) await enqueue(db, mutations, now);
       return saved;
     }),
+    recomputePrs: (exerciseId) => ordinary(async (user) => {
+      const now = clock.now();
+      const plan = await planPrs(user, exerciseId, now, []);
+      if (plan.mutations.length > 0) await enqueue(db, plan.mutations, now);
+      return { changed: plan.changed };
+    }),
     setExercisePref: (exerciseId, patch) => ordinary(async (user) => {
       const exercise = await db.exercises.get(exerciseId);
       const users = await visibleUsers();
@@ -430,17 +573,29 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       await save('exercise_prefs', row);
       return row;
     }),
-    updateSession: (id, patch) => ordinary(async (user) => {
+    updateSession: (id, patch) => noted(async (user) => {
       const session = await ownedSession(id, user);
       const now = clock.now();
       const planned = await planSession(session, patch, user, now);
-      await enqueue(db, planned.mutations, now);
+      const mutations = planned.mutations;
+      let prsChanged = false;
+      if (planned.next.local_date !== session.local_date) {
+        const exerciseIds = new Set((await db.sets.where('session_id').equals(session.id).toArray()).map((set) => set.exercise_id));
+        const runs = (await db.cardio_entries.where('session_id').equals(session.id).filter(active).count()) > 0;
+        for (const exerciseId of exerciseIds) prsChanged = await recomputeInto(user, exerciseId, now, mutations) || prsChanged;
+        if (runs) prsChanged = await recomputeInto(user, null, now, mutations) || prsChanged;
+      }
+      await enqueue(db, mutations, now);
       await syncActive(planned.next);
-      return planned.next;
+      return { value: planned.next, notice: await noticeFor(prsChanged, [session.local_date, planned.next.local_date]) };
     }),
     updateEntry: (async (table, id, patch) => {
-      if (table === 'bodyweight_entries') return ordinary((user) => rewriteBodyweight(user, id, patch));
-      return ordinary(async (user) => {
+      if (table === 'bodyweight_entries') return noted(async (user) => {
+        const before = await db.bodyweight_entries.get(id);
+        const row = await rewriteBodyweight(user, id, patch);
+        return { value: row, notice: await noticeFor(false, [before?.local_date ?? '', row.local_date]) };
+      });
+      return noted(async (user) => {
         const old = await db.mirror(table).get(id);
         if (!old || old.user_id !== user || !active(old as { deleted_at?: string | null })) throw new WriteFailure('no_open_session');
         const now = clock.now();
@@ -463,8 +618,9 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
           : table === 'martial_entries' ? validate(martialFormSchema, merged)
           : validate(minEntrySchema, merged);
         mutations.push({ table, row: asRemote(row) });
+        const prsChanged = table === 'cardio_entries' ? await recomputeInto(user, null, now, mutations) : false;
         await enqueue(db, mutations, now);
-        return row;
+        return { value: row, notice: await noticeFor(prsChanged, [String(old.local_date), localDate]) };
       });
     }) as RepoWrites['updateEntry'],
   };

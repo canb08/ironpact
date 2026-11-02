@@ -4,13 +4,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
 import { localDateOf } from '../../core/weeks.ts';
 import type { BodyweightEntry, Exercise, Profile, Session, SetRow } from '../../core/types.ts';
-import type { PrEvent, SessionWithSets } from '../../data/adapter.ts';
+import type { PrEvent, SessionWithSets, EditNotice } from '../../data/adapter.ts';
 import { TrendChart } from '../stats/TrendChart.tsx';
 import { bestE1rmPerSession, chartModel, trendWindow, type SessionBest } from '../stats/trend.ts';
 import { BigNumber, Button, copy } from '../../ui';
 import { bestE1rm, formatE1rm } from './e1rmView.ts';
 import { parseRest, writeErrorCopy } from './form.ts';
 import { HistorySet } from './historySet.tsx';
+import { EditNotices } from './notices.tsx';
+import { shownNotice } from './notices.ts';
 import { formatKgCell, repMaxTable, type RepMaxRow } from './repMax.ts';
 import { formatPrKg, prEyebrow } from '../prs/label.ts';
 import { Field } from './widgets.tsx';
@@ -57,6 +59,7 @@ export default function ExerciseDetailScreen() {
   const [revision, setRevision] = useState(0);
   const [undoId, setUndoId] = useState<string | null>(null);
   const [trashError, setTrashError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<EditNotice | null>(null);
   const data = useLiveQuery(async () => {
     if (!id) return EMPTY;
     const userId = repo.auth.userId();
@@ -125,6 +128,10 @@ export default function ExerciseDetailScreen() {
     setRevision((value) => value + 1);
   }
 
+  function publish(next: EditNotice | undefined) {
+    setNotice(shownNotice(next));
+  }
+
   async function removeSet(setId: string) {
     setTrashError(null);
     const result = await repo.w.softDelete('sets', setId);
@@ -133,6 +140,7 @@ export default function ExerciseDetailScreen() {
       return;
     }
     setUndoId(setId);
+    publish(result.notice);
     refresh();
   }
 
@@ -146,12 +154,14 @@ export default function ExerciseDetailScreen() {
       refresh();
       return;
     }
+    publish(result.notice);
     refresh();
   }
 
   return (
     <main className="progress">
       <h1>{exercise.name}</h1>
+      <EditNotices notice={notice} />
       {liftKind ? (
         <p>
           {copy.bestE1rm}{' '}
@@ -193,6 +203,7 @@ export default function ExerciseDetailScreen() {
                 bodyweight={data.bodyweight}
                 onRefresh={refresh}
                 onDelete={(setId) => { void removeSet(setId); }}
+                onNotice={publish}
               />
             ))}
           </ol>
@@ -305,13 +316,14 @@ function PrList({ events }: { events: readonly PrEvent[] }) {
 }
 
 function HistorySession({
-  exercise, item, bodyweight, onRefresh, onDelete,
+  exercise, item, bodyweight, onRefresh, onDelete, onNotice,
 }: {
   exercise: Exercise;
   item: SessionWithSets;
   bodyweight: readonly BodyweightEntry[];
   onRefresh: () => void;
   onDelete: (id: string) => void;
+  onNotice: (notice: EditNotice) => void;
 }) {
   const best = sessionBest(exercise, item, bodyweight);
   return (
@@ -322,7 +334,7 @@ function HistorySession({
       {best !== null ? <p>{copy.sessionE1rm} {formatE1rm(best)} {copy.kg}</p> : null}
       <ol>
         {item.sets.map((set) => (
-          <HistorySet key={set.id} set={set} exercise={exercise} onRefresh={onRefresh} onDelete={onDelete} />
+          <HistorySet key={set.id} set={set} exercise={exercise} onRefresh={onRefresh} onDelete={onDelete} onNotice={onNotice} />
         ))}
       </ol>
       <Link to={`/day/${item.session.local_date}`}>{copy.editDay}</Link>
