@@ -50,7 +50,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
 | P3B | Duo data layer + realtime client (L10) | Codex Astra | E | pr #34 draft (data read in full; Lead approved adding `tests/unit/features/auth/mockRepo.ts` for Repo.duo; CI p90 353 ms; Codex fixing presence on the receiving client) |
-| P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
+| P3E | Crew full + presence + Bar + comeback | Grok (friend's Codex out of usage) | E | todo — after P3B, P3C, P3D |
 | P3F | Progress S13: trend chart | Grok | E | merged #33 |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
 | P3H | Shared credit fixtures: SQL `week_credits` ↔ TS `credits.ts` parity (E5.7, L12) — **new ticket, test-only, no `src/**` or migrations** | Grok | E | running 2026-11-02 |
@@ -68,8 +68,8 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P4G | Playwright Phase 4 | Grok | C | todo — after P4C, P4E |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (Can's Codex took it: lane C idle, P5C needs it; Can's Claude reviews + merges) | running 2026-11-02 02:48 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | running 2026-11-02 03:00 |
-| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Codex Sol | E | todo — after P4B, P3E |
-| P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | running 2026-11-02 03:35 |
+| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Codex Sol → Grok if friend's Codex still out | E | todo — after P4B, P3E |
+| P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | running 2026-11-02 (lane E, Grok) |
 
 ## Parked / follow-ups
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
