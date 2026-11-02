@@ -60,6 +60,8 @@ export interface Remote {
   sendCode(email: string): Promise<Result<void, SendCodeError>>;
   verifyCode(email: string, code: string): Promise<Result<Uuid, VerifyCodeError>>;
   signOut(): Promise<void>;
+  /** L11: online-only irreversible deletion; clears authentication on success. */
+  deleteAccount(): Promise<Result<void, 'network'>>;
 
   /** Server clock for the per-launch offset (E5.4). */
   serverNow(): Promise<Instant>;
@@ -331,6 +333,8 @@ export interface RepoAuth {
   sendCode(email: string): Promise<Result<void, SendCodeError>>;
   verifyCode(email: string, code: string): Promise<Result<Uuid, VerifyCodeError>>;
   signOut(): Promise<void>; // also clears the local mirror
+  /** L11: also erases the device mirror/outbox after server-confirmed deletion. */
+  deleteAccount(): Promise<Result<void, 'network'>>;
 }
 
 export interface RepoCrew {

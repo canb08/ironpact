@@ -538,6 +538,25 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       sendCode: (email) => remote.sendCode(email),
       async verifyCode(email, code) { const result = await remote.verifyCode(email, code); await gate; return result; },
       async signOut() { await remote.signOut(); await gate; },
+      async deleteAccount() {
+        await gate;
+        const actor = remote.currentUserId();
+        if (closed || !actor || !environment.online()) return { ok: false, error: 'network' };
+        const result = await remote.deleteAccount();
+        if (!result.ok) return result;
+        await gate;
+        // Never erase a different account that signed in during deletion.
+        if (remote.currentUserId() === null) {
+          epoch++; engine.invalidate();
+          await db.transaction('rw', db.tables, async () => {
+            if (remote.currentUserId() === null && (await db.meta.get('my_user_id'))?.value === actor) {
+              await db.clearAccount();
+            }
+          });
+          await engine.refresh();
+        }
+        return result;
+      },
     }, q, w,
     sync: {
       status: () => engine.status(), onStatus: (cb) => engine.onStatus(cb),
