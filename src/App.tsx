@@ -19,8 +19,7 @@ export function AppShell({ repo }: { repo: Repo }) {
       <Suspense fallback={null}><ProfileFeel /></Suspense>
       <StatusBanners />
       <UpdateChip />
-      <AuthGate />
-      <RouterProvider router={router} />
+      <AuthGate><RouterProvider router={router} /></AuthGate>
     </RepoProvider>
   );
 }

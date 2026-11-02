@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useRepo } from '../../app/useRepo.ts';
 import { isStandalone } from '../../platform/install.ts';
 import { router } from '../../router.tsx';
@@ -24,9 +25,17 @@ function destination(userId: string | null, path: string, hasCrew: boolean): str
   return null;
 }
 
-export function AuthGate() {
+export function AuthGate({ children }: { children: ReactNode }) {
   const repo = useRepo();
   const [userId, setUserId] = useState<string | null>(repo.auth.userId());
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (ready) return;
+    // Bound the first-paint wait even if the local crew read never settles.
+    const timeout = setTimeout(() => setReady(true), 3_000);
+    return () => clearTimeout(timeout);
+  }, [ready]);
 
   useEffect(() => repo.auth.onChange(setUserId), [repo]);
 
@@ -60,8 +69,11 @@ export function AuthGate() {
             if (router.state.location.pathname === next) lastTarget = null;
             if (!again) return;
           }
+        } catch {
+          // A failed gate read must not leave the router hidden.
         } finally {
           running = false;
+          if (!cancel) setReady(true);
         }
       })();
     };
@@ -75,5 +87,5 @@ export function AuthGate() {
     };
   }, [repo, userId]);
 
-  return null;
+  return ready ? children : null;
 }
