@@ -29,8 +29,11 @@ insert into public.exercise_prefs (id, user_id, local_date, client_updated_at, d
 select md5('purge-exercise_prefs-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-exercise-' || i)::uuid, 90 from ages;
 insert into public.goals (id, user_id, local_date, client_updated_at, deleted_at, exercise_id, kind, target_value, unit, starts_on)
 select md5('purge-goals-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-exercise-' || i)::uuid, 'e1rm', 100, 'kg', current_date from ages;
+-- Fixture rows only: P2F's PR re-check (0007) is not under test here.
+alter table public.pr_events disable trigger c_check_pr_event;
 insert into public.pr_events (id, user_id, local_date, client_updated_at, deleted_at, exercise_id, source_id, pr_type, value)
 select md5('purge-pr_events-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, md5('purge-exercise-' || i)::uuid, md5('purge-sets-' || i)::uuid, 'e1rm', 100 from ages;
+alter table public.pr_events enable trigger c_check_pr_event;
 insert into public.reactions (id, user_id, local_date, client_updated_at, deleted_at, crew_id, to_user, target_type, target_id, kind)
 select md5('purge-reactions-' || i)::uuid, '50000000-0000-4000-8000-000000000001', current_date, now(), deleted_at, '50000000-0000-4000-8000-000000000002', '50000000-0000-4000-8000-000000000001', 'set', md5('purge-sets-' || i)::uuid, 'chalk' from ages;
 insert into public.streak_tokens (id, user_id, local_date, client_updated_at, deleted_at, crew_id, covers_user_id, kind, week_start)
