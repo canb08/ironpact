@@ -539,6 +539,11 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       expect(await repo.q.prEvents({ exerciseId: exercise.id, sessionId: session.id, since: set.local_date })).toHaveLength(1);
       expect(await repo.q.prEvents({ since: '2026-10-26' })).toEqual([]);
       expect(await repo.q.prEvents({ exerciseId: fixtureId(1) })).toEqual([]);
+      // Tombstones are for acknowledged claims. Offline-only claims are dropped.
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      environment.setOnline(false);
       const puts: string[] = [];
       const put = db.outbox.put.bind(db.outbox);
       const failure = vi.spyOn(db.outbox, 'put').mockImplementation((entry, key) => {
@@ -653,7 +658,7 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       return { best, next };
     }
 
-    it('P5F editing the PR set down tombstones it and the next set becomes the PR', async () => {
+    it('P5F editing an unacknowledged PR set down drops its claim and promotes the next set', async () => {
       const { session, exercise } = await gym();
       const { best, next } = await twoSessions(exercise.id, session.id);
       const first = unwrap(await repo.w.recomputePrs(exercise.id));
@@ -669,7 +674,8 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       const edited = await repo.w.updateSet(best.id, { weight_kg: 70 });
       expect(edited.ok && edited.notice).toEqual({ prsChanged: true, barAdjusted: false });
       const stamp = (await db.sets.get(best.id))?.client_updated_at;
-      expect(await db.mirror('pr_events').get(champion!.id)).toMatchObject({ deleted_at: stamp });
+      expect(await db.mirror('pr_events').get(champion!.id)).toBeUndefined();
+      expect(await repo.q.isPending(champion!.id)).toBe(false);
       const live = await repo.q.prEvents({ exerciseId: exercise.id });
       const promoted = live.find((row) => row.pr_type === 'e1rm');
       expect(promoted?.source_id).toBe(next.id);
@@ -680,8 +686,50 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       await repo.sync.flushNow();
       expect(await repo.q.deadLetters()).toEqual([]);
       const server = unwrap(await remote.fetchByIds('pr_events', [champion!.id, promoted!.id]));
-      expect(server.find((row) => row.id === champion!.id)).toMatchObject({ deleted_at: stamp });
+      expect(server.find((row) => row.id === champion!.id)).toBeUndefined();
       expect(server.find((row) => row.id === promoted!.id)).toMatchObject({ source_id: next.id, pr_type: 'e1rm', deleted_at: null });
+    });
+
+    it('P5F editing an acknowledged PR preserves its claim and queues only deleted_at', async () => {
+      const { session, exercise } = await gym();
+      const { best, next } = await twoSessions(exercise.id, session.id);
+      unwrap(await repo.w.recomputePrs(exercise.id));
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      await repo.sync.pullNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      environment.setOnline(false);
+      const champion = (await repo.q.prEvents({ exerciseId: exercise.id })).find((row) => row.pr_type === 'e1rm')!;
+      const acknowledged = await db.mirror('pr_events').get(champion.id);
+      expect(acknowledged?.updated_at).toEqual(expect.any(String));
+      instant += 1000;
+      const edited = await repo.w.updateSet(best.id, { weight_kg: 70 });
+      expect(edited.ok && edited.notice?.prsChanged).toBe(true);
+      const tombstone = { ...acknowledged, deleted_at: new Date(instant).toISOString() };
+      expect(await db.mirror('pr_events').get(champion.id)).toEqual(tombstone);
+      expect((await db.outbox.where('row_id').equals(champion.id).first())?.payload).toEqual(tombstone);
+      const promoted = (await repo.q.prEvents({ exerciseId: exercise.id })).find((row) => row.pr_type === 'e1rm')!;
+      expect(promoted.source_id).toBe(next.id);
+      environment.setOnline(true);
+      await repo.sync.flushNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      const server = unwrap(await remote.fetchByIds('pr_events', [champion.id, promoted.id]));
+      expect(Date.parse(String(server.find((row) => row.id === champion.id)?.deleted_at))).toBe(instant);
+      expect(server.find((row) => row.id === promoted.id)).toMatchObject({ source_id: next.id, deleted_at: null });
+    });
+
+    it('P5F rolls back dropping pending claims if the edited source cannot be queued', async () => {
+      const { session, exercise } = await gym();
+      const { best } = await twoSessions(exercise.id, session.id);
+      unwrap(await repo.w.recomputePrs(exercise.id));
+      const claims = await db.mirror('pr_events').toArray();
+      const queue = await db.outbox.toArray();
+      const failure = vi.spyOn(db.outbox, 'put').mockRejectedValue(new DOMException('full', 'QuotaExceededError'));
+      expect(await repo.w.updateSet(best.id, { weight_kg: 70 })).toEqual({ ok: false, error: 'storage_full' });
+      failure.mockRestore();
+      expect(await db.mirror('pr_events').toArray()).toEqual(claims);
+      expect(await db.outbox.toArray()).toEqual(queue);
+      expect(await db.sets.get(best.id)).toEqual(best);
     });
 
     it('P5F deleting the PR set promotes the next set, and a shorter run drops its distance PR', async () => {
@@ -703,7 +751,8 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       expect(shortened.ok && shortened.notice).toMatchObject({ prsChanged: true, barAdjusted: false });
       expect((await repo.q.prEvents({})).some((row) => row.pr_type === 'distance' && row.source_id === early.id)).toBe(false);
       expect((await repo.q.prEvents({})).some((row) => row.pr_type === 'distance')).toBe(false);
-      expect(await db.mirror('pr_events').get(distance!.id)).toMatchObject({ deleted_at: expect.any(String) });
+      expect(await db.mirror('pr_events').get(distance!.id)).toBeUndefined();
+      expect(await repo.q.isPending(distance!.id)).toBe(false);
       environment.setOnline(true);
       await repo.sync.flushNow();
       expect(await repo.q.deadLetters()).toEqual([]);

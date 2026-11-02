@@ -6,7 +6,7 @@ import { recomputePrs as standingPrs, type PrEventDraft, type PrHistory } from '
 import { weekStartOf } from '../core/weeks.ts';
 import { bodyweightFormSchema, cardioFormSchema, disciplineInNamespaceSchema, exercisePrefSchema, exerciseSchema, martialFormSchema, minEntrySchema, prEventSchema, profileFormSchema, sessionSchema, setFormSchema } from '../core/validate.ts';
 import type { EditNotice, ExercisePref, FeedItem, PrEvent, Repo, RepoQueries, RepoWrites, SessionPatch, SessionWithSets, StartSessionInput, WriteError } from './adapter.ts';
-import { compareInstant, createClock, localDateIn, type Clock } from './clock.ts';
+import { createClock, localDateIn, type Clock } from './clock.ts';
 import { asRemote, IronpactDB } from './db.ts';
 import { defaultProfile } from './defaults.ts';
 import { bodyweightId, newId } from './ids.ts';
@@ -348,10 +348,20 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       else fresh.push(draft);
     }
     const mutations: Mutation[] = [];
+    let dropped = false;
     for (const row of stored) {
       if (typeof row.id !== 'string' || used.has(row.id)) continue;
-      const stamp = typeof row.client_updated_at === 'string' && compareInstant(row.client_updated_at, now) > 0 ? row.client_updated_at : now;
-      mutations.push({ table: 'pr_events', row: { ...row, deleted_at: now, client_updated_at: stamp } });
+      const queued = db.outbox.where('[table+row_id]').equals(['pr_events', row.id]);
+      // Local inserts have no server-generated updated_at. Coalescing one into
+      // a tombstone would INSERT an invalid claim against the edited source.
+      if (row.updated_at == null && await queued.filter((entry) => entry.status === 'pending').count() > 0) {
+        await db.outbox.where('[table+row_id]').equals(['pr_events', row.id]).delete();
+        await db.mirror('pr_events').delete(row.id);
+        dropped = true;
+      } else {
+        // 0007 accepts an unchanged claim on UPDATE, with only deleted_at set.
+        mutations.push({ table: 'pr_events', row: { ...row, deleted_at: now } });
+      }
     }
     for (const draft of fresh) {
       if (draft.user_id !== user) throw new WriteFailure('world_record');
@@ -364,21 +374,18 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       mutations.push({ table: 'pr_events', row: asRemote(row) });
     }
     const already = pending.some((mutation) => mutation.table === 'pr_events' && inPrScope(mutation.row.exercise_id, mutation.row.pr_type, exerciseId));
-    return { mutations, changed: already || mutations.length > 0 };
+    return { mutations, changed: dropped || already || mutations.length > 0 };
   }
   async function deletionMutations(table: Parameters<RepoWrites['softDelete']>[0], id: string, deleted: boolean, user: string): Promise<{ mutations: Mutation[]; now: string; localDate: string }> {
     const row = await db.mirror(table).get(id);
     if (!row || row.user_id !== user) throw new WriteFailure('no_open_session');
     const now = clock.now();
     const mutations: Mutation[] = [{ table, row: { ...row, deleted_at: deleted ? now : null, client_updated_at: now } }];
-    if ((table === 'sets' || table === 'cardio_entries') && deleted) {
-      const prs = await db.mirror('pr_events').where('source_id').equals(id).toArray();
-      mutations.push(...prs.filter((pr) => pr.user_id === user).map((pr) => ({ table: 'pr_events' as const, row: { ...pr, deleted_at: now, client_updated_at: typeof pr.client_updated_at === 'string' && compareInstant(pr.client_updated_at, now) > 0 ? pr.client_updated_at : now } })));
-    }
     return { mutations, now, localDate: typeof row.local_date === 'string' ? row.local_date : '' };
   }
   async function deletion(table: Parameters<RepoWrites['softDelete']>[0], id: string, deleted: boolean, user: string): Promise<void> {
     const built = await deletionMutations(table, id, deleted, user);
+    await attachPrs(user, table, id, built.now, built.mutations);
     await enqueue(db, built.mutations, built.now);
     if (table === 'sessions' && deleted) await db.meta.delete('active_session_id');
   }
