@@ -408,6 +408,33 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P4F: add this ticket's strings directly below ──
 
   // ── P5A: add this ticket's strings directly below ──
+  progressLifts: 'Lifts',
+  progressRun: 'Run',
+  progressMartial: 'Martial arts',
+  progressBody: 'Body',
+  progressDistanceCaption: 'Distance per week over 12 weeks, kilometres.',
+  progressPaceCaption: 'Pace over 12 weeks. Lower is faster.',
+  progressMartialCaption: '{discipline}, minutes per week over 12 weeks.',
+  progressBodyCaption: 'Body weight and a 7-day moving average, kilograms.',
+  progressBodyPercent: '7-day moving average. Both lines are a percent of each person\'s own first value. {partner} is dashed.',
+  progressCompareCaption: 'Both lines are a percent of each person\'s own first value. {partner} is dashed.',
+  progressSparkCaption: '{exercise}. Best e1RM over 12 weeks.',
+  progressWeekKm: '{week} · {km} km',
+  progressPacePoint: '{date} · {pace} per km',
+  progressPaceOwn: '{date} · {pace} per km · {percent}%',
+  progressRunOwn: '{percent}% · {km} km',
+  progressMartialWeek: '{week} · {minutes} min',
+  progressMartialOwn: '{percent}% · {minutes} min',
+  progressPrDistance: '{date} · {km} km',
+  progressPrPace: '{date} · {pace} per km',
+  progressPrHeading: 'Run PRs',
+  progressColDate: 'Date',
+  progressColWeek: 'Week',
+  progressColKm: 'Kilometres',
+  progressColMinutes: 'Minutes',
+  progressColKg: 'Kilograms',
+  progressColAverage: '7-day average',
+  progressPartnerQuietLine: 'No line for {partner} in these 12 weeks.',
 
   // ── P5B: add this ticket's strings directly below ──
 
