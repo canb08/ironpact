@@ -12,7 +12,7 @@
 .settings-screen p {
   margin: 0;
 }
-/* Same gap the screen grid uses, so reserving the form does not move the vault. */
+/* Keep each sub-page on the same spacing scale. */
 .settings-profile {
   display: grid;
   gap: var(--s-5);
@@ -25,7 +25,6 @@
   padding-top: var(--s-3);
   border-top: 1px solid var(--line);
 }
-.settings-toggle,
 .settings-radio {
   display: flex;
   align-items: center;
@@ -33,13 +32,11 @@
   min-height: 48px;
   min-width: 0;
 }
-.settings-toggle input,
 .settings-radio input {
   width: 1.5rem;
   height: 1.5rem;
   flex: 0 0 auto;
 }
-.settings-toggle label,
 .settings-radio span {
   flex: 1;
   min-height: 48px;
@@ -116,3 +113,61 @@
   gap: var(--s-2);
   min-width: 0;
 }
+
+.settings-index { display: grid; gap: var(--s-4); }
+.settings-index ul { margin: 0; padding: 0; list-style: none; }
+.settings-index .ui-list-row { width: 100%; text-align: start; }
+.settings-index li + li { border-top: 1px solid var(--line); }
+.settings-sync { display: grid; gap: var(--s-2); color: var(--text-muted); font-size: var(--t-sm); }
+.settings-plates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-2); }
+.settings-screen fieldset { min-width: 0; margin: 0; padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.settings-screen h2 { font-size: 1.375rem; line-height: 1.3; font-weight: 600; }
+.settings-screen h3 { margin: 0; font-size: var(--t-md); font-weight: 600; }
+.settings-screen .settings-section:first-child { padding-top: 0; border-top: 0; }
+.settings-screen .vault-panel > [role='status']:empty { display: none; }
+
+.settings-sync-errors summary { min-height: 48px; padding-block: var(--s-3); box-sizing: border-box; cursor: pointer; }
+.settings-screen > .settings-section { padding-top: 0; border-top: 0; }
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--s-2) 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.settings-toggle > span:first-child { min-width: 0; }
+.settings-toggle__track {
+  position: relative;
+  flex: 0 0 44px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 1px solid var(--text);
+  border-radius: var(--r-full);
+  background: var(--steel);
+}
+.settings-toggle__track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  background: var(--rubber);
+}
+.settings-toggle[aria-checked='true'] .settings-toggle__track { background: var(--chalk); }
+.settings-toggle[aria-checked='true'] .settings-toggle__track::before { transform: translateX(20px); }
+.settings-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.settings-toggle:disabled { opacity: 0.55; cursor: default; }
+.settings-radio input { accent-color: var(--text); }

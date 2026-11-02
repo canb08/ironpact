@@ -15,6 +15,7 @@ export const router = createBrowserRouter([
       { path: '/log/:kind', ...screen(() => import('./features/quicklog/QuickLogScreen.tsx')) },
       { path: '/crew', ...screen(() => import('./features/crew-feed/CrewScreen.tsx')) },
       { path: '/settings/*', ...screen(() => import('./features/settings/SettingsScreen.tsx')) },
+      { path: '/settings/:section', ...screen(() => import('./features/settings/SettingsScreen.tsx')) },
       { path: '/exercise/:id', ...screen(() => import('./features/progress/ExerciseDetailScreen.tsx')) },
       { path: '/day/:date', ...screen(() => import('./features/progress/DayEditorScreen.tsx')) },
       { path: '/progress', ...screen(() => import('./features/stats/ProgressScreen.tsx')) },
