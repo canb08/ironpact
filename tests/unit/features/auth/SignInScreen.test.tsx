@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
 import { AppShell } from '../../../../src/App.tsx';
@@ -47,7 +47,7 @@ describe('S2 sign in', () => {
     for (let n = 1; n <= 6; n += 1) {
       expect((screen.getByLabelText(fill(copy.codeDigit, { n })) as HTMLInputElement).value).toBe(String(n));
     }
-    fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Verify }));
     expect(verifyCode).toHaveBeenCalledWith('alice@example.test', '123456');
   });
 
@@ -61,10 +61,27 @@ describe('S2 sign in', () => {
     fireEvent.click(screen.getByRole('button', { name: copy.sendCode }));
     const first = await screen.findByLabelText(fill(copy.codeDigit, { n: 1 }));
     fireEvent.paste(first, { clipboardData: { getData: () => '000000' } });
-    fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Verify }));
     expect(await screen.findByText(copy.wrongCode)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Verify }));
     expect(await screen.findByText(copy.expiredCode)).toBeTruthy();
+  });
+
+  it('resends after the cooldown, clears the previous code, and supports changing email', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const sendCode = vi.fn(async () => ({ ok: true as const, value: undefined }));
+    renderSignIn(mockRepo({ auth: { sendCode } }));
+    fireEvent.change(screen.getByLabelText(copy.emailLabel), { target: { value: 'alice@example.test' } });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: copy.sendCode })); });
+    const first = screen.getByLabelText(fill(copy.codeDigit, { n: 1 }));
+    fireEvent.paste(first, { clipboardData: { getData: () => '123456' } });
+    expect(screen.getByRole('button', { name: copy.x9Resend }).hasAttribute('disabled')).toBe(true);
+    await act(async () => { vi.advanceTimersByTime(60_000); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: copy.x9Resend })); });
+    expect(sendCode).toHaveBeenCalledTimes(2);
+    expect((first as HTMLInputElement).value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: copy.x9ChangeEmail }));
+    expect((screen.getByLabelText(copy.emailLabel) as HTMLInputElement).value).toBe('alice@example.test');
   });
 
   it('counts down and disables resend until 0', async () => {
@@ -91,6 +108,8 @@ describe('S2 sign in', () => {
 });
 
 describe('auth gate', () => {
+  // Unit test setup: compile the lazy screen before exercising the interaction.
+  beforeAll(async () => { await import('../../../../src/features/onboarding/CrewSetupScreen.tsx'); });
   beforeEach(async () => {
     sessionStorage.clear();
     dismissInstallGate();
@@ -129,15 +148,17 @@ describe('auth gate', () => {
       clipboardData: { getData: () => '123456' },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      fireEvent.click(screen.getByRole('button', { name: copy.x9Verify }));
     });
-    fireEvent.change(await screen.findByLabelText(copy.displayName), { target: { value: 'Alex' } });
+    fireEvent.click(await screen.findByRole('button', { name: copy.x9Continue }));
+    fireEvent.change(await screen.findByLabelText(copy.x9Name), { target: { value: 'Lifter' } });
+    fireEvent.click(screen.getByRole('button', { name: copy.x9Continue }));
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      fireEvent.click(screen.getByRole('button', { name: copy.x9Skip }));
     });
     expect(create).toHaveBeenCalledWith(copy.defaultCrewName);
     expect(upsertMyProfile).toHaveBeenCalledWith(
-      expect.objectContaining({ display_name: 'Alex', color_hue: 125, weekly_target: 3, initial: 'A' }),
+      expect.objectContaining({ display_name: 'Lifter', color_hue: 353, weekly_target: 3, initial: 'L' }),
     );
   });
 
