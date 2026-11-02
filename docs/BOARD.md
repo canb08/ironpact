@@ -46,9 +46,9 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Grok (Codex out of usage) | C | running 2026-11-02 02:10 |
 | P2E | S14 exercise detail + S15 day editor | Grok | C | running 2026-11-02 02:10 |
 | P2G | Playwright Phase 2 | Grok | C | todo — after P2D, P2E |
-| P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | running 2026-11-02 |
-| P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | running 2026-11-02 |
-| P3D | Ring component | Grok | E | running 2026-11-02 |
+| P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | pr #28 (reviewed: SQL read in full; contract request → L12) |
+| P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | pr #27 (reviewed; local suite green; PR opened by Lead) |
+| P3D | Ring component | Grok | E | pr #29 (skimmed UI; PR opened by Lead) |
 | P3B | Duo data layer + realtime client (L10) | Codex Astra | E | todo — after P3A |
 | P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
 | P3F | Progress S13: trend chart | Grok | E | todo — after P3C |
@@ -71,6 +71,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5A | S13 Progress full | Grok | E | todo — after P3F |
 
 ## Parked / follow-ups
+- P3H (lane E, test-only, after P3A + P3C): E5.7 shared credit fixtures, pgTAP + Vitest (L12).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
 - Size budget: initial JS = entry + modulepreloads; the data layer (Dexie, zod, sync, adapters) is lazy-loaded in `App.tsx` (C5) → initial **100.5 / 170 kB**. Keep screens and backend libraries out of the static import graph.
