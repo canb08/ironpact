@@ -590,6 +590,8 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   serverAsleep: 'Server asleep — data safe on phone.',
   swUpdate: 'New version — tap to reload',
 
+  // ── H2: add this ticket's strings directly below ──
+
   // ── H3: security audit; no user-facing strings ──
 
   // ── P5F: add this ticket's strings directly below ──

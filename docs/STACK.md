@@ -108,6 +108,18 @@ Resolved with `npm view <package> version` on 2026-11-02. Anybody is not install
 
 Resolved with `npm view motion version` and `npm view @number-flow/react version` on 2026-11-02. Same pins R1 recorded on 2026-11-01 (`motion@14.9.0` published 2026-10-30). `canvas-confetti` is not installed (P4C). Anybody is still not installed, so the set-logged `wdth` write has no glyph to flex until that face is added; the card scale and 4px plate drop are the visible micro.
 
+## H2 Lighthouse CI (2026-11-02)
+
+| Package (dev only) | Exact version | Purpose |
+|---|---|---|
+| `@lhci/cli` | `0.15.1` | Lighthouse CI. `lhci autorun` builds nothing itself; CI builds with `VITE_BACKEND=mock`, then autorun starts `vite preview` and audits it. |
+
+Resolved with `npm view @lhci/cli version` on 2026-11-02 and installed with `--save-exact`. No other direct dependency was added. The package pins Lighthouse `12.6.1` (its own dependency, not a second install).
+
+`lighthouserc.json` uses Lighthouse's mobile preset: Moto G Power viewport (412×823, DPR 1.75) and simulated slow 4G (`rttMs` 150, `throughputKbps` 1638.4, `cpuSlowdownMultiplier` 4). Those throttling numbers are `throttling.mobileSlow4G` from Lighthouse 12.6.1. URLs: `/install`, `/`, `/session`, `/crew`, `/settings`. Three runs; assertions use `aggregationMethod: "median"` (LHCI does not accept `median-run`). Budgets: LCP ≤2000 ms, CLS ≤0.05, TBT ≤200 ms (INP proxy, spec §7.6), best-practices ≥0.9.
+
+Lighthouse 12 removed the PWA category and the `installable-manifest` audit, so `lighthouserc.json` cannot assert "PWA installable". The `lighthouse` job checks the same preview URLs with Chrome's `Page.getInstallabilityErrors` instead. [Lighthouse v12.0.0](https://github.com/GoogleChrome/lighthouse/releases/tag/v12.0.0).
+
 ## H1 accessibility (2026-11-02)
 
 | Package (dev only) | Exact version | Purpose |

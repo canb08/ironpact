@@ -168,3 +168,91 @@ jobs:
       - name: Playwright (iPhone 15 WebKit and Pixel 7 Chromium)
         run: npx playwright test
 
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Measured budgets fail (H2 PR, ## Found). Keep the report, do not block merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Production build (mock backend)
+        run: npm run build
+        env:
+          VITE_BACKEND: mock
+      - name: Lighthouse CI (vite preview is started by lhci)
+        id: lhci
+        continue-on-error: true
+        run: npx --no-install lhci autorun
+      - name: PWA installability
+        id: installability
+        if: success() || failure()
+        run: |
+          set -euo pipefail
+          cleanup() { if [ -f "$RUNNER_TEMP/preview.pid" ]; then kill "$(cat "$RUNNER_TEMP/preview.pid")" 2>/dev/null || true; fi; }
+          trap cleanup EXIT
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > "$RUNNER_TEMP/preview.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/preview.pid"
+          ready=false
+          for attempt in $(seq 1 40); do
+            # Vite colours its banner, so poll the port instead of grepping "Local:".
+            if curl -sf -o /dev/null "http://127.0.0.1:4173/"; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            echo "vite preview did not become ready"
+            cat "$RUNNER_TEMP/preview.log"
+            exit 1
+          fi
+          node --input-type=module << 'JS'
+          import { createRequire } from 'node:module';
+          import { pathToFileURL } from 'node:url';
+
+          const require = createRequire(pathToFileURL(`${process.cwd()}/package.json`));
+          const chromeLauncher = require('chrome-launcher');
+          const puppeteer = await import('puppeteer-core');
+          const urls = ['/install', '/', '/session', '/crew', '/settings'].map(
+            (path) => `http://127.0.0.1:4173${path}`,
+          );
+          const chrome = await chromeLauncher.launch({
+            chromePath: process.env.CHROME_PATH,
+            chromeFlags: ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage'],
+          });
+          const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chrome.port}` });
+          const failures = [];
+          try {
+            for (const url of urls) {
+              const page = await browser.newPage();
+              await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+              const session = await page.createCDPSession();
+              await session.send('Page.enable');
+              const result = await session.send('Page.getInstallabilityErrors');
+              const errors = result.installabilityErrors ?? [];
+              console.log(JSON.stringify({ url, errors }));
+              if (errors.length) failures.push({ url, errors });
+              await page.close();
+            }
+          } finally {
+            await browser.disconnect();
+            await chrome.kill();
+          }
+          if (failures.length) {
+            console.error(JSON.stringify({ failures }, null, 2));
+            process.exit(1);
+          }
+          JS
+      - name: Upload Lighthouse reports
+        if: always() && (steps.lhci.outcome == 'failure' || steps.installability.outcome == 'failure')
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-ci
+          path: .lighthouseci
+          if-no-files-found: ignore
+
