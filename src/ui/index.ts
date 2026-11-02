@@ -12,4 +12,5 @@ export type { ToastOptions, ToastControls } from './ToastContext';
 export { Chip } from './Chip';
 export { BigNumber } from './BigNumber';
 export type { BigNumberProps } from './BigNumber';
+export { Ring } from './Ring';
 export { copy, fill } from './copy';
