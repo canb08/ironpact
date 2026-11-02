@@ -347,6 +347,9 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P5D: add this ticket's strings directly below ──
 
   // ── P5E: add this ticket's strings directly below ──
+  offlineBanner: "Saved on your phone. Syncs when you're back up.",
+  serverAsleep: 'Server asleep — data safe on phone.',
+  swUpdate: 'New version — tap to reload',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
