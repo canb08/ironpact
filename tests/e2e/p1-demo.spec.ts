@@ -20,6 +20,7 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await expect(page.getByTestId('my-week')).toBeVisible();
   await page.getByRole('button', { name: copy.min, exact: true }).click();
   await expect(page.getByText(copy.minLogged)).toBeVisible();
+  await expect(page.getByText(copy.minLogged, { exact: true })).toHaveCount(1);
 
   await page.getByRole('link', { name: copy.weight, exact: true }).click();
   const weight = page.getByRole('dialog', { name: copy.weight });

@@ -68,6 +68,7 @@ function FloorBody() {
   const [hideAdjusted, setHideAdjusted] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const lastMinAt = useRef<number | undefined>(undefined);
   const crewTick = useCrewTick(repo);
   const debugClose = useDebugWeek();
   const presence = usePresence(repo);
@@ -80,7 +81,10 @@ function FloorBody() {
   }
 
   async function onMin() {
-    if (savingRef.current) return;
+    const now = performance.now();
+    // A fast local write may finish between taps of the same double-tap.
+    if (savingRef.current || (lastMinAt.current !== undefined && now - lastMinAt.current < 400)) return;
+    lastMinAt.current = now;
     savingRef.current = true;
     setSaving(true);
     try {
@@ -161,7 +165,8 @@ function FloorBody() {
           <section className="floor-card" aria-labelledby="my-week-heading">
             <h2 id="my-week-heading">{copy.myWeek}</h2>
             <p className="floor-week" data-testid="my-week">{duo.me.line}</p>
-            <Ring members={[meRing]} size="personal" reduced={duo.reduceMotion} announceMin />
+            {/* The toast owns the MIN confirmation; the ring still animates the half segment. */}
+            <Ring members={[meRing]} size="personal" reduced={duo.reduceMotion} />
             <p className="floor-status">{fill(copy.weeksOn, { count: shownPlates })}</p>
           </section>
           {duo.partners.length === 0 ? (

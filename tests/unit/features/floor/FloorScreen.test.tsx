@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '../../data/harness.ts';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { weekCredits } from '../../../../src/core/credits.ts';
@@ -26,6 +27,7 @@ afterEach(async () => {
   await db?.delete();
   repo = undefined;
   db = undefined;
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
@@ -91,9 +93,11 @@ function renderFloor() {
     { path: '/settings', element: <main>Settings</main> },
   ], { initialEntries: ['/'] });
   render(
-    <RepoProvider repo={repo!}>
-      <RouterProvider router={router} />
-    </RepoProvider>,
+    <StrictMode>
+      <RepoProvider repo={repo!}>
+        <RouterProvider router={router} />
+      </RepoProvider>
+    </StrictMode>,
   );
   return router;
 }
@@ -117,6 +121,8 @@ it('MIN one tap logs one 20m walk and Undo removes it', async () => {
   expect(screen.getByRole('link', { name: copy.settings }).getAttribute('href')).toBe('/settings');
 
   const min = screen.getByRole('button', { name: copy.min });
+  const logMin = vi.spyOn(handle.repo.w, 'logMin');
+  vi.spyOn(performance, 'now').mockReturnValue(1000);
   fireEvent.click(min);
   fireEvent.click(min);
   await waitFor(async () => {
@@ -128,6 +134,10 @@ it('MIN one tap logs one 20m walk and Undo removes it', async () => {
   const logged = await handle.repo.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
   expect(logged.min[0]?.description).toBe(copy.walk);
   expect(screen.getByRole('status').textContent).toBe(copy.minLogged);
+  // The second tap can arrive after the local write has already completed.
+  fireEvent.click(min);
+  expect(logMin).toHaveBeenCalledTimes(1);
+  expect(screen.getAllByText(copy.minLogged, { exact: true })).toHaveLength(1);
 
   fireEvent.click(screen.getByRole('button', { name: copy.undo }));
   await waitFor(async () => {
@@ -136,9 +146,60 @@ it('MIN one tap logs one 20m walk and Undo removes it', async () => {
     expect(entries.sessions.filter((session) => session.kind === 'min')).toHaveLength(0);
     expect(screen.getByTestId('my-week').textContent).toBe('0/3 · 0 MIN');
   });
+  // Undo dismisses the only toast; no duplicate confirmation is queued behind it.
+  expect(screen.getByRole('status').textContent).toBe('');
+  expect(screen.queryByText(copy.minLogged, { exact: true })).toBeNull();
 
   fireEvent.click(screen.getByRole('button', { name: copy.start }));
   expect(router.state.location.pathname).toBe('/session');
+});
+
+it('keeps Floor and its links mounted while a crew pull refresh is pending', async () => {
+  const handle = await makeRepo('2026-10-24T12:00:00.000Z');
+  let crewChanged: (() => void) | undefined;
+  const subscribe = handle.repo.duo.onCrewChange.bind(handle.repo.duo);
+  vi.spyOn(handle.repo.duo, 'onCrewChange').mockImplementation((listener) => {
+    crewChanged = listener;
+    return subscribe(listener);
+  });
+  renderFloor();
+  await screen.findByTestId('my-week');
+  // Floor's PR hook also pulls on mount; finish that pull before seeding the next delta.
+  await act(async () => { await handle.pull(); });
+  const main = screen.getByRole('main');
+  const weight = screen.getByRole('link', { name: copy.weight });
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  const lastSummary = handle.repo.q.lastSessionSummary.bind(handle.repo.q);
+  const refresh = vi.spyOn(handle.repo.q, 'lastSessionSummary').mockImplementation(async (id) => {
+    await pending;
+    return lastSummary(id);
+  });
+  const busyStates: (string | null)[] = [];
+  const observer = new MutationObserver(() => { busyStates.push(main.getAttribute('aria-busy')); });
+  observer.observe(main, { attributes: true, attributeFilter: ['aria-busy'] });
+  const partner = gymRow(MOCK_USER_IDS.bob, 8, '2026-10-24', '2026-10-24T11:00:00.000Z');
+  try {
+    handle.seed({ sessions: [partner.session], sets: [partner.set] });
+    await act(async () => {
+      await handle.pull();
+      const entries = await handle.repo.q.entriesBetween(MOCK_USER_IDS.bob, '2026-10-24', '2026-10-24');
+      expect(entries.sessions).toHaveLength(1);
+      // Explicitly invalidate as the crew realtime subscription does after its delta pull.
+      crewChanged!();
+    });
+    await waitFor(() => { expect(refresh).toHaveBeenCalled(); });
+    expect(main.getAttribute('aria-busy')).toBeNull();
+    expect(screen.getByRole('link', { name: copy.weight })).toBe(weight);
+    await act(async () => { release(); });
+    await waitFor(() => { expect(screen.getByTestId('partner-week').textContent).toBe('1/3 · 0 MIN'); });
+    expect(screen.getByRole('main')).toBe(main);
+    expect(screen.getByRole('link', { name: copy.weight })).toBe(weight);
+    expect(busyStates).not.toContain('true');
+  } finally {
+    release();
+    observer.disconnect();
+  }
 });
 
 it('week text matches core on a Sunday night that is already Monday in UTC', async () => {
