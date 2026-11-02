@@ -77,3 +77,82 @@
   text-decoration: none;
   justify-self: start;
 }
+
+.mt-shell {
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mt-card {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+
+.mt-card h3,
+.mt-stat,
+.mt-quiet,
+.mt-draft {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mt-card h3 {
+  font: 700 var(--t-lg) / 1.2 var(--font-body);
+}
+
+.mt-stat {
+  font: 700 var(--t-lg) / 1.15 var(--font-number);
+  font-variant-numeric: tabular-nums;
+}
+
+.mt-quiet {
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.mt-draft {
+  min-height: 1.4em;
+  font: 700 var(--t-lg) / 1.2 var(--font-number);
+}
+
+.mt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mt-chips > .ui-button,
+.ui-button.mt-hot {
+  min-height: 56px;
+  min-width: 48px;
+  max-width: 100%;
+}
+
+.mt-adjust-toggle {
+  justify-self: start;
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.mt-adjust {
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mt-adjust .ui-scrub__value {
+  font-size: min(var(--t-mega), 22vw);
+}
+
+
