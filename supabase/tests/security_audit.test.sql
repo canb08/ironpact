@@ -94,20 +94,42 @@ select todo(1, 'H3-G2 settle_challenge is not implemented');
 select has_function('public', 'settle_challenge', 'H3-G2 settle_challenge exists');
 select todo(1, 'H3-G3 save_push_subscription is not implemented');
 select has_function('public', 'save_push_subscription', 'H3-G3 save_push_subscription exists');
-select todo(1, 'H3-G4 mark_seen is not implemented');
-select has_function('public', 'mark_seen', 'H3-G4 mark_seen exists');
+select has_function('public', 'mark_pr_events_seen', array['uuid[]'],
+  'H3-G4 partner PR receipts shipped in P4H');
 
--- Stock Supabase images grant anon and authenticated on future public objects.
--- 0002 revokes only the tables that already exist. TODO: CI shows whether this
--- database still has that default. An unexpected success means H3-G7 is a pass.
-select todo(1, 'H3-G7 default privileges may grant client roles on future public objects');
+-- H5: inspect explicit defaults, including PUBLIC (OID 0), then exercise the
+-- effective defaults on new postgres-owned objects. pg_default_acl alone misses
+-- built-in PUBLIC EXECUTE when the global ACL has no row.
 select ok(not exists (
   select 1 from pg_default_acl d
-  left join pg_namespace n on n.oid = d.defaclnamespace
-  where (n.nspname = 'public' or d.defaclnamespace = 0)
-    and d.defaclobjtype in ('r', 'f')
-    and d.defaclacl::text ~ 'anon|authenticated'
-), 'H3-G7 default privileges do not grant anon or authenticated');
+  cross join lateral aclexplode(d.defaclacl) a
+  where d.defaclrole = 'postgres'::regrole
+    and (d.defaclnamespace = 'public'::regnamespace or d.defaclnamespace = 0)
+    and d.defaclobjtype in ('r', 'S', 'f')
+    and a.grantee in (0, 'anon'::regrole::oid, 'authenticated'::regrole::oid)
+), 'H3-G7 default privileges do not grant anon, authenticated or PUBLIC');
+
+set local role postgres;
+create table public.h5_default_privileges_probe (id integer);
+create sequence public.h5_default_privileges_probe_seq;
+create function public.h5_default_privileges_probe_fn() returns integer
+language sql as 'select 1';
+reset role;
+
+select ok(not has_table_privilege(r, 'public.h5_default_privileges_probe',
+  'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'),
+  'H3-G7 future table is closed to ' || r)
+from unnest(array['anon', 'authenticated']) as r;
+select ok(not has_sequence_privilege(r, 'public.h5_default_privileges_probe_seq',
+  'USAGE,SELECT,UPDATE'), 'H3-G7 future sequence is closed to ' || r)
+from unnest(array['anon', 'authenticated']) as r;
+select ok(not has_function_privilege(r, 'public.h5_default_privileges_probe_fn()', 'EXECUTE'),
+  'H3-G7 future function is closed to ' || r)
+from unnest(array['anon', 'authenticated']) as r;
+
+drop function public.h5_default_privileges_probe_fn();
+drop sequence public.h5_default_privileges_probe_seq;
+drop table public.h5_default_privileges_probe;
 
 set local role authenticated;
 set local request.jwt.claims = '{"role":"authenticated"}';

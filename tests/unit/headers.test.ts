@@ -47,14 +47,13 @@ describe('public/_headers', () => {
     return found ?? {};
   }
 
-  it('sends a CSP with supabase connect-src and no unsafe-eval', () => {
+  it('templates the project CSP origins with no wildcard or unsafe-eval', () => {
     const csp = headers('/*')['content-security-policy'] ?? '';
     expect(csp).not.toMatch(/unsafe-eval/);
     expect(directive(csp, 'script-src')).toBe("script-src 'self'");
     const connect = directive(csp, 'connect-src');
-    expect(connect).toContain('https://*.supabase.co');
-    expect(connect).toContain('wss://*.supabase.co');
-    expect(source).not.toContain('<ref>');
+    expect(connect).toBe("connect-src 'self' https://<ref>.supabase.co wss://<ref>.supabase.co");
+    expect(source).not.toContain('*.supabase.co');
   });
 
   it('sets nosniff, referrer policy, and permissions policy on every path', () => {
