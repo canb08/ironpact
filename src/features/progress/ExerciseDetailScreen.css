@@ -1,0 +1,27 @@
+.exercise-detail { gap: var(--s-5); }
+.exercise-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.exercise-detail h1 { font-size: 28px; text-transform: none; letter-spacing: normal; color: var(--text); }
+.exercise-detail h2 { font-size: 22px; color: var(--text); }
+.exercise-detail-hero { display: grid; gap: var(--s-3); }
+.exercise-detail-hero h2 { font-size: 17px; color: var(--text-muted); }
+.exercise-detail .progress-chart { margin: 0; }
+.exercise-detail .progress-svg { border: 0; }
+.exercise-detail .progress-line--you { stroke: var(--plate-red); }
+.exercise-detail .progress-svg .progress-dot--you { fill: var(--plate-red); }
+.exercise-detail .progress-swatch--you { color: var(--text); }
+.exercise-detail .progress-axis { font: 400 13px var(--font-body); }
+.exercise-detail summary { min-height: 44px; padding-block: var(--s-3); cursor: pointer; }
+.exercise-detail details p { color: var(--text-muted); font-size: 15px; }
+.exercise-detail section > .progress-history > li { padding-block: var(--s-3); border-bottom: 1px solid var(--line); }
+.exercise-detail section[aria-label='PR list'] li { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: space-between; }
+.exercise-detail section[aria-label='PR list'] strong { border-inline-start: 4px solid var(--plate-yellow); padding-inline-start: var(--s-2); font-weight: 600; }
+.exercise-detail .progress-history a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); }
+.exercise-rep-max { border-top: 1px solid var(--line); }
+.exercise-rep-max .progress-reps { font-size: 13px; }
+.exercise-rep-max .progress-reps th, .exercise-rep-max .progress-reps td { padding: var(--s-2) var(--s-1); }
+.exercise-settings { display: grid; gap: var(--s-5); }
+.exercise-settings input:not([type='checkbox']) { box-sizing: border-box; width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--s-2); color: var(--text); background: var(--bg); font: inherit; }
+
+.exercise-detail-heading { justify-content: flex-end; margin-bottom: -16px; }
+.exercise-detail .exercise-detail-hero > [data-testid='best-e1rm'] { font-size: 56px; }
+.exercise-detail .progress-svg .progress-dot--partner { fill: var(--plate-blue); }

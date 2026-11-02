@@ -18,7 +18,7 @@ test('tabs reach every main screen; Progress reaches an exercise and its day, wi
   await expect(page.getByTestId('session-live')).toBeVisible();
   await tabs(page).getByRole('link', { name: copy.progressTitle, exact: true }).click();
   await expect(tabs(page).getByRole('link', { name: copy.progressTitle, exact: true })).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('link', { name: 'Bench press', exact: true }).click();
+  await page.getByRole('link', { name: /^Bench press/ }).click();
   await expect(page).toHaveURL(new RegExp(`/exercise/${BENCH}$`));
   await expect(page.getByRole('heading', { name: 'Bench press', exact: true })).toBeVisible();
   await page.getByRole('link', { name: copy.editDay, exact: true }).click();
