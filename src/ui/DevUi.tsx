@@ -7,8 +7,41 @@ import {
 } from './icons';
 import {
   BigNumber, Button, Chip, HoldButton, ListRow, PlateBar, Ring, ScreenHeader,
-  SegmentedControl, Sheet, Stepper, ToastProvider, copy, useToast,
+  ScrubDial, SegmentedControl, Sheet, Stepper, ToastProvider, copy, feel, useToast,
 } from './index';
+import type { FeelKind, FeelPulse } from './feel/feel';
+
+const FEEL_KINDS = ['tick', 'set', 'plate', 'round', 'pr', 'lockout', 'error'] as const satisfies readonly FeelKind[];
+
+function FeelBench() {
+  const [kg, setKg] = useState(80);
+  const [reps, setReps] = useState(5);
+  const [pulse, setPulse] = useState<FeelPulse | null>(null);
+  const dock = pulse?.visual === 'dock-flash' ? 'is-set'
+    : pulse?.visual === 'plate-slide' ? 'is-plate'
+      : pulse?.visual === 'pr-takeover' ? 'is-pr'
+        : pulse?.visual === 'shake' ? 'is-error'
+          : '';
+  return (
+    <section>
+      <h2>Feel</h2>
+      <ScrubDial label={copy.weight} value={kg} onChange={setKg} min={0} max={300} step={2.5} unit={copy.kg} />
+      <ScrubDial label={copy.reps} value={reps} onChange={setReps} min={1} max={30} step={1} />
+      <div
+        className={`ui-feel-dock ${dock}`}
+        data-feel={pulse?.kind ?? ''}
+        style={pulse?.shakePx ? { transform: `translateX(${pulse.shakePx}px)` } : undefined}
+      />
+      <div className="ui-gallery__row">
+        {FEEL_KINDS.map((kind) => (
+          <Button key={kind} variant="secondary" onClick={() => feel(kind, { weightKg: kg, pulse: setPulse })}>
+            {kind}
+          </Button>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function Gallery() {
   const [weight, setWeight] = useState(80);
@@ -136,6 +169,7 @@ function Gallery() {
           ] as const).map(([sound, label]) => <Button key={sound} variant="secondary" onClick={() => play(sound)}>{label}</Button>)}
         </div>
       </section>
+      <FeelBench />
       <Sheet open={open} title={copy.devSheet} onClose={() => setOpen(false)}>
         <p>{copy.devSheetBody}</p>
         <Button onClick={() => setOpen(false)}>{copy.x1Done}</Button>
