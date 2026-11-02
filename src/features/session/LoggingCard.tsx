@@ -12,7 +12,7 @@ import { revealLatestSet } from './sessionViewport.ts';
 import { SetList } from './SetList.tsx';
 import { FRESH_UNDO_MS, prefillAt, roundKg } from './sessionModel.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
-import { SetLoggedPlayer } from '../../ui/motion/SetLogged.tsx';
+import { SetLoggedMotion } from '../../ui/motion/SetLogged.tsx';
 import { useSetLoggedMicro } from './useSetLoggedMicro.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
@@ -138,13 +138,15 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
         }}>{formatNudgeChip(nudge)}</Button>
         <p>{nudgeSentence(nudge)}</p>
       </div>}
-      <SetLoggedPlayer playKey={logged.playKey} reduced={logged.reduced} />
-      <div className="session-steppers">
-        <div data-set-logged-weight="">
-          <Stepper label={weightLabel} value={kg} step={step} unit={copy.kg} onChange={setKg} disabled={busy} />
+      {/* Keep the spring's overshoot inside the dock's gutters, away from the page edges. */}
+      <SetLoggedMotion playKey={logged.playKey} reduced={logged.reduced}>
+        <div className="session-steppers">
+          <div data-set-logged-weight="">
+            <Stepper label={weightLabel} value={kg} step={step} unit={copy.kg} onChange={setKg} disabled={busy} />
+          </div>
+          <Stepper label={copy.reps} value={reps} step={1} onChange={setReps} disabled={busy} />
         </div>
-        <Stepper label={copy.reps} value={reps} step={1} onChange={setReps} disabled={busy} />
-      </div>
+      </SetLoggedMotion>
       <div className="session-options">
         <Button variant="ghost" disabled={busy} aria-expanded={rpeOpen} onClick={() => setRpeOpen(!rpeOpen)}>
           {rpe === null ? copy.x4AddRpe : fill(copy.sessionRpeValue, { value: rpe })}
