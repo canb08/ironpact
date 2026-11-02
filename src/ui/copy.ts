@@ -337,8 +337,22 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P3B: add this ticket's strings directly below ──
 
   // ── P3C: add this ticket's strings directly below ──
+  ringClosedAll: "CLOSED. All of you. That's the job.",
+  platesLabel: 'PLATES',
 
   // ── P3D: add this ticket's strings directly below ──
+  ringThisWeek: 'THIS WEEK',
+  ringResets: 'Resets Mon',
+  ringCount: '{done}/{capacity}',
+  ringOf: '{credits} of {target}',
+  ringNamed: '{name} {credits} of {target}',
+  ringWeek: 'Week: {done} of {capacity} sessions. {detail}',
+  ringWeekMins: 'Week: {done} of {capacity} sessions. {detail}, {mins} MIN',
+  ringRow: '{credits}/{target} · {mins} MIN',
+  ringDemo: 'Rings',
+  ringYou: 'You',
+  ringPartner: 'partner',
+  ringThird: 'third',
 
   // ── P3E: add this ticket's strings directly below ──
 
