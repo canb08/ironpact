@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, expect, it } from 'vitest';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
 import { DuoMoments } from '../../../../src/features/duo/DuoMoments';
 import { ForgeFlame } from '../../../../src/features/duo/ForgeFlame';
 import { PartnerShockwave } from '../../../../src/features/duo/PartnerShockwave';
@@ -92,4 +92,27 @@ it('celebrates a bar tier-up once and keeps a drop quiet', () => {
   expect(tierMomentDecision(null, 'Iron')).toEqual({ store: 'Iron', celebrate: null });
   expect(tierMomentDecision('Iron', 'Steel')).toEqual({ store: 'Steel', celebrate: 'Steel' });
   expect(tierMomentDecision('Steel', 'Iron')).toEqual({ store: 'Iron', celebrate: null });
+});
+
+it('acknowledges each queued card only when it starts, including after session deferral', async () => {
+  vi.useFakeTimers();
+  try {
+    const first = vi.fn();
+    const second = vi.fn();
+    const events = [{ ...event, onPlayed: first }, { ...event, id: 'pr-2', onPlayed: second }];
+    const view = render(<PartnerShockwave events={events} inSession reduced />);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(first).not.toHaveBeenCalled();
+    expect(second).not.toHaveBeenCalled();
+    view.rerender(<PartnerShockwave events={events} inSession={false} reduced />);
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+    expect(screen.getByTestId('partner-shockwave').getAttribute('data-shockwave')).toBe('pr-1');
+    await act(() => vi.advanceTimersByTimeAsync(1500));
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('partner-shockwave').getAttribute('data-shockwave')).toBe('pr-2');
+    await act(() => vi.advanceTimersByTimeAsync(1500));
+    expect(screen.queryByTestId('partner-shockwave')).toBeNull();
+  } finally { cleanup(); vi.useRealTimers(); }
 });

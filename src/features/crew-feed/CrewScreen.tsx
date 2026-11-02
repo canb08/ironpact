@@ -1,3 +1,4 @@
+import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { useRef, useState, useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { formatBodyweight, formatDuration, formatKg, formatKm } from '@shared/export-format.ts';
@@ -47,6 +48,7 @@ export default function CrewScreen() {
 }
 
 function CrewFeed() {
+  usePartnerPrShockwave();
   const repo = useRepo();
   const online = useOnline(repo);
   const crewTick = useCrewTick(repo);

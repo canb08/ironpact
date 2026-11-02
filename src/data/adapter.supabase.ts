@@ -97,6 +97,7 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
   }
 
   return {
+    markPrEventsSeen: (ids) => rpc('mark_pr_events_seen', { ids: [...ids] }, []).then((result) => result.ok ? ok(undefined) : result),
     useSpot: (weekStart) => rpc('use_spot', { week_start: weekStart }, SPOT_ERRORS),
     async subscribeCrew(crewId, callbacks) {
       const actor = userId;
