@@ -102,11 +102,11 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | merged #65 (Lead review round 2: chunkier PlateBar, chalk primary) |
 | X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | merged #66 (shell copy in src/app/shell/copy.ts → fold into copy.ts in X10) |
 | X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | merged #68 (Lead screenshot review; e2e START helper fixed in round 2) |
-| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — Lead review: 4 changes (current-exercise sets hidden under dock, name looks like a field, row icons, summary header) in PR comment; owner's Codex out until 21:36, resume in the same chat |
+| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — review fixes pushed (00f5c67), screenshots OK, CI running |
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
 | X7 | Crew centred on partner | Grok | E | running — friend's Codex (Sol High) |
-| X8 | Settings grouped sub-pages | Grok | C | queued (after X1+X2) |
+| X8 | Settings grouped sub-pages | Codex Sol High | C | running — owner's Codex |
 | X9 | Onboarding: name/colour/target + explainer | Grok | C | queued (after X1, H10) |
 | X10 | Copy + date sweep | Grok | either | queued (after X3–X9) |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
