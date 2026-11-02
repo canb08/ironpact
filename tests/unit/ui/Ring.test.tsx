@@ -152,7 +152,7 @@ describe('Ring', () => {
     expect(container.querySelector('[data-motion="static"]')).toBeTruthy();
     expect(container.querySelector('[data-puff]')).toBeNull();
     expect(container.querySelector('canvas')).toBeNull();
-    expect(screen.getByText(copy.ringClosedCentre)).toBeTruthy();
+    expect(screen.getByText(copy.x1WeekComplete)).toBeTruthy();
     expect(container.querySelector('.ring-spin')).toBeNull();
   });
 });

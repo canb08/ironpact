@@ -63,7 +63,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 {current.action.label}
               </Button>
             )}
-            <Button variant="ghost" onClick={() => dismissToast(current.id)}>
+            <Button variant="quiet" onClick={() => dismissToast(current.id)}>
               {copy.dismiss}
             </Button>
           </div>

@@ -198,7 +198,7 @@ export function Ring({ members, size, className = '', reduced = false, closing =
   const cy = px / 2;
   const radius = px / 2 - stroke / 2 - 6;
   const titleId = `${uid}-title`;
-  const countSize = resolved === 'personal' ? 28 : 44;
+  const countSize = resolved === 'personal' ? 28 : 40;
   const signature = members.map((member) => `${member.id}:${member.credits}`).join('|');
   const [motionState, setMotionState] = useState({
     signature,
@@ -230,7 +230,7 @@ export function Ring({ members, size, className = '', reduced = false, closing =
 
   return (
     <div
-      className={`ui-edge-steel ${className}`.trim()}
+      className={`ui-ring ${className}`.trim()}
       data-motion={motion}
       data-closing={closing ? '1' : '0'}
       style={{ borderRadius: 'var(--r-lg)', background: 'var(--surface-1)', padding: 'var(--s-3)' }}
@@ -270,6 +270,7 @@ export function Ring({ members, size, className = '', reduced = false, closing =
             const isFilling = fillingSet.has(key);
             return (
               <g key={key}>
+                {state !== 'empty' && <path d={path} fill="none" stroke="var(--text-muted)" strokeWidth={width + 2} strokeLinecap="round" />}
                 {state === 'min' && (
                   <path d={path} fill="none" stroke="var(--line)" strokeWidth={stroke} strokeLinecap="round" />
                 )}
@@ -361,22 +362,21 @@ export function Ring({ members, size, className = '', reduced = false, closing =
           textAnchor="middle"
           fill="var(--text-muted)"
           fontFamily="var(--font-body)"
-          fontSize={resolved === 'personal' ? 10 : 12}
+          fontSize={13}
           fontWeight={600}
-          letterSpacing="0.08em"
         >
-          {closing ? '' : copy.ringThisWeek}
+          {closing ? '' : copy.x1ThisWeek}
         </text>
         <text
           x={cx}
           y={cy + (closing ? 8 : resolved === 'personal' ? 8 : 12)}
           textAnchor="middle"
           fill="var(--text)"
-          fontFamily="var(--font-display)"
-          fontSize={closing ? countSize : countSize}
-          fontWeight={closing ? 900 : 800}
+          fontFamily={closing ? 'var(--font-body)' : 'var(--font-number)'}
+          fontSize={closing ? 22 : countSize}
+          fontWeight={600}
         >
-          {closing ? copy.ringClosedCentre : fill(copy.ringCount, { done: formatCredit(done), capacity })}
+          {closing ? copy.x1WeekComplete : fill(copy.ringCount, { done: formatCredit(done), capacity })}
         </text>
         {closing ? null : (
           <text
@@ -385,7 +385,7 @@ export function Ring({ members, size, className = '', reduced = false, closing =
             textAnchor="middle"
             fill="var(--text-muted)"
             fontFamily="var(--font-body)"
-            fontSize={resolved === 'personal' ? 11 : 14}
+            fontSize={13}
           >
             {copy.ringResets}
           </text>
@@ -418,16 +418,16 @@ export function Ring({ members, size, className = '', reduced = false, closing =
                 borderRadius: 'var(--r-full)',
                 border: '1px solid var(--line-steel-b)',
                 background: 'var(--surface-2)',
-                color: member.color,
+                color: 'var(--text)',
                 fontWeight: 700,
-                fontSize: 11,
+                fontSize: 13,
               }}
             >
               {member.initial}
             </span>
             <span style={{ flex: '1 1 auto', minWidth: 0 }}>{member.name}</span>
             <span style={{ fontFamily: 'var(--font-data)', fontVariantNumeric: 'tabular-nums' }}>
-              {fill(copy.ringRow, {
+              {fill(copy.x1RingRow, {
                 credits: formatCredit(member.credits),
                 target: member.target,
                 mins: member.minCount ?? 0,

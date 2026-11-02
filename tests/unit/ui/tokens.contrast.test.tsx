@@ -17,49 +17,37 @@ function colour(theme: Record<string, string>, key: string): string {
   return value;
 }
 
-it('preserves the hex source values through the OKLCH conversion', () => {
-  for (const match of source.matchAll(/--[\w-]+: (oklch\([^;]+\)); \/\* (#[\da-f]{6}) \*\//gi)) {
-    expect(formatHex(match[1])).toBe(match[2]?.toLowerCase());
+it('preserves the R2 palette in both themes', () => {
+  const palette = {
+    rubber: '#1e1f22', 'rubber-raised': '#2a2c30', chalk: '#edebe6', steel: '#8c9199',
+    'plate-red': '#d3263a', 'plate-blue': '#2563c9', 'plate-yellow': '#f2c230', 'plate-green': '#2f9e5b',
+  };
+  for (const theme of [dark, light]) {
+    for (const [key, hex] of Object.entries(palette)) expect(formatHex(colour(theme, key))).toBe(hex);
   }
-  expect(formatHex(colour(dark, 'tier-titanium'))).toBe('#c9ccd1');
+  expect(formatHex(colour(dark, 'bg'))).toBe(palette.rubber);
+  expect(formatHex(colour(light, 'text'))).toBe(palette.rubber);
+  expect(formatHex(colour(light, 'bg'))).toBe(palette.chalk);
+  expect(formatHex(colour(dark, 'text'))).toBe(palette.chalk);
 });
 
-// L1: dark keeps its source colours. Obsidian's 3:1 is the molten rim, not the #1A1420 core.
-// Light molten, Iron, Steel and Titanium are darker same-hue variants.
-// MDN: https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Understanding_WCAG/Perceivable/Color_contrast
+// Fixed plate colours are decorative fills. Text uses AA ink or a contrasting label.
+// https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Understanding_WCAG/Perceivable/Color_contrast
 for (const [name, theme] of Object.entries({ dark, light })) {
-  describe(`${name} contrast (§3.2.4)`, () => {
+  describe(`${name} R2 contrast`, () => {
     const pairs: [string, string, number][] = [];
-    for (const ink of ['text', 'text-muted', 'molten']) {
-      for (const background of ['bg', 'surface-1', 'surface-2']) pairs.push([ink, background, 4.5]);
+    for (const ink of ['text', 'text-muted', 'text-faint', 'molten', 'danger', 'partner-text', 'success-text']) {
+      for (const background of ['bg', 'surface-1', 'surface-2', 'surface-3']) pairs.push([ink, background, 4.5]);
     }
-    pairs.push(['on-molten', 'molten', 4.5], ['danger', 'surface-1', 4.5]);
-    for (const ink of [
-      'member-volt',
-      'member-ice',
-      'rest',
-      'tier-iron',
-      'tier-steel',
-      'tier-titanium',
-      'tier-obsidian',
-    ])
-      pairs.push([ink, 'surface-1', 3]);
-
+    pairs.push(
+      ['on-primary', 'plate-red', 4.5], ['rubber', 'plate-yellow', 4.5],
+      ['on-molten', 'molten', 4.5], ['bg', 'text', 4.5],
+      ['line', 'bg', 3], ['line', 'surface-2', 3],
+    );
     for (const [ink, background, minimum] of pairs) {
-      const label = `${name}: ${ink} on ${background}`;
-      if (ink === 'tier-obsidian') {
-        it(`${label} meets ${minimum}:1 on the molten rim (L1)`, () => {
-          expect(wcagContrast(colour(theme, 'molten'), colour(theme, background))).toBeGreaterThanOrEqual(
-            minimum,
-          );
-        });
-      } else {
-        it(`${ink} on ${background} meets ${minimum}:1`, () => {
-          expect(wcagContrast(colour(theme, ink), colour(theme, background))).toBeGreaterThanOrEqual(
-            minimum,
-          );
-        });
-      }
+      it(`${ink} on ${background} meets ${minimum}:1`, () => {
+        expect(wcagContrast(colour(theme, ink), colour(theme, background))).toBeGreaterThanOrEqual(minimum);
+      });
     }
   });
 }
