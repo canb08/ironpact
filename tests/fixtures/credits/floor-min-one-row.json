@@ -1,0 +1,42 @@
+{
+  "name": "one Floor MIN row earns 0.5 and the session itself never earns 1",
+  "week_start": "2026-10-19",
+  "target": 3,
+  "sessions": [
+    {
+      "id": "21000000-0000-4000-8000-000000000008",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-20",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "kind": "min",
+      "mode": "full",
+      "started_at": "2026-10-20T08:00:00.000Z",
+      "ended_at": null,
+      "tz": "Europe/Amsterdam",
+      "readiness": null,
+      "together_id": null,
+      "note": null
+    }
+  ],
+  "min_entries": [
+    {
+      "id": "61000000-0000-4000-8000-000000000009",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-20",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "session_id": "21000000-0000-4000-8000-000000000008",
+      "description": "20m walk",
+      "duration_min": null,
+      "logged_at": "2026-10-20T08:00:00.000Z"
+    }
+  ],
+  "sets": [],
+  "cardio_entries": [],
+  "martial_entries": [],
+  "expected": {
+    "credits": 0.5,
+    "status": "HELD"
+  }
+}

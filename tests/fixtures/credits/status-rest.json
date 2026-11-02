@@ -1,0 +1,14 @@
+{
+  "name": "status is REST when the week has 0 credits",
+  "week_start": "2026-10-19",
+  "target": 3,
+  "sessions": [],
+  "min_entries": [],
+  "sets": [],
+  "cardio_entries": [],
+  "martial_entries": [],
+  "expected": {
+    "credits": 0,
+    "status": "REST"
+  }
+}

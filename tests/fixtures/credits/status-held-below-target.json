@@ -1,0 +1,78 @@
+{
+  "name": "status is HELD when credits are below the target and at least 0.5",
+  "week_start": "2026-10-19",
+  "target": 3,
+  "sessions": [
+    {
+      "id": "21000000-0000-4000-8000-000000000053",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-20",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "kind": "gym",
+      "mode": "full",
+      "started_at": "2026-10-20T08:00:00.000Z",
+      "ended_at": null,
+      "tz": "Europe/Amsterdam",
+      "readiness": null,
+      "together_id": null,
+      "note": null
+    },
+    {
+      "id": "21000000-0000-4000-8000-000000000054",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-21",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "kind": "gym",
+      "mode": "full",
+      "started_at": "2026-10-20T08:00:00.000Z",
+      "ended_at": null,
+      "tz": "Europe/Amsterdam",
+      "readiness": null,
+      "together_id": null,
+      "note": null
+    }
+  ],
+  "min_entries": [],
+  "sets": [
+    {
+      "id": "31000000-0000-4000-8000-000000000055",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-20",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "session_id": "21000000-0000-4000-8000-000000000053",
+      "exercise_id": "00000000-0000-4000-8000-000000000001",
+      "set_index": 1,
+      "reps": 5,
+      "weight_kg": 60,
+      "rpe": null,
+      "is_warmup": false,
+      "note": null,
+      "logged_at": "2026-10-20T08:00:00.000Z"
+    },
+    {
+      "id": "31000000-0000-4000-8000-000000000056",
+      "user_id": "10000000-0000-4000-8000-000000000001",
+      "local_date": "2026-10-21",
+      "client_updated_at": "2026-10-20T08:00:00.000Z",
+      "deleted_at": null,
+      "session_id": "21000000-0000-4000-8000-000000000054",
+      "exercise_id": "00000000-0000-4000-8000-000000000001",
+      "set_index": 1,
+      "reps": 5,
+      "weight_kg": 60,
+      "rpe": null,
+      "is_warmup": false,
+      "note": null,
+      "logged_at": "2026-10-20T08:00:00.000Z"
+    }
+  ],
+  "cardio_entries": [],
+  "martial_entries": [],
+  "expected": {
+    "credits": 2,
+    "status": "HELD"
+  }
+}
