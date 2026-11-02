@@ -1,4 +1,21 @@
 export const copy = {
+  // ── X8
+  x8Appearance: 'Appearance',
+  x8Privacy: 'Privacy & export',
+  x8ProfileDetail: 'Name, colour and weekly target',
+  x8TrainingDetail: 'Plates, bar, rest and units',
+  x8AppearanceDetail: 'Theme, sound and haptics',
+  x8PrivacyDetail: 'Sharing, vault tokens and export',
+  x8CrewDetail: 'Invite someone or leave your crew',
+  x8AccountDetail: 'Sign out or delete your account',
+  x8BatterySaverHint: 'Reduces visual effects to save battery.',
+  x8Synced: 'Everything synced',
+  x8SyncOffline: 'Offline. Changes stay on this phone.',
+  x8Syncing: 'Syncing changes',
+  x8ReviewSync: 'Review unsynced entries',
+  x8Tokens: 'Vault tokens',
+  x8ExportAccess: 'Export URL and instructions',
+
   // ── X6
   x6Week: 'Training week',
   x6Mon: 'Mon',

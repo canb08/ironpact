@@ -1,4 +1,6 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { ListRow } from '../../ui/ListRow.tsx';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { NotifyPrefs, Profile, Theme } from '../../core/types.ts';
 import type { Repo, SyncStatus } from '../../data/adapter.ts';
@@ -18,31 +20,53 @@ import { listedPlates, togglePlate } from './plates.ts';
 import '../export/export.css';
 import './settings.css';
 
+const notificationsAvailable = false; // Phase 7: retain preferences and controls until push ships.
+
+const sections = [
+  { id: 'profile', title: copy.settingsProfile, detail: copy.x8ProfileDetail },
+  { id: 'training', title: copy.settingsTraining, detail: copy.x8TrainingDetail },
+  { id: 'appearance', title: copy.x8Appearance, detail: copy.x8AppearanceDetail },
+  { id: 'privacy', title: copy.x8Privacy, detail: copy.x8PrivacyDetail },
+  { id: 'crew', title: copy.settingsCrew, detail: copy.x8CrewDetail },
+  { id: 'account', title: copy.settingsAccount, detail: copy.x8AccountDetail },
+] as const;
+type Section = typeof sections[number]['id'];
+
 type Patch = Partial<Omit<Profile, 'id'>>;
 type SavePatch = Patch | ((current: Profile) => Patch);
 
 export default function SettingsScreen() {
+  const { section } = useParams();
+  const current = sections.find((item) => item.id === section)?.id;
   const repo = useRepo();
   const user = useSyncExternalStore(repo.auth.onChange, repo.auth.userId);
   return (
     <main className="settings-screen">
       <h1>{copy.settingsTitle}</h1>
-      {user ? <SettingsBody key={user} /> : <p>{copy.profileNeeded}</p>}
+      {user ? <SettingsBody key={`${user}-${current ?? 'index'}`} section={current} /> : <p>{copy.profileNeeded}</p>}
     </main>
   );
 }
 
-function SettingsBody() {
+function SettingsBody({ section }: { section?: Section }) {
   const repo = useRepo();
-  return (
-    <>
-      <ProfileSettings repo={repo} />
-      <VaultExport repo={repo} />
-      <SyncPanel repo={repo} />
-      <CrewPanel repo={repo} />
-      <AccountPanel repo={repo} />
-    </>
-  );
+  const navigate = useNavigate();
+  if (!section) return <>
+    <nav className="settings-index" aria-label={copy.settingsTitle}>
+      {[sections.slice(0, 3), sections.slice(3)].map((group, index) => <ul key={index}>
+        {group.map((item) => <li key={item.id}>
+          <ListRow title={item.title} detail={item.detail} chevron onClick={() => void navigate(`/settings/${item.id}`)} />
+        </li>)}
+      </ul>)}
+    </nav>
+    <SyncPanel repo={repo} />
+  </>;
+  return <>
+    {['profile', 'training', 'appearance', 'privacy'].includes(section) && <ProfileSettings repo={repo} section={section} />}
+    {section === 'privacy' && <VaultExport repo={repo} />}
+    {section === 'crew' && <CrewPanel repo={repo} />}
+    {section === 'account' && <AccountPanel repo={repo} />}
+  </>;
 }
 
 function useSaver(repo: Repo, onSaved: () => void) {
@@ -73,7 +97,7 @@ function useSaver(repo: Repo, onSaved: () => void) {
   return { error, save };
 }
 
-function ProfileSettings({ repo }: { repo: Repo }) {
+function ProfileSettings({ repo, section }: { repo: Repo; section: Section }) {
   const [revision, setRevision] = useState(0);
   const profile = useLiveQuery(() => repo.q.me(), [repo, revision]);
   const pending = !profile;
@@ -142,144 +166,156 @@ function ProfileSettings({ repo }: { repo: Repo }) {
 
   return (
     <div className="settings-profile" aria-busy={pending} aria-hidden={pending || undefined} inert={pending || undefined}>
-      <section className="settings-section" aria-labelledby="settings-profile">
-        <h2 id="settings-profile">{copy.settingsProfile}</h2>
-        <div className="settings-field">
-          <label htmlFor="settings-name">{copy.displayName}</label>
-          <input
-            id="settings-name"
-            type="text"
-            value={name}
-            autoComplete="nickname"
-            disabled={pending}
-            aria-invalid={nameError !== null}
-            onChange={(event) => {
-              setNameDraft(event.currentTarget.value);
-              commitName(event.currentTarget.value);
-            }}
-            onBlur={(event) => commitName(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
+      {section === 'profile' && (
+        <section className="settings-section" aria-labelledby="settings-profile">
+          <h2 id="settings-profile">{copy.settingsProfile}</h2>
+          <div className="settings-field">
+            <label htmlFor="settings-name">{copy.displayName}</label>
+            <input
+              id="settings-name"
+              type="text"
+              value={name}
+              autoComplete="nickname"
+              disabled={pending}
+              aria-invalid={nameError !== null}
+              onChange={(event) => {
+                setNameDraft(event.currentTarget.value);
                 commitName(event.currentTarget.value);
-              }
-            }}
-          />
-        </div>
-        <p className="settings-muted">{copy.noSurnames}</p>
-        {nameError ? <p role="alert">{nameError}</p> : null}
-        {profile ? (
-          <Stepper label={copy.weeklyTarget} value={profile.weekly_target} min={1} max={7} onChange={(weekly_target) => saveIfReady({ weekly_target })} />
-        ) : (
-          <FrozenStepper label={copy.weeklyTarget} />
-        )}
-        <div role="group" aria-label={copy.colour} className="settings-hues">
-          {MEMBER_HUES.map((hue) => (
-            <button
-              key={hue}
-              type="button"
-              disabled={pending}
-              aria-pressed={profile ? profile.color_hue === hue : false}
-              aria-label={hueName(hue)}
-              style={{ background: `oklch(0.8 0.15 ${hue})` }}
-              onClick={() => saveIfReady({ color_hue: hue })}
+              }}
+              onBlur={(event) => commitName(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commitName(event.currentTarget.value);
+                }
+              }}
             />
-          ))}
-        </div>
-        <div className="settings-field">
-          <label htmlFor="settings-min">{copy.settingsMinLabel}</label>
-          <input
-            id="settings-min"
-            type="text"
-            value={minLabel}
-            maxLength={40}
-            disabled={pending}
-            onChange={(event) => {
-              setMinDraft(event.currentTarget.value);
-              commitMin(event.currentTarget.value);
-            }}
-            onBlur={(event) => commitMin(event.currentTarget.value)}
-          />
-        </div>
-        {minError ? <p role="alert">{minError}</p> : null}
-      </section>
-
-      <section className="settings-section" aria-labelledby="settings-units">
-        <h2 id="settings-units">{copy.settingsUnits}</h2>
-        <Toggle label={copy.unitsKg} checked disabled onChange={() => undefined} />
-        <p className="settings-muted">{copy.unitsFixed}</p>
-      </section>
-
-      <section className="settings-section" aria-labelledby="settings-training">
-        <h2 id="settings-training">{copy.settingsTraining}</h2>
-        <p id="plate-inventory">{copy.plateInventory}</p>
-        <div role="group" aria-labelledby="plate-inventory">
-          {listedPlates(profile?.plates_kg ?? []).map((kg) => (
-            <Toggle
-              key={kg}
-              label={fill(copy.plateKg, { kg })}
-              checked={profile?.plates_kg.some((plate) => plate === kg) ?? false}
+          </div>
+          <p className="settings-muted">{copy.noSurnames}</p>
+          {nameError ? <p role="alert">{nameError}</p> : null}
+          {profile ? (
+            <Stepper label={copy.weeklyTarget} value={profile.weekly_target} min={1} max={7} onChange={(weekly_target) => saveIfReady({ weekly_target })} />
+          ) : (
+            <FrozenStepper label={copy.weeklyTarget} />
+          )}
+          <div role="group" aria-label={copy.colour} className="settings-hues">
+            {MEMBER_HUES.map((hue) => (
+              <button
+                key={hue}
+                type="button"
+                disabled={pending}
+                aria-pressed={profile ? profile.color_hue === hue : false}
+                aria-label={hueName(hue)}
+                style={{ background: `oklch(0.8 0.15 ${hue})` }}
+                onClick={() => saveIfReady({ color_hue: hue })}
+              />
+            ))}
+          </div>
+          <div className="settings-field">
+            <label htmlFor="settings-min">{copy.settingsMinLabel}</label>
+            <input
+              id="settings-min"
+              type="text"
+              value={minLabel}
+              maxLength={40}
               disabled={pending}
-              onChange={() => saveIfReady((current) => ({ plates_kg: togglePlate(current.plates_kg, kg) }))}
+              onChange={(event) => {
+                setMinDraft(event.currentTarget.value);
+                commitMin(event.currentTarget.value);
+              }}
+              onBlur={(event) => commitMin(event.currentTarget.value)}
             />
-          ))}
-        </div>
-        {profile ? (
-          <Stepper label={copy.barKg} value={profile.bar_kg} min={5} max={25} step={2.5} onChange={(bar_kg) => saveIfReady({ bar_kg })} />
-        ) : (
-          <FrozenStepper label={copy.barKg} />
-        )}
-        <h3>{copy.restDefaults}</h3>
-        <p>{fill(copy.restCompoundLine, { seconds: defaultRestSeconds('compound') })}</p>
-        <p>{fill(copy.restIsolationLine, { seconds: defaultRestSeconds('isolation') })}</p>
-        <p className="settings-muted">{copy.restRemembered}</p>
-        <Toggle label={copy.bigJumps} checked={profile?.big_jumps ?? false} disabled={pending} onChange={(big_jumps) => saveIfReady({ big_jumps })} />
-        <p className="settings-muted">{copy.bigJumpsHint}</p>
-      </section>
+          </div>
+          {minError ? <p role="alert">{minError}</p> : null}
+        </section>
+      )}
 
-      <section className="settings-section" aria-labelledby="settings-feel">
-        <h2 id="settings-feel">{copy.settingsFeel}</h2>
-        <Toggle label={copy.soundOn} checked={profile?.sound_on ?? false} disabled={pending} onChange={(sound_on) => saveIfReady({ sound_on })} />
-        <Toggle label={copy.hapticsOn} checked={profile?.haptics_on ?? false} disabled={pending} onChange={(haptics_on) => saveIfReady({ haptics_on })} />
-        <Toggle label={copy.reduceMotionOn} checked={profile?.reduce_motion ?? false} disabled={pending} onChange={(reduce_motion) => saveIfReady({ reduce_motion })} />
-        <Toggle label={copy.batterySaverOn} checked={profile?.battery_saver ?? false} disabled={pending} onChange={(battery_saver) => saveIfReady({ battery_saver })} />
-        <p className="settings-muted">{copy.batterySaverHint}</p>
-        <fieldset>
-          <legend>{copy.themeChoice}</legend>
-          {(['dark', 'light', 'system'] as const).map((theme) => (
-            <label key={theme} className="settings-radio">
-              <input type="radio" name="settings-theme" checked={profile?.theme === theme} disabled={pending} onChange={() => saveIfReady({ theme })} />
-              <span>{themeLabel(theme)}</span>
-            </label>
-          ))}
-        </fieldset>
-      </section>
+      {section === 'training' && (
+        <section className="settings-section" aria-labelledby="settings-training">
+          <h2 id="settings-training">{copy.settingsTraining}</h2>
+          <p id="plate-inventory">{copy.plateInventory}</p>
+          <div role="group" aria-labelledby="plate-inventory" className="settings-plates">
+            {listedPlates(profile?.plates_kg ?? []).map((kg) => (
+              <Toggle
+                key={kg}
+                label={fill(copy.plateKg, { kg })}
+                checked={profile?.plates_kg.some((plate) => plate === kg) ?? false}
+                disabled={pending}
+                onChange={() => saveIfReady((current) => ({ plates_kg: togglePlate(current.plates_kg, kg) }))}
+              />
+            ))}
+          </div>
+          {profile ? (
+            <Stepper label={copy.barKg} value={profile.bar_kg} min={5} max={25} step={2.5} onChange={(bar_kg) => saveIfReady({ bar_kg })} />
+          ) : (
+            <FrozenStepper label={copy.barKg} />
+          )}
+          <h3>{copy.restDefaults}</h3>
+          <p>{fill(copy.restCompoundLine, { seconds: defaultRestSeconds('compound') })}</p>
+          <p>{fill(copy.restIsolationLine, { seconds: defaultRestSeconds('isolation') })}</p>
+          <p className="settings-muted">{copy.restRemembered}</p>
+          <Toggle label={copy.bigJumps} checked={profile?.big_jumps ?? false} disabled={pending} onChange={(big_jumps) => saveIfReady({ big_jumps })} />
+          <p className="settings-muted">{copy.bigJumpsHint}</p>
+        </section>
+      )}
 
-      <section className="settings-section" aria-labelledby="settings-notify">
-        <h2 id="settings-notify">{copy.settingsNotifications}</h2>
-        <p className="settings-muted">{copy.notificationsSaved}</p>
-        <Toggle label={copy.notifyPartnerStart} checked={profile?.notify.partner_start ?? false} disabled={pending} onChange={(checked) => setNotify('partner_start', checked)} />
-        <Toggle label={copy.notifyPartnerPr} checked={profile?.notify.partner_pr ?? false} disabled={pending} onChange={(checked) => setNotify('partner_pr', checked)} />
-        <Toggle label={copy.notifyNudge} checked={profile?.notify.nudge ?? false} disabled={pending} onChange={(checked) => setNotify('nudge', checked)} />
-        <Toggle label={copy.notifyRecap} checked={profile?.notify.recap ?? false} disabled={pending} onChange={(checked) => setNotify('recap', checked)} />
-        <Toggle label={copy.notifySpot} checked={profile?.notify.spot ?? false} disabled={pending} onChange={(checked) => setNotify('spot', checked)} />
-        <h3>{copy.quietHours}</h3>
-        <div className="settings-field">
-          <label htmlFor="quiet-start">{copy.quietStart}</label>
-          <input id="quiet-start" type="time" value={profile ? profile.quiet_start.slice(0, 5) : ''} disabled={pending} onChange={(event) => commitQuiet('quiet_start', event.currentTarget.value)} />
-        </div>
-        <div className="settings-field">
-          <label htmlFor="quiet-end">{copy.quietEnd}</label>
-          <input id="quiet-end" type="time" value={profile ? profile.quiet_end.slice(0, 5) : ''} disabled={pending} onChange={(event) => commitQuiet('quiet_end', event.currentTarget.value)} />
-        </div>
-        {quietError ? <p role="alert">{quietError}</p> : null}
-      </section>
+      {section === 'training' && (
+        <section className="settings-section" aria-labelledby="settings-units">
+          <h2 id="settings-units">{copy.settingsUnits}</h2>
+          <Toggle label={copy.unitsKg} checked disabled onChange={() => undefined} />
+          <p className="settings-muted">{copy.unitsFixed}</p>
+        </section>
+      )}
 
-      <section className="settings-section" aria-labelledby="settings-privacy">
-        <h2 id="settings-privacy">{copy.settingsPrivacy}</h2>
-        <Toggle label={copy.shareBodyweight} checked={profile?.show_bodyweight ?? false} disabled={pending} onChange={(show_bodyweight) => saveIfReady({ show_bodyweight })} />
-        <Toggle label={copy.shareDots} checked={profile?.share_dots ?? false} disabled={pending} onChange={(share_dots) => saveIfReady({ share_dots })} />
-      </section>
+      {section === 'appearance' && (
+        <section className="settings-section" aria-labelledby="settings-feel">
+          <h2 id="settings-feel">{copy.x8Appearance}</h2>
+          <Toggle label={copy.soundOn} checked={profile?.sound_on ?? false} disabled={pending} onChange={(sound_on) => saveIfReady({ sound_on })} />
+          <Toggle label={copy.hapticsOn} checked={profile?.haptics_on ?? false} disabled={pending} onChange={(haptics_on) => saveIfReady({ haptics_on })} />
+          <Toggle label={copy.reduceMotionOn} checked={profile?.reduce_motion ?? false} disabled={pending} onChange={(reduce_motion) => saveIfReady({ reduce_motion })} />
+          <Toggle label={copy.batterySaverOn} checked={profile?.battery_saver ?? false} disabled={pending} onChange={(battery_saver) => saveIfReady({ battery_saver })} />
+          <p className="settings-muted">{copy.x8BatterySaverHint}</p>
+          <fieldset>
+            <legend>{copy.themeChoice}</legend>
+            {(['dark', 'light', 'system'] as const).map((theme) => (
+              <label key={theme} className="settings-radio">
+                <input type="radio" name="settings-theme" checked={profile?.theme === theme} disabled={pending} onChange={() => saveIfReady({ theme })} />
+                <span>{themeLabel(theme)}</span>
+              </label>
+            ))}
+          </fieldset>
+        </section>
+      )}
+
+      {notificationsAvailable && (
+        <section className="settings-section" aria-labelledby="settings-notify">
+          <h2 id="settings-notify">{copy.settingsNotifications}</h2>
+          <p className="settings-muted">{copy.notificationsSaved}</p>
+          <Toggle label={copy.notifyPartnerStart} checked={profile?.notify.partner_start ?? false} disabled={pending} onChange={(checked) => setNotify('partner_start', checked)} />
+          <Toggle label={copy.notifyPartnerPr} checked={profile?.notify.partner_pr ?? false} disabled={pending} onChange={(checked) => setNotify('partner_pr', checked)} />
+          <Toggle label={copy.notifyNudge} checked={profile?.notify.nudge ?? false} disabled={pending} onChange={(checked) => setNotify('nudge', checked)} />
+          <Toggle label={copy.notifyRecap} checked={profile?.notify.recap ?? false} disabled={pending} onChange={(checked) => setNotify('recap', checked)} />
+          <Toggle label={copy.notifySpot} checked={profile?.notify.spot ?? false} disabled={pending} onChange={(checked) => setNotify('spot', checked)} />
+          <h3>{copy.quietHours}</h3>
+          <div className="settings-field">
+            <label htmlFor="quiet-start">{copy.quietStart}</label>
+            <input id="quiet-start" type="time" value={profile ? profile.quiet_start.slice(0, 5) : ''} disabled={pending} onChange={(event) => commitQuiet('quiet_start', event.currentTarget.value)} />
+          </div>
+          <div className="settings-field">
+            <label htmlFor="quiet-end">{copy.quietEnd}</label>
+            <input id="quiet-end" type="time" value={profile ? profile.quiet_end.slice(0, 5) : ''} disabled={pending} onChange={(event) => commitQuiet('quiet_end', event.currentTarget.value)} />
+          </div>
+          {quietError ? <p role="alert">{quietError}</p> : null}
+        </section>
+      )}
+
+      {section === 'privacy' && (
+        <section className="settings-section" aria-labelledby="settings-privacy">
+          <h2 id="settings-privacy">{copy.x8Privacy}</h2>
+          <Toggle label={copy.shareBodyweight} checked={profile?.show_bodyweight ?? false} disabled={pending} onChange={(show_bodyweight) => saveIfReady({ show_bodyweight })} />
+          <Toggle label={copy.shareDots} checked={profile?.share_dots ?? false} disabled={pending} onChange={(share_dots) => saveIfReady({ share_dots })} />
+        </section>
+      )}
       {error ? <p role="alert">{error}</p> : null}
     </div>
   );
@@ -291,24 +327,29 @@ function SyncPanel({ repo }: { repo: Repo }) {
   const letters = useLiveQuery(() => repo.q.deadLetters(), [repo, status.deadCount, revision]);
   const count = letters?.length ?? status.deadCount;
   const bump = () => setRevision((value) => value + 1);
+  const message = count > 0 ? count === 1 ? copy.deadOne : fill(copy.deadMany, { count })
+    : status.pendingCount > 0 ? fill(copy.syncWaiting, { count: status.pendingCount })
+    : status.state === 'offline' ? copy.x8SyncOffline
+    : status.state === 'flushing' ? copy.x8Syncing
+    : status.state === 'server_asleep' ? copy.serverAsleep : copy.x8Synced;
   return (
-    <section className="settings-section" aria-labelledby="settings-sync">
-      <h2 id="settings-sync">{copy.settingsSync}</h2>
-      <p>{fill(copy.syncWaiting, { count: status.pendingCount })}</p>
-      {count === 1 ? <p>{copy.deadOne}</p> : null}
-      {count > 1 ? <p>{fill(copy.deadMany, { count })}</p> : null}
-      <ul className="settings-dead">
-        {(letters ?? []).map((letter) => (
-          <li key={letter.seq}>
-            <p>{letter.last_error}</p>
-            <div className="settings-actions">
-              <Button variant="secondary" onClick={() => void repo.sync.retryDead(letter.seq).then(bump)}>{copy.retryEntry}</Button>
-              <Button variant="secondary" onClick={() => void repo.sync.discardDead(letter.seq).then(bump)}>{copy.discardEntry}</Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <footer className="settings-sync" aria-label={copy.settingsSync}>
+      <p role="status">{message}</p>
+      {count > 0 && <details className="settings-sync-errors">
+        <summary>{copy.x8ReviewSync}</summary>
+        <ul className="settings-dead">
+          {(letters ?? []).map((letter) => (
+            <li key={letter.seq}>
+              <p>{letter.last_error}</p>
+              <div className="settings-actions">
+                <Button variant="secondary" onClick={() => void repo.sync.retryDead(letter.seq).then(bump)}>{copy.retryEntry}</Button>
+                <Button variant="secondary" onClick={() => void repo.sync.discardDead(letter.seq).then(bump)}>{copy.discardEntry}</Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </details>}
+    </footer>
   );
 }
 

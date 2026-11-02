@@ -47,5 +47,11 @@
   font: var(--t-sm)/1.5 var(--font-data);
   user-select: text;
 }
-.vault-preview { max-height: 24rem; overflow-y: auto; }
+.vault-preview { max-height: 12rem; overflow-y: auto; }
 .vault-danger { color: var(--danger); border-color: var(--danger); }
+
+.vault-disclosure { min-width: 0; border-block: 1px solid var(--line); }
+.vault-disclosure + .vault-disclosure { border-top: 0; }
+.vault-disclosure summary { min-height: 48px; padding: var(--s-3) 0; box-sizing: border-box; cursor: pointer; font-weight: 600; }
+.vault-disclosure[open] > .vault-panel { padding-bottom: var(--s-4); }
+.vault-token { background: transparent; }

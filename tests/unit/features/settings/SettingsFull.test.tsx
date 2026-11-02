@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -23,8 +24,13 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
-function mount() {
-  return render(<RepoProvider repo={context.repo}><SettingsScreen /></RepoProvider>);
+let router: ReturnType<typeof createMemoryRouter>;
+function mount(section = 'profile') {
+  router = createMemoryRouter([{ path: '/settings/:section?', element: <SettingsScreen /> }], { initialEntries: [`/settings/${section}`] });
+  return render(<RepoProvider repo={context.repo}><RouterProvider router={router} /></RepoProvider>);
+}
+async function go(section: string) {
+  await act(async () => { await router.navigate(`/settings/${section}`); });
 }
 
 function setInput(element: HTMLElement, value: string) {
@@ -45,7 +51,8 @@ async function me() {
 
 it('persists every toggle through upsertMyProfile and applies feel flags', async () => {
   const user = userEvent.setup();
-  mount();
+  const original = (await me())!;
+  mount('appearance');
   await screen.findByRole('checkbox', { name: copy.soundOn });
 
   await user.click(screen.getByRole('checkbox', { name: copy.soundOn }));
@@ -64,30 +71,26 @@ it('persists every toggle through upsertMyProfile and applies feel flags', async
   await waitFor(async () => expect((await me())?.battery_saver).toBe(true));
   await waitFor(() => expect(document.documentElement.dataset.batterySaver).toBe('on'));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.bigJumps }));
+  await go('training');
+  await user.click(await screen.findByRole('checkbox', { name: copy.bigJumps }));
   await waitFor(async () => expect((await me())?.big_jumps).toBe(true));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.shareBodyweight }));
+  await go('privacy');
+  await user.click(await screen.findByRole('checkbox', { name: copy.shareBodyweight }));
   await waitFor(async () => expect((await me())?.show_bodyweight).toBe(true));
 
   await user.click(screen.getByRole('checkbox', { name: copy.shareDots }));
   await waitFor(async () => expect((await me())?.share_dots).toBe(true));
 
-  await user.click(screen.getByRole('checkbox', { name: copy.notifyPartnerStart }));
-  await waitFor(async () => expect((await me())?.notify.partner_start).toBe(true));
-  await user.click(screen.getByRole('checkbox', { name: copy.notifyPartnerPr }));
-  await waitFor(async () => expect((await me())?.notify.partner_pr).toBe(false));
-  await user.click(screen.getByRole('checkbox', { name: copy.notifyNudge }));
-  await waitFor(async () => expect((await me())?.notify.nudge).toBe(false));
-  await user.click(screen.getByRole('checkbox', { name: copy.notifyRecap }));
-  await waitFor(async () => expect((await me())?.notify.recap).toBe(false));
-  await user.click(screen.getByRole('checkbox', { name: copy.notifySpot }));
-  await waitFor(async () => expect((await me())?.notify.spot).toBe(false));
-
-  await user.click(screen.getByRole('radio', { name: copy.themeLight }));
+  expect(screen.queryByRole('checkbox', { name: copy.notifyPartnerStart })).toBeNull();
+  expect((await me())?.notify).toEqual(original.notify);
+  await go('appearance');
+  await user.click(await screen.findByRole('radio', { name: copy.themeLight }));
   await waitFor(async () => expect((await me())?.theme).toBe('light'));
   await waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
 
+  await go('training');
+  await screen.findByRole('checkbox', { name: /^kg$/ });
   const units = screen.getByRole('checkbox', { name: /^kg$/ });
   expect(units.hasAttribute('disabled')).toBe(true);
   expect((units as HTMLInputElement).checked).toBe(true);
@@ -96,8 +99,9 @@ it('persists every toggle through upsertMyProfile and applies feel flags', async
   expect(screen.getByText(fill(copy.restIsolationLine, { seconds: 90 }))).toBeTruthy();
 });
 
-it('saves name, colour, target, plates, bar, min label and quiet hours', async () => {
+it('saves name, colour, target, plates, bar and min label, preserving hidden quiet hours', async () => {
   const user = userEvent.setup();
+  const original = (await me())!;
   mount();
   const name = await screen.findByRole('textbox', { name: copy.displayName });
   setInput(name, 'Lifter');
@@ -114,22 +118,23 @@ it('saves name, colour, target, plates, bar, min label and quiet hours', async (
   await user.click(screen.getByRole('button', { name: fill(copy.increase, { label: copy.weeklyTarget }) }));
   await waitFor(async () => expect((await me())?.weekly_target).toBe(4));
 
-  await user.click(screen.getByRole('checkbox', { name: fill(copy.plateKg, { kg: 25 }) }));
+  await go('training');
+  await user.click(await screen.findByRole('checkbox', { name: fill(copy.plateKg, { kg: 25 }) }));
   await waitFor(async () => expect((await me())?.plates_kg).not.toContain(25));
   expect((await me())?.plates_kg).toContain(20);
 
   await user.click(screen.getByRole('button', { name: fill(copy.increase, { label: copy.barKg }) }));
   await waitFor(async () => expect((await me())?.bar_kg).toBe(22.5));
 
-  const min = screen.getByRole('textbox', { name: copy.settingsMinLabel });
+  await go('profile');
+  const min = await screen.findByRole('textbox', { name: copy.settingsMinLabel });
   setInput(min, '10m walk');
   fireEvent.blur(min);
   await waitFor(async () => expect((await me())?.min_default_label).toBe('10m walk'));
 
-  setInput(screen.getByLabelText(copy.quietStart), '21:30');
-  await waitFor(async () => expect((await me())?.quiet_start).toBe('21:30'));
-  setInput(screen.getByLabelText(copy.quietEnd), '07:15');
-  await waitFor(async () => expect((await me())?.quiet_end).toBe('07:15'));
+  expect(screen.queryByLabelText(copy.quietStart)).toBeNull();
+  expect((await me())?.quiet_start).toBe(original.quiet_start);
+  expect((await me())?.quiet_end).toBe(original.quiet_end);
 });
 
 it('shows one dead entry and retries or discards it', async () => {
@@ -143,8 +148,9 @@ it('shows one dead entry and retries or discards it', async () => {
     last_error: 'invalid set',
   });
   const user = userEvent.setup();
-  mount();
+  mount('');
   expect(await screen.findByText(copy.deadOne)).toBeTruthy();
+  await user.click(screen.getByText(copy.x8ReviewSync, { selector: 'summary' }));
   const retry = vi.spyOn(context.repo.sync, 'retryDead').mockResolvedValue(undefined);
   await user.click(screen.getByRole('button', { name: copy.retryEntry }));
   expect(retry).toHaveBeenCalledWith(seq);
@@ -164,6 +170,7 @@ it('does not delete until the hold and DELETE are both done', async () => {
   expect(spy).not.toHaveBeenCalled();
   expect(screen.queryByRole('textbox', { name: copy.deleteTypeLabel })).toBeNull();
 
+  await go('account');
   await hold(await screen.findByRole('button', { name: copy.holdDeleteAccount }));
   const typed = await screen.findByRole('textbox', { name: copy.deleteTypeLabel });
   const confirm = screen.getByRole('button', { name: new RegExp(`^${copy.deleteAccount}$`) });
@@ -181,7 +188,7 @@ it('does not delete until the hold and DELETE are both done', async () => {
 
 it('copies a crew invite and leaves on hold', async () => {
   const user = userEvent.setup();
-  mount();
+  mount('crew');
   await user.click(await screen.findByRole('button', { name: copy.copyInvite }));
   const code = await screen.findByLabelText(copy.inviteCodeLabel);
   expect(code.textContent).toMatch(/^[0-9A-HJKMNP-TV-Z]{10}$/);
@@ -192,7 +199,7 @@ it('copies a crew invite and leaves on hold', async () => {
 
 it('signs out from settings', async () => {
   const user = userEvent.setup();
-  mount();
+  mount('account');
   await user.click(await screen.findByRole('button', { name: copy.signOut }));
   expect(await screen.findByText(copy.profileNeeded)).toBeTruthy();
 });
