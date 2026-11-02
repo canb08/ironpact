@@ -32,6 +32,7 @@ export function createSupabaseRealtime(client: SupabaseClient, crewId: string, u
   let cycle = 0;
   let reconnecting = false;
   let lastSent: string | null = null;
+  let mayBeTracked = false;
   let sentAt: number[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   // Realtime v2.147.1 permits five client presence events per 30 seconds and
@@ -43,24 +44,24 @@ export function createSupabaseRealtime(client: SupabaseClient, crewId: string, u
     clearTimeout(timer);
     if (closed || presence.state !== 'joined') return;
     const key = desired ? JSON.stringify(desired) : null;
-    if (key === lastSent) return;
+    if (key === lastSent && (key !== null || !mayBeTracked)) return;
     const now = Date.now();
     sentAt = sentAt.filter((at) => now - at < presenceWindow);
     if (sentAt.length >= (desired ? 4 : 5)) {
       timer = setTimeout(publish, Math.max(1, sentAt[0]! + presenceWindow - now));
       return;
     }
-    lastSent = key; sentAt.push(now);
+    lastSent = key; mayBeTracked = desired !== null; sentAt.push(now);
     const version = cycle;
     // Websocket sends are ordered. Do not wait for a track acknowledgement to
     // send finish/untrack: a lost acknowledgement must not prolong presence.
     void (desired ? presence.track(desired) : presence.untrack()).then((result) => {
-      if (version === cycle && result !== 'ok' && lastSent === key) lastSent = null;
-    }).catch(() => { if (version === cycle && lastSent === key) lastSent = null; });
+      if (version === cycle && result !== 'ok' && lastSent === key) { lastSent = null; mayBeTracked = true; }
+    }).catch(() => { if (version === cycle && lastSent === key) { lastSent = null; mayBeTracked = true; } });
   };
   const subscribe = (channel: RealtimeChannel, version: number) => channel.subscribe((status) => {
     if (closed || cycle !== version || status !== 'SUBSCRIBED') return;
-    if (channel === presence) { lastSent = null; sentAt = []; publish(); }
+    if (channel === presence) { lastSent = null; mayBeTracked = false; sentAt = []; publish(); }
     callbacks.onChange(); // Close the subscribe/pull gap and recover after socket rejoin.
   });
   function join() {

@@ -100,4 +100,14 @@ describe('Supabase realtime transport', () => {
       expect(channels[0]!.track).toHaveBeenCalledTimes(8);
     } finally { connection.close(); vi.useRealTimers(); }
   });
+  it('still untracks on finish when a track acknowledgement was lost', async () => {
+    const { channels, connection } = fixture();
+    try {
+      channels[0]!.track.mockResolvedValueOnce('timed out');
+      connection.setPresence(payload);
+      await Promise.resolve();
+      connection.setPresence(null);
+      expect(channels[0]!.untrack).toHaveBeenCalledTimes(1);
+    } finally { connection.close(); }
+  });
 });
