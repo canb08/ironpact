@@ -197,7 +197,9 @@ it('keeps the rep-max table collapsed and labels a private partner overlay with 
   if (!crew) throw new Error('missing crew');
   await harness.db.crew_members.put({ crew_id: crew.crew.id, user_id: partnerId, role: 'member', joined_at: '2026-10-01T08:00:00Z', left_at: null });
   await harness.db.exercises.put(exercise);
-  const date = new Date().toISOString().slice(0, 10);
+  // Local calendar date: the screen labels 'Today' in local time, so a UTC date breaks between local midnight and 01:00.
+  const now = new Date();
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   for (const [user, n, weight] of [[me.id, 90, 80], [partnerId, 100, 213.7]] as const) {
     for (let index = 0; index < 2; index++) {
       await harness.db.sessions.put({ ...session, id: id(n + index), user_id: user, local_date: date });

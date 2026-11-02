@@ -126,6 +126,8 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
 
+**Lead fix on main (2026-11-03 00:45):** `ExerciseDetailScreen.test.tsx` built its session date in UTC while the screen labels Today in local time, so it failed between local 00:00 and 01:00 (red on main and every PR). Now uses the local date.
+
 **Engines (2026-11-03 00:20):** friend's Grok hit its weekly limit (resets 2026-11-08). Friend's Codex is back after 00:43. Remaining lane E work: Y3 (after X4), Y4, Y5, Y7, Y8 (needs lane C ack), Y9 → Codex, or wait for the Grok reset.
 
 **Lane C:** X11 waits for Y5 (L20). Y9 adds a 5th tab (Proof) to the X2 shell, and Y8 adds migration 0012 (L21). Ack/object here.
