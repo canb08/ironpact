@@ -57,8 +57,8 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 ## Phase 4–5 queue (fire order in `docs/LANES.md`)
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | todo — no deps |
-| P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | todo — no deps |
+| P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | running 2026-11-02 01:05 |
+| P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | running 2026-11-02 01:05 |
 | P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | todo — after P2C |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Codex Sol | C | todo — after P4A, P2D |
 | P4C | PR takeover + partner shockwave hook | Codex Sol | C | todo — after P4B, P2D |
