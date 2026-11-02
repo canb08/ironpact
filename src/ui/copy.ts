@@ -395,6 +395,15 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P4E: add this ticket's strings directly below ──
 
   // ── P4F: add this ticket's strings directly below ──
+  installKeepData: 'Installed apps keep your data. Browser tabs can lose it after 7 days.',
+  installDone: 'I installed it',
+  installAgain: 'Show me again',
+  installSkip: 'Skip',
+  installOpenInSafari: 'Open this in Safari',
+  installOpenInChrome: 'Open this in Chrome',
+  installCopyLink: 'Copy link',
+  installLinkCopied: 'Link copied.',
+  installCopyManual: 'Select the link and copy it.',
 
   // ── P5A: add this ticket's strings directly below ──
 

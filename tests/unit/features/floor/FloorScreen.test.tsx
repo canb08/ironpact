@@ -21,6 +21,7 @@ let db: IronpactDB | undefined;
 
 afterEach(async () => {
   cleanup();
+  localStorage.removeItem('ironpact.install-dismissed');
   repo?.close();
   await db?.delete();
   repo = undefined;
@@ -83,6 +84,7 @@ async function makeRepo(startIso: string) {
 function renderFloor() {
   const router = createMemoryRouter([
     { path: '/', element: <FloorScreen /> },
+    { path: '/install', element: <main>Install</main> },
     { path: '/session', element: <main>Session</main> },
     { path: '/log/:kind', element: <main>Log</main> },
     { path: '/crew', element: <main>Crew</main> },
@@ -181,4 +183,14 @@ it('week text matches core on a Sunday night that is already Monday in UTC', asy
   expect(screen.getByRole('heading', { name: 'Crewmate' })).toBeTruthy();
   expect(screen.getByTestId('partner-week').textContent).toBe(partnerLine);
   expect(screen.getByTestId('last-session').textContent).toBe('2026-10-26 · MIN');
+});
+
+it('puts the install chip on Floor after the gate was skipped', async () => {
+  localStorage.setItem('ironpact.install-dismissed', '1');
+  await makeRepo('2026-10-24T12:00:00.000Z');
+  const router = renderFloor();
+  const chip = await screen.findByRole('link', { name: copy.install });
+  expect(chip.getAttribute('href')).toBe('/install');
+  fireEvent.click(chip);
+  expect(router.state.location.pathname).toBe('/install');
 });
