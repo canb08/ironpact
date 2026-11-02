@@ -1,3 +1,4 @@
+import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { MinEntry, Session, SetRow } from '../../core/types.ts';
@@ -59,6 +60,7 @@ function statusLine(member: FloorData['duo']['me'], live: boolean): string {
 }
 
 function FloorBody() {
+  usePartnerPrShockwave();
   const repo = useRepo();
   const navigate = useNavigate();
   const { showToast } = useToast();

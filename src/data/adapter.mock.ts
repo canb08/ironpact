@@ -110,6 +110,17 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
     return null;
   }
   const remote: MockRemote = {
+    async markPrEventsSeen(ids) {
+      const actor = userId; await pause();
+      if (!actor || actor !== userId) return { ok: false, error: 'network' };
+      for (const id of new Set(ids)) {
+        const row = map('pr_events').get(id);
+        if (!row || row.deleted_at || row.user_id === actor || !crewmate(actor, row.user_id)) continue;
+        const seen = Array.isArray(row.seen_by) ? row.seen_by : [];
+        if (!seen.includes(actor)) seed('pr_events', [{ ...row, seen_by: [...seen, actor], updated_at: instant(), received_at: instant() }]);
+      }
+      return success(undefined);
+    },
     async useSpot(weekStart) {
       const actor = userId; await pause();
       if (actor !== userId) return { ok: false, error: 'network' };
@@ -199,6 +210,7 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
             if (row[ownerField] !== actor || existing[ownerField] !== actor) { tables.set(table, backup); return client('ownership'); }
             output.push(projection(table, existing)); continue;
           }
+          if (table === 'pr_events' && existing) row.seen_by = structuredClone(existing.seen_by ?? []);
           const error = validateWrite(table, row, actor);
           if (error) { tables.set(table, backup); return client(error); }
           const saved: RemoteRow = table === 'exercise_muscles' ? { exercise_id: row.exercise_id, muscle: row.muscle, weight: row.weight } : { ...row, updated_at: instant(), created_at: existing?.created_at ?? row.created_at ?? instant() };

@@ -54,6 +54,8 @@ export interface KeysetCursor {
 
 export interface Remote {
   readonly kind: 'supabase' | 'mock';
+  /** L16: online-only, idempotent acknowledgement of live crewmate PRs. */
+  markPrEventsSeen(ids: readonly Uuid[]): Promise<Result<void, 'network'>>;
   useSpot(weekStart: LocalDate): Promise<Result<Uuid, SpotError>>;
   subscribeCrew(crewId: Uuid, callbacks: CrewRealtimeCallbacks): Promise<CrewRealtime>;
 
@@ -307,6 +309,8 @@ export interface RepoQueries {
   recentSessionsWithSets(limit: number): Promise<SessionWithSets[]>;
   /** My live (non-deleted) PR events. `sessionId` matches set and run sources. */
   prEvents(filter: PrEventFilter): Promise<PrEvent[]>;
+  /** L16: live current crewmates’ PRs not yet seen by the viewer. */
+  unseenPartnerPrs(): Promise<PrEvent[]>;
   /** My `exercise_prefs` row, or `undefined` when unset or soft-deleted. */
   exercisePref(exerciseId: Uuid): Promise<ExercisePref | undefined>;
   /** Every entry of mine on that local date (S15). */
@@ -314,6 +318,8 @@ export interface RepoQueries {
 }
 
 export interface RepoWrites {
+  /** L16: RPC online, no outbox entry offline; retry on next open. */
+  markPrEventsSeen(ids: readonly Uuid[]): Promise<Result<void, 'network'>>;
   upsertMyProfile(patch: Partial<Omit<Profile, 'id'>>): Promise<Result<Profile, WriteError>>;
   createExercise(input: Pick<Exercise, 'name' | 'export_label' | 'kind' | 'category' | 'lower_body'>): Promise<Result<Exercise, WriteError | 'label_taken'>>;
   startSession(input: StartSessionInput): Promise<Result<Session, WriteError>>;

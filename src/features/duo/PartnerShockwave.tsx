@@ -25,24 +25,28 @@ export function PartnerShockwave({
   const signature = events.map((event) => event.id).join('|');
 
   useEffect(() => {
-    let hide: number | undefined;
+    let timer: number | undefined;
     let cancelled = false;
-    const start = window.setTimeout(() => {
+    const played = new Set(shockwavePlayed());
+    function next() {
       if (cancelled) return;
-      const next = pickShockwave(events, shockwavePlayed(), inSession);
-      if (!next) return;
-      rememberShockwave(next.id);
-      setVisible(next);
-      hide = window.setTimeout(() => setVisible(null), SHOCKWAVE_MS);
-    }, 0);
+      const event = pickShockwave(events, [...played], inSession);
+      setVisible(event);
+      if (!event) return;
+      const key = event.playKey ?? event.id;
+      played.add(key);
+      rememberShockwave(key);
+      event.onPlayed?.();
+      timer = window.setTimeout(next, SHOCKWAVE_MS);
+    }
+    timer = window.setTimeout(next, 0);
     return () => {
       cancelled = true;
-      window.clearTimeout(start);
-      if (hide !== undefined) window.clearTimeout(hide);
+      window.clearTimeout(timer);
     };
   }, [signature, inSession, events]);
 
-  if (!visible) return null;
+  if (!visible || inSession) return null;
   return (
     <aside
       className="shockwave"
@@ -52,7 +56,7 @@ export function PartnerShockwave({
     >
       <p className="shockwave__stamp">{copy.shockwaveStamp}</p>
       <p className="shockwave__line">
-        {fill(copy.shockwaveLine, { name: visible.name, exercise: visible.exercise, detail: visible.detail })}
+        {visible.line ?? fill(copy.shockwaveLine, { name: visible.name, exercise: visible.exercise, detail: visible.detail })}
       </p>
     </aside>
   );

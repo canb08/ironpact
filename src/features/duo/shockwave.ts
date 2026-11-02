@@ -11,12 +11,13 @@ export interface ShockwaveEvent {
   exercise: string;
   /** Already formatted, e.g. "85 kg × 5". */
   detail: string;
+  /** Production events use the existing copy templates and a viewer-scoped key. */
+  line?: string;
+  playKey?: string;
+  onPlayed?: () => void;
 }
 
-/**
- * P4C owns `usePartnerPrShockwave()` (`pr_events.seen_by`). That export is not on main yet.
- * Floor and Crew render whatever this bridge is given; the play-once store is the next-open guard.
- */
+/** P4C publishes verified Repo rows here; P4E owns presentation and playback. */
 let current: readonly ShockwaveEvent[] = [];
 const listeners = new Set<() => void>();
 
@@ -42,7 +43,7 @@ export function pickShockwave(
 ): ShockwaveEvent | null {
   if (inSession) return null;
   const seen = new Set(played);
-  return events.find((event) => !seen.has(event.id)) ?? null;
+  return events.find((event) => !seen.has(event.playKey ?? event.id)) ?? null;
 }
 
 export function shockwavePlayed(): string[] {
@@ -51,7 +52,9 @@ export function shockwavePlayed(): string[] {
 
 export function rememberShockwave(id: string): void {
   const played = readIdList(SHOCKWAVE_KEY);
-  if (!played.includes(id)) writeIdList(SHOCKWAVE_KEY, [...played, id]);
+  if (!played.includes(id)) {
+    try { writeIdList(SHOCKWAVE_KEY, [...played, id]); } catch { /* Server receipt remains authoritative. */ }
+  }
 }
 
 export function resetShockwaveForTests(): void {

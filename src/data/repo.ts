@@ -215,6 +215,18 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
       }
       return result;
     }),
+    unseenPartnerPrs: () => read(async () => {
+      const user = remote.currentUserId();
+      if (!user) return [];
+      const users = await visibleUsers();
+      users.delete(user);
+      const rows = await db.mirror('pr_events').filter((row) =>
+        !row.deleted_at && users.has(String(row.user_id))).toArray();
+      return rows.flatMap((row) => {
+        const parsed = prEventSchema.safeParse(row);
+        return parsed.success && !parsed.data.seen_by.includes(user) ? [parsed.data] : [];
+      }).sort((a, b) => b.client_updated_at.localeCompare(a.client_updated_at) || b.id.localeCompare(a.id));
+    }),
     prEvents: (filter) => read(async () => {
       const user = remote.currentUserId();
       if (!user) return [];
@@ -453,6 +465,26 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     return row;
   }
   const w: RepoWrites = {
+    markPrEventsSeen: (ids) => rpc(async (valid) => {
+      if (!environment.online()) return { ok: false, error: 'network' as const };
+      const user = remote.currentUserId()!;
+      const result = await remote.markPrEventsSeen(ids);
+      if (!result.ok || !valid()) return { ok: false, error: 'network' as const };
+      // This metadata never enters the owner's outbox or changes their claim.
+      await db.transaction('rw', db.mirror('pr_events'), db.crew_members, async () => {
+        const users = await visibleUsers();
+        for (const id of new Set(ids)) {
+          if (!valid()) return;
+          const row = await db.mirror('pr_events').get(id);
+          const parsed = prEventSchema.safeParse(row);
+          if (parsed.success && !parsed.data.deleted_at && parsed.data.user_id !== user
+            && users.has(parsed.data.user_id) && !parsed.data.seen_by.includes(user)) {
+            await db.mirror('pr_events').update(id, { seen_by: [...parsed.data.seen_by, user] });
+          }
+        }
+      });
+      return ok(undefined);
+    }),
     upsertMyProfile: (patch) => ordinary(async (user) => {
       const row = validate(profileFormSchema, { ...(await db.profiles.get(user) ?? defaultProfile(user, clock.timezone())), ...patch, id: user });
       await save('profiles', row); return row;

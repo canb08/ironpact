@@ -1,3 +1,4 @@
+import { runPartnerPrContract } from '../unit/data/partner-pr.contract.ts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createClock } from '../../src/data/clock.ts';
 import { IronpactDB, rowKey, SNAPSHOT_TIMESTAMP } from '../../src/data/db.ts';
@@ -11,6 +12,17 @@ describe.skipIf(process.env.RUN_SUPABASE_INTEGRATION !== '1')('Supabase local st
   beforeAll(async () => { stack = await localStack(); }, 30_000);
   afterAll(async () => { await stack?.close(); }, 30_000);
   beforeEach(async () => { await stack.reset(); }, 30_000);
+
+  runPartnerPrContract(async () => {
+    const owner = stack.remote;
+    const crew = unwrap(await owner.createCrew('Crew', 'Europe/Amsterdam'));
+    const invite = unwrap(await owner.createInvite(crew));
+    return { owner, async asPartner() {
+      const partner = await stack.bob.signIn();
+      unwrap(await partner.redeemInvite(invite));
+      return partner;
+    } };
+  });
 
   describe('A6 unchanged contract on Supabase', () => {
     runRepoContract(async ({ now }) => {

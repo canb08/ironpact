@@ -145,3 +145,17 @@ describe('mock Remote semantics (separate from the reusable Repo contract)', () 
     }
   });
 });
+
+it('L16: stale owner PR tombstones preserve partner receipts', async () => {
+  const remote = createMockRemote();
+  const pr = { ...weight(fixtureId(3000)), exercise_id: MOCK_EXERCISE_ID,
+    source_id: fixtureId(3001), pr_type: 'e1rm', reps: 5, value: 70,
+    previous_value: 60, pct_over_previous: 16.6667, seen_by: [] };
+  remote.seed('pr_events', [pr]);
+  unwrap(await remote.verifyCode('bob@example.test', '123456'));
+  unwrap(await remote.markPrEventsSeen([pr.id]));
+  unwrap(await remote.verifyCode('alice@example.test', '123456'));
+  const updated = await remote.upsert('pr_events', [{ ...pr, deleted_at: instant }]);
+  expect(updated).toMatchObject({ ok: true, value: [{ deleted_at: instant, seen_by: [MOCK_USER_IDS.bob] }] });
+  expect(remote.inspect('pr_events')[0]?.seen_by).toEqual([MOCK_USER_IDS.bob]);
+});

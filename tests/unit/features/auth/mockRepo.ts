@@ -121,11 +121,13 @@ export function mockRepo(partial: {
     exerciseHistory: async () => [],
     recentSessionsWithSets: async () => [],
     prEvents: async () => [],
+    unseenPartnerPrs: async () => [],
     exercisePref: async () => undefined,
     day: async () => ({ sessions: [], sets: [], cardio: [], martial: [], min: [], bodyweight: [] }),
     ...partial.q,
   };
   const w: RepoWrites = {
+    markPrEventsSeen: async () => ({ ok: true, value: undefined }),
     upsertMyProfile: async (patch) => ({ ok: true, value: testProfile(patch) }),
     createExercise: async () => ({ ok: false, error: 'storage_full' }),
     startSession: async () => ({ ok: false, error: 'storage_full' }),
