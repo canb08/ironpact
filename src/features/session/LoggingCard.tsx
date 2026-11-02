@@ -12,6 +12,8 @@ import { skipRest, startRest, useRestTimer } from '../timer/useRestTimer.ts';
 import { SetList } from './SetList.tsx';
 import { FRESH_UNDO_MS, prefillAt, roundKg } from './sessionModel.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
+import { SetLoggedPlayer } from '../../ui/motion/SetLogged.tsx';
+import { useSetLoggedMicro } from './useSetLoggedMicro.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
 interface LoggingCardProps {
@@ -37,6 +39,7 @@ function nudgeSentence(nudge: Nudge): string {
 export function LoggingCard({ session, exercise, sets, prefillSets, pending, restSeconds, nudge, onNext, onFinish, onLogged, onRack }: LoggingCardProps) {
   const repo = useRepo();
   const write = useSessionWrite();
+  const logged = useSetLoggedMicro();
   const rest = useRestTimer();
   const id = useId();
   const workingLogged = sets.filter((set) => !set.is_warmup).length;
@@ -107,12 +110,16 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
         setWarmup(false);
         setFreshId(row.id);
         haptic('setLogged');
+        logged.play();
         startRest(exercise.id, restSeconds);
         onLogged(row);
       });
     }}>
+      <SetLoggedPlayer playKey={logged.playKey} reduced={logged.reduced} />
       <div className="session-steppers">
-        <Stepper label={weightLabel} value={kg} step={step} onChange={setKg} disabled={write.busy} />
+        <div data-set-logged-weight="">
+          <Stepper label={weightLabel} value={kg} step={step} onChange={setKg} disabled={write.busy} />
+        </div>
         <Stepper label={copy.reps} value={reps} step={1} onChange={setReps} disabled={write.busy} />
       </div>
       <div className="session-options">
@@ -127,7 +134,7 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
       {resting && <RestTimerOverlay part="controls" onSkipHold={rack} />}
       <div className="session-actions">
         <Button size="xl" variant="secondary" disabled={write.busy} onClick={onNext}>{copy.nextExercise}</Button>
-        <HoldButton size="xl" variant="secondary" holdMs={600} disabled={write.busy} aria-label={copy.finish} onHoldComplete={rack}>
+        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} disabled={write.busy} aria-label={copy.finish} onHoldComplete={rack}>
           {copy.rackIt}
           <span className="session-hold-hint">{copy.finish}</span>
         </HoldButton>
@@ -135,6 +142,7 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
       <Button className="session-log" type="submit" size="xl" disabled={write.busy} aria-describedby={`${id}-error`}>
         {copy.logSet}
       </Button>
+      {logged.visible && <p role="status">{copy.setLogged}</p>}
     </form>
     <Sheet open={rpeOpen} onClose={() => setRpeOpen(false)} title={copy.sessionRpe}>{rpePills}</Sheet>
   </>;

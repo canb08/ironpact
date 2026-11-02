@@ -14,3 +14,14 @@ export { BigNumber } from './BigNumber';
 export type { BigNumberProps } from './BigNumber';
 export { Ring } from './Ring';
 export { copy, fill } from './copy';
+export { UI, SLAM, HEAVY, EASE_OUT, MOTION_MS } from './motion/springs';
+export { useReducedMotion, motionIsReduced } from './motion/reduced';
+export { useMotionReduced } from './motion/reduced-context';
+export { startViewTransition } from './motion/viewTransition';
+export { createFlashGuard, MAX_FLASHES_PER_SECOND } from './motion/flash';
+export { createMomentQueue, moments, TIER1_GAP_MS, MOMENT_KIND } from './moments/queue';
+export type { Moment, MomentQueue, MomentSnapshot, TriggerResult } from './moments/queue';
+export { registerMomentView } from './moments/registry';
+export { MomentHost } from './moments/MomentHost';
+// MotionProvider, SetLoggedMotion and AnimatedNumber import `motion` / `@number-flow/react`.
+// They stay off this barrel so the entry graph cannot pull them into initial JS.

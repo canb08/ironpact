@@ -20,6 +20,7 @@
 .session-tick--pending { color: var(--text-muted); }
 .session-controls { display: grid; gap: 8px; flex-shrink: 0; margin-top: auto; }
 .session-steppers { display: grid; gap: 8px; }
+.session-steppers [data-set-logged-weight] { display: contents; }
 .session-steppers .ui-stepper { position: relative; }
 .session-steppers .ui-stepper > label { position: absolute; inset-inline-start: 80px; top: 3px; font-size: .75rem; pointer-events: none; }
 .session-steppers .ui-stepper input { box-sizing: border-box; padding-top: 12px; font-size: clamp(1.5rem, 6vw, 2rem); }

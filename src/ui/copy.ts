@@ -441,6 +441,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   devSaved: 'Saved',
 
   // ── P4B: add this ticket's strings directly below ──
+  // Set logged toast is `setLogged` ("Locked in.") in the string bank. No new sentence.
 
   // ── P4C: add this ticket's strings directly below ──
 
