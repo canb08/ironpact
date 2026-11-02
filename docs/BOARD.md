@@ -72,6 +72,14 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5F | Recompute PRs after an edit + edit notices (L13) | Grok | C | running 2026-11-02 03:55 |
 | P5A | S13 Progress full | Grok | **C** (Can's Grok took it while idle; Can's Claude reviews + merges) | merged #37 |
 
+## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need Can)
+| ID | What | Engine | Lane | Status |
+|---|---|---|---|---|
+| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | C | running 2026-11-02 04:32 |
+| H2 | Lighthouse CI on the production build | Grok | C | running 2026-11-02 04:32 |
+| H3 | Security checklist audit (§4) + missing pgTAP | Grok | C | running 2026-11-02 04:32 |
+| H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
+
 ## Parked / follow-ups
 - **For lane C (seen by friend's Claude, 2026-11-02, mock backend, 375 px wide):** on `/session` after choosing an exercise, the kg and reps inputs overflow the right edge (horizontal scroll). Belongs to the session screen (P2D / S6).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
