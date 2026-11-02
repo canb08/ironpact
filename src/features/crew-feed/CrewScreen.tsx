@@ -22,7 +22,7 @@ import { PresenceBanner } from '../duo/PresenceBanner.tsx';
 import { useCrewTick } from '../duo/useCrewTick.ts';
 import { useDebugWeek } from '../duo/useDebugWeek.ts';
 import { usePresence } from '../duo/usePresence.ts';
-import { barTier, formatRawKg, memberColor, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
+import { barTier, formatRawKg, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
 import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { formatEntry, groupFeed, itemsFromHistory, type FeedDay } from './feed.ts';
 import { longestSharedStreak, monthBounds, prsThisWeek, sessionsTogether, topSets, volumeKg } from './stats.ts';
@@ -317,8 +317,7 @@ function CrewFeed() {
               {day.entries.map((entry) => {
                 const profile = profiles.get(entry.user);
                 const name = shownName(profile?.display_name ?? '', entry.user === meId ? copy.x7You : copy.x7Partner);
-                const hue = profile?.color_hue;
-                const color = entry.user === meId ? duo.me.color : colors.get(entry.user) ?? memberColor(typeof hue === 'number' ? hue : 220);
+                const color = entry.user === meId ? 'var(--plate-red)' : 'var(--plate-blue)';
                 return <li key={entry.id}>
                   <p className="crew-person">
                     <span className="crew-swatch" style={{ background: color }} aria-hidden="true" />
