@@ -147,9 +147,11 @@ select throws_ok($q$update public.bodyweight_entries set weight_kg = 29$q$,'2351
 select is((select local_date from public.bodyweight_entries limit 1),date '2026-10-26',
   'standalone bodyweight retains own local date');
 
+-- P2F: assisted pull-up (−25 kg) with no bodyweight on or before the set date
+-- has no e1RM. The session volume of that one working set is −125.
 insert into public.pr_events (id,exercise_id,source_id,pr_type,value,user_id,local_date,client_updated_at)
 values ('80000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000011',
-  '30000000-0000-4000-8000-000000000001','e1rm',80,
+  '30000000-0000-4000-8000-000000000001','volume',-125,
   '10000000-0000-4000-8000-000000000001','2026-10-25','2026-10-28');
 update public.sets set deleted_at = now();
 select ok((select deleted_at is not null from public.pr_events limit 1),

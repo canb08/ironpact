@@ -40,18 +40,18 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 |---|---|---|---|---|
 | C6 | Router + copy anchors for Phase 2–3 | Claude | C | merged (direct) |
 | P2A | Data contract: history, PR events, prefs, day, edits (L9) | Grok | C | merged #25 |
-| P2F | Server re-check of PR events (0007) | Grok (Codex hit usage limit) | C | running 2026-11-02 01:50 |
+| P2F | Server re-check of PR events (0007) | Grok | C | merged #31 |
 | P2B | Core: PRs, progression, readiness, prefill | Grok | C | merged #21 |
 | P2C | Rest timer engine + Wake Lock + haptics | Grok | C | merged #20 |
-| P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Grok (Codex out of usage) | C | running 2026-11-02 02:10 |
-| P2E | S14 exercise detail + S15 day editor | Grok | C | running 2026-11-02 02:10 |
+| P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Grok | C | pr #30 (e2e fix requested) |
+| P2E | S14 exercise detail + S15 day editor | Grok | C | pr #26 (unit test fix requested) |
 | P2G | Playwright Phase 2 | Grok | C | todo — after P2D, P2E |
 | P3A | Realtime channel + week-close cron (0004/0005) | Codex Astra | E | merged #28 |
 | P3C | Core: Bar, spots, fair comparison, comeback | Grok | E | merged #27 |
 | P3D | Ring component | Grok | E | merged #29 |
 | P3B | Duo data layer + realtime client (L10) | Codex Astra | E | running 2026-11-02 |
 | P3E | Crew full + presence + Bar + comeback | Codex Sol | E | todo — after P3B, P3C, P3D |
-| P3F | Progress S13: trend chart | Grok | E | running 2026-11-02 |
+| P3F | Progress S13: trend chart | Grok | E | pr #33 (skimmed UI; rebasing + lazy chunk checked locally; PR opened by Lead) |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
 
 ## Phase 4–5 queue (fire order in `docs/LANES.md`)
