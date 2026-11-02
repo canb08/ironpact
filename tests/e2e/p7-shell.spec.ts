@@ -72,17 +72,24 @@ test('only set-input focus hides the tabs; they return after blur and workout co
   await reachFloor(page);
   await waitForBench(page);
   await logBench(page, 1);
-  const kg = page.getByRole('spinbutton', { name: copy.kg, exact: true });
+  const dock = page.locator('[data-session-dock]');
+  await expect(dock).toBeVisible();
+  const kg = dock.getByRole('spinbutton', { name: copy.kg, exact: true });
   await kg.focus();
   await expect(tabs(page)).toBeHidden();
-  await page.getByRole('button', { name: copy.logSet, exact: true }).focus();
+  await kg.blur();
   await expect(tabs(page)).toBeVisible();
-  const rack = page.getByRole('button', { name: copy.finish });
+  await dock.getByRole('button', { name: copy.x4Log, exact: true }).focus();
+  await expect(tabs(page)).toBeVisible();
+  const rack = page.getByRole('button', { name: copy.x4FinishHold, exact: true });
   await rack.focus();
   await page.keyboard.down('Enter');
   try { await expect(page.getByRole('region', { name: copy.summaryTitle })).toBeVisible(); }
   finally { await page.keyboard.up('Enter'); }
   await expect(page.getByTestId('session-live')).toHaveCount(0);
+  await expect(tabs(page)).toBeVisible();
+  await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
   await tabs(page).getByRole('link', { name: shellCopy.today, exact: true }).click();
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
   await page.getByRole('textbox').first().focus();

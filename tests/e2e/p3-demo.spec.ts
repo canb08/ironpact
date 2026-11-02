@@ -1,7 +1,7 @@
 import { devices, expect, test, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { MOCK_USER_IDS } from '../../src/data/adapter.mock.ts';
 import { shellCopy } from '../../src/app/shell/copy.ts';
-import { copy, fill } from '../../src/ui/copy.ts';
+import { copy } from '../../src/ui/copy.ts';
 import { reachFloor } from './helpers.ts';
 
 /**
@@ -212,19 +212,18 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
     await expect(page.getByTestId('debug-week')).toHaveCount(0);
 
     await bob.getByRole('button', { name: copy.start, exact: true }).click();
-    await expect(bob.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
-    await bob.getByRole('button', { name: copy.start, exact: true }).click();
-    await expect(page.getByTestId('presence-banner')).toHaveText(QUIET);
-
     const picker = bob.getByRole('dialog', { name: copy.pickerTitle });
     await expect(picker).toBeVisible();
     await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
     await expect(picker).toBeHidden();
-    const weight = bob.getByRole('spinbutton', { name: copy.kg });
+    await expect(bob.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true })).toBeVisible();
+    await expect(page.getByTestId('presence-banner')).toHaveText(QUIET);
+    const dock = bob.locator('[data-session-dock]');
+    const weight = dock.getByRole('spinbutton', { name: copy.kg, exact: true });
     await weight.fill('80');
     await expect(weight).toHaveValue('80');
-    await bob.getByRole('button', { name: copy.logSet }).click();
-    await expect(bob.getByText(fill(copy.sessionSetCount, { count: 1 }), { exact: true })).toBeVisible();
+    await dock.getByRole('button', { name: copy.x4Log, exact: true }).click();
+    await expect(bob.getByText(copy.x4SetOne, { exact: true })).toBeVisible();
     await expect(page.getByTestId('presence-banner')).toHaveText(BENCH);
 
     await page.locator('.app-shell__tabs').getByRole('link', { name: copy.crewTitle, exact: true }).click();
