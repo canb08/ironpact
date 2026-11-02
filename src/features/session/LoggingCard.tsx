@@ -123,13 +123,15 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
         <Button size="xl" variant="secondary" aria-pressed={warmup} disabled={write.busy}
           onClick={() => setWarmup(!warmup)}>{copy.sessionWarmup}</Button>
       </div>
-      {resting ? <RestTimerOverlay part="controls" onSkipHold={rack} /> : <div className="session-actions">
+      {/* RACK IT stays reachable during rest: the timer adds controls, it never replaces the finish action. */}
+      {resting && <RestTimerOverlay part="controls" onSkipHold={rack} />}
+      <div className="session-actions">
         <Button size="xl" variant="secondary" disabled={write.busy} onClick={onNext}>{copy.nextExercise}</Button>
         <HoldButton size="xl" variant="secondary" holdMs={600} disabled={write.busy} aria-label={copy.finish} onHoldComplete={rack}>
           {copy.rackIt}
           <span className="session-hold-hint">{copy.finish}</span>
         </HoldButton>
-      </div>}
+      </div>
       <Button className="session-log" type="submit" size="xl" disabled={write.busy} aria-describedby={`${id}-error`}>
         {copy.logSet}
       </Button>
