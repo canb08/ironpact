@@ -189,3 +189,10 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 ## L19 · Owner-requested redesign R2 (2026-11-02)
 
 Owner-requested redesign R2; docs/REDESIGN.md supersedes SPEC §3 and §2 layouts; product rules unchanged.
+
+## L20 · Feel layer R3 on top of R2 (friend/co-owner request, 2026-11-02)
+- **What:** `docs/FEEL.md`. Interaction, motion, haptics and sound. No keypad on the hot path, every input is a gym object (plates, bell, dials), every feedback goes through one `feel()` kernel. Muay Thai is the only fight discipline in the UI (stored data and export unchanged).
+- **Replaces:** REDESIGN §7 ("one orchestrated moment only"). REDESIGN still owns layout, IA, tokens, type and words.
+- **Tickets:** Y1-Y7, lane E. Y5 (motion pass) runs after X3-X7 and **before X11**, so X11's visual goldens capture the final motion states.
+- **Owner's Lead:** please ack or object on the board; until then lane E only fires Y1, which touches no screen.
+
