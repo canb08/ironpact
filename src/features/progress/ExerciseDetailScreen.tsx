@@ -1,14 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
-import type { BodyweightEntry, Exercise } from '../../core/types.ts';
-import type { SessionWithSets } from '../../data/adapter.ts';
-import { BigNumber, Button, Chip, copy, fill } from '../../ui';
+import { localDateOf } from '../../core/weeks.ts';
+import type { BodyweightEntry, Exercise, Profile, Session, SetRow } from '../../core/types.ts';
+import type { PrEvent, SessionWithSets } from '../../data/adapter.ts';
+import { TrendChart } from '../stats/TrendChart.tsx';
+import { bestE1rmPerSession, chartModel, trendWindow, type SessionBest } from '../stats/trend.ts';
+import { BigNumber, Button, copy } from '../../ui';
 import { bestE1rm, formatE1rm } from './e1rmView.ts';
 import { parseRest, writeErrorCopy } from './form.ts';
+import { HistorySet } from './historySet.tsx';
+import { formatKgCell, repMaxTable, type RepMaxRow } from './repMax.ts';
+import { formatPrKg, prEyebrow } from '../prs/label.ts';
 import { Field } from './widgets.tsx';
 import './progress.css';
+
+interface DetailData {
+  exercise: Exercise | undefined;
+  history: SessionWithSets[];
+  prefRest: number | null;
+  bigJumps: boolean;
+  bodyweight: BodyweightEntry[];
+  me: Profile | undefined;
+  sessions: Session[];
+  sets: SetRow[];
+  prs: PrEvent[];
+}
+
+const EMPTY: DetailData = {
+  exercise: undefined,
+  history: [],
+  prefRest: null,
+  bigJumps: false,
+  bodyweight: [],
+  me: undefined,
+  sessions: [],
+  sets: [],
+  prs: [],
+};
 
 function bodyweightOn(rows: readonly BodyweightEntry[], date: string): number | null {
   const prior = rows.filter((row) => row.local_date <= date).sort((a, b) => b.measured_at.localeCompare(a.measured_at));
@@ -25,15 +55,18 @@ export default function ExerciseDetailScreen() {
   const repo = useRepo();
   const { id } = useParams();
   const [revision, setRevision] = useState(0);
+  const [undoId, setUndoId] = useState<string | null>(null);
+  const [trashError, setTrashError] = useState<string | null>(null);
   const data = useLiveQuery(async () => {
-    if (!id) return { exercise: undefined, history: [], prefRest: null as number | null, bigJumps: false, bodyweight: [] as BodyweightEntry[] };
+    if (!id) return EMPTY;
     const userId = repo.auth.userId();
-    const [exercises, history, pref, me, span] = await Promise.all([
+    const [exercises, history, pref, me, span, prs] = await Promise.all([
       repo.q.exercises(),
       repo.q.exerciseHistory(id, 100),
       repo.q.exercisePref(id),
       repo.q.me(),
       userId ? repo.q.entriesBetween(userId, '0000-01-01', '9999-12-31') : Promise.resolve(null),
+      repo.q.prEvents({ exerciseId: id }),
     ]);
     return {
       exercise: exercises.find((exercise) => exercise.id === id),
@@ -41,8 +74,18 @@ export default function ExerciseDetailScreen() {
       prefRest: pref?.rest_s ?? null,
       bigJumps: me?.big_jumps ?? false,
       bodyweight: span?.bodyweight ?? [],
+      me,
+      sessions: span?.sessions ?? [],
+      sets: span?.sets ?? [],
+      prs,
     };
   }, [repo, id, revision]);
+
+  useEffect(() => {
+    if (!undoId) return undefined;
+    const timer = window.setTimeout(() => setUndoId(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [undoId]);
 
   if (!id || data === undefined) return <main className="progress"><p>{copy.loading}</p></main>;
   if (!data.exercise) return <main className="progress"><h1>{copy.missingExercise}</h1></main>;
@@ -57,6 +100,54 @@ export default function ExerciseDetailScreen() {
       return max === null || value > max ? value : max;
     }, null);
   const fallback = exercise.category === 'isolation' ? 90 : 120;
+  const rows = liftKind === null
+    ? []
+    : repMaxTable(
+      data.history.map((item) => ({ localDate: item.session.local_date, sets: item.sets })),
+      liftKind,
+      (date) => bodyweightOn(data.bodyweight, date),
+    );
+  const chartWindow = data.me == null ? null : trendWindow(localDateOf(new Date().toISOString(), data.me.tz));
+  const points = liftKind === null || data.me == null || chartWindow == null
+    ? []
+    : bestE1rmPerSession({
+      userId: data.me.id,
+      exerciseId: exercise.id,
+      from: chartWindow.from,
+      to: chartWindow.to,
+      exercise,
+      sessions: data.sessions,
+      sets: data.sets,
+      bodyweights: data.bodyweight,
+    });
+
+  function refresh() {
+    setRevision((value) => value + 1);
+  }
+
+  async function removeSet(setId: string) {
+    setTrashError(null);
+    const result = await repo.w.softDelete('sets', setId);
+    if (!result.ok) {
+      setTrashError(writeErrorCopy(result.error));
+      return;
+    }
+    setUndoId(setId);
+    refresh();
+  }
+
+  async function restoreSet() {
+    const setId = undoId;
+    if (!setId) return;
+    setUndoId(null);
+    const result = await repo.w.restore('sets', setId);
+    if (!result.ok) {
+      setTrashError(writeErrorCopy(result.error));
+      refresh();
+      return;
+    }
+    refresh();
+  }
 
   return (
     <main className="progress">
@@ -67,12 +158,17 @@ export default function ExerciseDetailScreen() {
           <BigNumber data-testid="best-e1rm" size="xl" value={best === null ? copy.e1rmNone : formatE1rm(best)} unit={copy.kg} />
         </p>
       ) : null}
+      {liftKind && chartWindow ? (
+        <E1rmChart points={points} window={chartWindow} />
+      ) : null}
+      {liftKind ? <RepMaxTable rows={rows} /> : null}
+      <PrList events={data.prs} />
       <RestEditor
         initial={data.prefRest ?? fallback}
         onSave={async (rest) => {
           const result = await repo.w.setExercisePref(exercise.id, { rest_s: rest });
           if (!result.ok) return writeErrorCopy(result.error);
-          setRevision((value) => value + 1);
+          refresh();
           return null;
         }}
       />
@@ -81,7 +177,7 @@ export default function ExerciseDetailScreen() {
         onSave={async (next) => {
           const result = await repo.w.upsertMyProfile({ big_jumps: next });
           if (!result.ok) return writeErrorCopy(result.error);
-          setRevision((value) => value + 1);
+          refresh();
           return null;
         }}
       />
@@ -90,16 +186,133 @@ export default function ExerciseDetailScreen() {
         {data.history.length === 0 ? <p>{copy.noSetsYet}</p> : (
           <ol className="progress-history">
             {data.history.map((item) => (
-              <HistorySession key={item.session.id} exercise={exercise} item={item} bodyweight={data.bodyweight} />
+              <HistorySession
+                key={item.session.id}
+                exercise={exercise}
+                item={item}
+                bodyweight={data.bodyweight}
+                onRefresh={refresh}
+                onDelete={(setId) => { void removeSet(setId); }}
+              />
             ))}
           </ol>
         )}
       </section>
+      {trashError ? <p className="progress-error" role="alert">{trashError}</p> : null}
+      {undoId ? (
+        <p className="progress-inline" role="status">
+          {copy.undone}
+          <Button onClick={() => { void restoreSet(); }}>{copy.restore}</Button>
+        </p>
+      ) : null}
     </main>
   );
 }
 
-function HistorySession({ exercise, item, bodyweight }: { exercise: Exercise; item: SessionWithSets; bodyweight: readonly BodyweightEntry[] }) {
+function E1rmChart({
+  points, window,
+}: {
+  points: readonly SessionBest[];
+  window: { from: string; to: string };
+}) {
+  const model = chartModel(points, [], false);
+  return (
+    <section aria-label={copy.bestE1rm}>
+      <h2>{copy.bestE1rm}</h2>
+      {points.length < 2 ? <p>{copy.emptyProgress}</p> : (
+        <TrendChart
+          model={model}
+          window={window}
+          youLabel={copy.progressYou}
+          partnerLabel={null}
+          partnerHue={200}
+          caption={copy.progressChartKg}
+        />
+      )}
+      {points.length > 0 ? (
+        <table className="progress-sr">
+          <caption>{copy.chartTableCaption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{copy.dateLabel}</th>
+              <th scope="col">{copy.chartTableKg}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {points.map((point) => (
+              <tr key={point.sessionId}>
+                <td>{point.localDate}</td>
+                <td>{formatE1rm(point.e1rm)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+    </section>
+  );
+}
+
+function RepMaxTable({ rows }: { rows: readonly RepMaxRow[] }) {
+  return (
+    <section aria-label={copy.repMaxHeading}>
+      <h2>{copy.repMaxHeading}</h2>
+      <p className="progress-muted">{copy.repMaxCaption}</p>
+      <div className="progress-table-wrap">
+        <table className="progress-reps">
+          <thead>
+            <tr>
+              <th scope="col">{copy.reps}</th>
+              <th scope="col">{copy.repMaxActual}</th>
+              <th scope="col">{copy.repMaxDerived}</th>
+              <th scope="col">{copy.dateLabel}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.reps}>
+                <th scope="row">{row.reps}</th>
+                <td>{row.actualKg == null ? copy.e1rmNone : formatKgCell(row.actualKg)}</td>
+                <td>{row.derivedKg == null ? copy.e1rmNone : formatKgCell(row.derivedKg)}</td>
+                <td>{row.date ?? copy.e1rmNone}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function PrList({ events }: { events: readonly PrEvent[] }) {
+  return (
+    <section aria-label={copy.prListHeading}>
+      <h2>{copy.prListHeading}</h2>
+      {events.length === 0 ? <p>{copy.prListEmpty}</p> : (
+        <ul className="progress-history">
+          {events.map((event) => (
+            <li key={event.id}>
+              {prEyebrow(event)}
+              {' · '}
+              {formatPrKg(event.value)}
+              {' · '}
+              {event.local_date}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function HistorySession({
+  exercise, item, bodyweight, onRefresh, onDelete,
+}: {
+  exercise: Exercise;
+  item: SessionWithSets;
+  bodyweight: readonly BodyweightEntry[];
+  onRefresh: () => void;
+  onDelete: (id: string) => void;
+}) {
   const best = sessionBest(exercise, item, bodyweight);
   return (
     <li>
@@ -109,11 +322,7 @@ function HistorySession({ exercise, item, bodyweight }: { exercise: Exercise; it
       {best !== null ? <p>{copy.sessionE1rm} {formatE1rm(best)} {copy.kg}</p> : null}
       <ol>
         {item.sets.map((set) => (
-          <li key={set.id} className="progress-set">
-            <span>{fill(copy.setLine, { index: set.set_index, reps: set.reps, kg: set.weight_kg })}</span>
-            {set.rpe !== null ? <span>@{set.rpe}</span> : null}
-            {set.is_warmup ? <Chip>{copy.sessionWarmup}</Chip> : null}
-          </li>
+          <HistorySet key={set.id} set={set} exercise={exercise} onRefresh={onRefresh} onDelete={onDelete} />
         ))}
       </ol>
       <Link to={`/day/${item.session.local_date}`}>{copy.editDay}</Link>
