@@ -43,6 +43,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
     let cancel = false;
     let running = false;
     let again = false;
+    let waitingForCrew = false;
+    let triedPull = false;
+    let pullTimeout: ReturnType<typeof setTimeout> | undefined;
     let lastTarget: string | null = null;
     let previous = router.state.location.pathname;
     const run = () => {
@@ -59,7 +62,23 @@ export function AuthGate({ children }: { children: ReactNode }) {
             if (previous === '/install' && path !== '/install') dismissInstallGate();
             previous = path;
             const id = repo.auth.userId();
-            const crew = id ? await repo.q.myCrew() : undefined;
+            let crew = id ? await repo.q.myCrew() : undefined;
+            if (cancel) return;
+            waitingForCrew = id !== null && crew === undefined;
+            if (waitingForCrew && !triedPull && repo.sync.status().state !== 'offline') {
+              triedPull = true;
+              try {
+                await Promise.race([
+                  repo.sync.pullNow().catch(() => {}),
+                  new Promise<void>((resolve) => { pullTimeout = setTimeout(resolve, 3_000); }),
+                ]);
+              } finally {
+                clearTimeout(pullTimeout);
+              }
+              if (cancel) return;
+              crew = await repo.q.myCrew();
+              waitingForCrew = crew === undefined;
+            }
             if (cancel) return;
             const here = router.state.location.pathname;
             const next = destination(id, here, crew !== undefined);
@@ -73,7 +92,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
           // A failed gate read must not leave the router hidden.
         } finally {
           running = false;
-          if (!cancel) setReady(true);
+          if (!cancel) {
+            if (again) run();
+            else setReady(true);
+          }
         }
       })();
     };
@@ -81,9 +103,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const unsubscribe = router.subscribe(() => {
       if (!cancel) run();
     });
+    // SyncEngine refreshes status after each pull, including the bootstrap pull.
+    // Once membership exists, route changes alone are enough to run the gate.
+    const unsubscribeSync = repo.sync.onStatus(() => {
+      if (!cancel && waitingForCrew) run();
+    });
     return () => {
       cancel = true;
+      clearTimeout(pullTimeout);
       unsubscribe();
+      unsubscribeSync();
     };
   }, [repo, userId]);
 

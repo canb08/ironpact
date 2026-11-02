@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
@@ -47,7 +47,6 @@ describe('S3 crew', () => {
     ['code_dead', copy.deadInvite],
     ['crew_full', copy.crewFull],
     ['slow_down', copy.inviteSlow],
-    ['already_in_crew', copy.alreadyInCrew],
   ] as const)('shows the string for %s', async (error, text) => {
     const redeem = vi.fn(async () => ({ ok: false as const, error }));
     renderCrew('/join/ABCDEFGHJK', mockRepo({ userId: 'user-1', crew: { redeem } }));
@@ -56,6 +55,54 @@ describe('S3 crew', () => {
     expect(await screen.findByText(text)).toBeTruthy();
     expect(redeem).toHaveBeenCalledOnce();
   });
+
+  it.each(['/crew/new', '/join/ABCDEFGHJK'])(
+    'recovers already_in_crew from %s by pulling before navigating without changing the profile',
+    async (path) => {
+      let finishPull!: () => void;
+      const pulled = new Promise<void>((resolve) => { finishPull = resolve; });
+      let membership: Awaited<ReturnType<ReturnType<typeof mockRepo>['q']['myCrew']>>;
+      const pullNow = vi.fn(async () => {
+        await pulled;
+        membership = { crew: testCrew(), members: [testMember()] };
+      });
+      const already = vi.fn(async () => ({ ok: false as const, error: 'already_in_crew' as const }));
+      const upsertMyProfile = vi.fn();
+      renderCrew(path, mockRepo({
+        userId: 'user-1', crew: { create: already, redeem: already },
+        q: { myCrew: async () => membership }, sync: { pullNow }, w: { upsertMyProfile },
+      }));
+      fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'Alex' } });
+      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      await waitFor(() => { expect(pullNow).toHaveBeenCalledOnce(); });
+      expect(screen.queryByText('floor')).toBeNull();
+      expect(screen.queryByText(copy.alreadyInCrew)).toBeNull();
+      await act(async () => { finishPull(); });
+      expect(await screen.findByText('floor')).toBeTruthy();
+      expect(upsertMyProfile).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['rejected', 'empty mirror'])(
+    'keeps recovery retryable when the pull fails (%s)',
+    async (failure) => {
+      const pullNow = vi.fn(async () => {
+        if (failure === 'rejected') throw new Error('network');
+      });
+      renderCrew('/crew/new', mockRepo({
+        userId: 'user-1',
+        crew: { create: async () => ({ ok: false, error: 'already_in_crew' }) },
+        sync: { pullNow },
+      }));
+      fireEvent.change(screen.getByLabelText(copy.displayName), { target: { value: 'Alex' } });
+      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      expect(await screen.findByText(copy.alreadyInCrew)).toBeTruthy();
+      expect(screen.getByRole('button', { name: copy.lockIn }).hasAttribute('disabled')).toBe(false);
+      expect(screen.queryByText('floor')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: copy.lockIn }));
+      await waitFor(() => { expect(pullNow).toHaveBeenCalledTimes(2); });
+    },
+  );
 
   it('blocks a name over 16 characters', () => {
     const create = vi.fn();

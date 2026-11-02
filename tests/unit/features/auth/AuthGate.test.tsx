@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppShell } from '../../../../src/App.tsx';
 import { router } from '../../../../src/router.tsx';
 import { dismissInstallGate, readJoinCode } from '../../../../src/features/auth/joinCode.ts';
-import type { Repo } from '../../../../src/data/adapter.ts';
+import type { Repo, SyncStatus } from '../../../../src/data/adapter.ts';
 import { mockRepo, testCrew, testMember } from './mockRepo.ts';
 
 const observed = vi.hoisted(() => ({ render: vi.fn(), mount: vi.fn(), unmount: vi.fn() }));
@@ -95,6 +95,98 @@ describe('AuthGate first paint', () => {
     render(<AppShell repo={mockRepo({ userId: 'user-1' })} />);
     expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/crew/new');
     expect(observed.render).not.toHaveBeenCalledWith('/');
+  });
+
+  it('waits for the fresh-device pull and renders the Floor without crew setup', async () => {
+    dismissInstallGate();
+    await router.navigate('/sign-in');
+    const pulled = deferred<void>();
+    let membership: typeof crew | undefined;
+    const pullNow = vi.fn(async () => { await pulled.promise; membership = crew; });
+    render(<AppShell repo={mockRepo({
+      userId: 'user-1', q: { myCrew: async () => membership }, sync: { pullNow },
+    })} />);
+    await waitFor(() => { expect(pullNow).toHaveBeenCalledOnce(); });
+    expect(observed.render).not.toHaveBeenCalled();
+    await act(async () => { pulled.resolve(); });
+    expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/');
+    expect(observed.render).not.toHaveBeenCalledWith('/crew/new');
+  });
+
+  it('recovers from crew setup when a later pull brings membership', async () => {
+    dismissInstallGate();
+    const mirror: { membership?: typeof crew } = {};
+    let notify: ((status: SyncStatus) => void) | undefined;
+    const unsubscribe = vi.fn();
+    const onStatus = vi.fn((cb: (status: SyncStatus) => void) => { notify = cb; return unsubscribe; });
+    const repo = mockRepo({
+      userId: 'user-1', q: { myCrew: async () => mirror.membership }, sync: { onStatus },
+    });
+    const view = render(<AppShell repo={repo} />);
+    expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/crew/new');
+    mirror.membership = crew;
+    await act(async () => { notify?.(repo.sync.status()); });
+    expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/');
+    expect(observed.mount).toHaveBeenCalledOnce();
+    view.unmount();
+    expect(unsubscribe).toHaveBeenCalledTimes(onStatus.mock.calls.length);
+  });
+
+  it('decides crew setup immediately offline without attempting a pull', async () => {
+    dismissInstallGate();
+    const pullNow = vi.fn(async () => {});
+    render(<AppShell repo={mockRepo({
+      userId: 'user-1', sync: {
+        pullNow,
+        status: () => ({ state: 'offline', pendingCount: 0, deadCount: 0, lastSyncedAt: null }),
+      },
+    })} />);
+    expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/crew/new');
+    expect(pullNow).not.toHaveBeenCalled();
+  });
+
+  it('caps a hung first pull at 3 seconds and still reacts to its late completion', async () => {
+    vi.useFakeTimers();
+    dismissInstallGate();
+    const pulled = deferred<void>();
+    const mirror: { membership?: typeof crew } = {};
+    let notify: ((status: SyncStatus) => void) | undefined;
+    const repo = mockRepo({
+      userId: 'user-1', q: { myCrew: async () => mirror.membership },
+      sync: {
+        pullNow: () => pulled.promise,
+        onStatus: (cb) => { notify = cb; return () => {}; },
+      },
+    });
+    render(<AppShell repo={repo} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_999); });
+    expect(observed.render).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(screen.getByTestId('route')).toHaveProperty('textContent', '/crew/new');
+    mirror.membership = crew;
+    await act(async () => { pulled.resolve(); notify?.(repo.sync.status()); });
+    expect(screen.getByTestId('route')).toHaveProperty('textContent', '/');
+  });
+
+  it('releases the gate after a failed pull', async () => {
+    dismissInstallGate();
+    render(<AppShell repo={mockRepo({
+      userId: 'user-1', sync: { pullNow: async () => { throw new Error('offline'); } },
+    })} />);
+    expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/crew/new');
+  });
+
+  it('ignores the old account pull after sign-out', async () => {
+    dismissInstallGate();
+    const pulled = deferred<void>();
+    const pullNow = vi.fn(() => pulled.promise);
+    const repo = mockRepo({ userId: 'user-1', sync: { pullNow } });
+    render(<AppShell repo={repo} />);
+    await waitFor(() => { expect(pullNow).toHaveBeenCalledOnce(); });
+    await act(async () => { await repo.auth.signOut(); });
+    expect(await screen.findByTestId('route')).toHaveProperty('textContent', '/sign-in');
+    await act(async () => { pulled.resolve(); });
+    expect(router.state.location.pathname).toBe('/sign-in');
   });
 
   it('renders sign-in first for a signed-out user who skipped install', async () => {
