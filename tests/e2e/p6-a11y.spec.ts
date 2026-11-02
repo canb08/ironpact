@@ -98,7 +98,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
     await expect(page.getByRole('heading', { name: 'Bench press', exact: true })).toBeVisible();
   });
   await visit('S15', `/day/${DAY}`, async () => {
-    await expect(page.getByRole('heading', { name: DAY })).toBeVisible();
+    await expect(page.locator('.day-chip[aria-current="date"]')).toHaveAttribute('href', `/day/${DAY}`);
     await expect(page.getByText(copy.emptyDay)).toBeVisible();
   });
   await visit('S16', '/settings', async () => {
