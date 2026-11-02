@@ -1,0 +1,112 @@
+.settings-screen {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--s-4);
+  display: grid;
+  gap: var(--s-5);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.settings-screen h1,
+.settings-screen h2,
+.settings-screen p {
+  margin: 0;
+}
+.settings-section {
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+.settings-toggle,
+.settings-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  min-width: 0;
+}
+.settings-toggle input,
+.settings-radio input {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+}
+.settings-toggle label,
+.settings-radio span {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+.settings-field {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.settings-field input,
+.settings-screen input[type='time'],
+.settings-screen input[type='text'] {
+  min-height: 48px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.settings-screen input:disabled,
+.settings-units {
+  opacity: 0.55;
+}
+.settings-hues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.settings-hues button {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: var(--r-full);
+  border: 2px solid var(--line);
+  padding: 0;
+}
+.settings-hues button[aria-pressed='true'] {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.settings-danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.settings-code {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font: var(--t-sm) / 1.4 var(--font-data);
+}
+.settings-muted {
+  color: var(--text-muted);
+}
+.settings-dead {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.settings-dead li {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
