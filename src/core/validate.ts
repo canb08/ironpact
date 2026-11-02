@@ -92,6 +92,20 @@ export const minEntrySchema = z.object({
 export const bodyweightEntrySchema = z.object({
   ...syncShape, weight_kg: z.number().min(30).max(300).multipleOf(0.1), measured_at: instantSchema,
 }) satisfies z.ZodType<BodyweightEntry>;
+export const exercisePrefSchema = z.object({
+  ...syncShape, exercise_id: uuid, rest_s: z.int().min(15).max(600),
+});
+export const prEventSchema = z.object({
+  ...syncShape,
+  exercise_id: uuid.nullable(),
+  source_id: uuid,
+  pr_type: z.enum(['e1rm', 'rep_max', 'volume', 'distance', 'pace']),
+  reps: smallint.nullable(),
+  value: z.number().finite(),
+  previous_value: z.number().finite().nullable(),
+  pct_over_previous: z.number().finite().nullable(),
+  seen_by: z.array(uuid),
+});
 
 // §2.7, D14, E2.3: one source for form limits and the world-record predicate.
 export const uiSchemas = {
