@@ -63,7 +63,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.floor-empty {
+.floor-empty,
+.floor-status {
   color: var(--text-muted);
 }
 

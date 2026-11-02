@@ -408,6 +408,21 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   ringThird: 'third',
 
   // ── P3E: add this ticket's strings directly below ──
+  presenceBanner: '{partner} is on the floor · {work} · {minutes} min',
+  presenceQuiet: '{partner} is on the floor · {minutes} min',
+  trainingNow: 'Training now',
+  lastTrained: 'Last trained {days} d ago',
+  lastTrainedToday: 'Last trained today',
+  notTrainedYet: 'No sessions yet',
+  archived: 'Archived',
+  together: 'Together',
+  togetherSessions: '{count} sessions',
+  togetherTonnes: '{tonnes} t',
+  fairPercent: '{percent}',
+  showRawKg: 'Show kg',
+  rawKg: '{kg} kg',
+  weeksOn: '{count} weeks on',
+  spotSent: 'Covered {partner}.',
 
   // ── P3F: add this ticket's strings directly below ──
   progressTitle: 'Progress',
