@@ -7,6 +7,14 @@ export interface OutboxEntry {
   table: SyncedTable;
   row_id: string;
   payload: RemoteRow;
+  /**
+   * Earlier payloads the server must accept before `payload`. A PR tombstone is
+   * legal only as an update of an unchanged claim, so the live claim stays here
+   * until that insert has been acknowledged.
+   */
+  prelude?: RemoteRow[];
+  /** Generation of `payload`. Send `gen - prelude.length` before anything newer. */
+  gen?: number;
   revision: string;
   status: 'pending' | 'dead';
   created_at: string;

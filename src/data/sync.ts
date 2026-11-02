@@ -35,6 +35,10 @@ export function browserEnvironment(): SyncEnvironment {
 }
 
 /** One controller per repo; close invalidates responses even though Remote has no abort parameter. */
+function sendableGeneration(entry: OutboxEntry): number {
+  return (entry.gen ?? 0) - (entry.prelude?.length ?? 0);
+}
+
 export class SyncEngine {
   private state: SyncStatus;
   private listeners = new Set<(status: SyncStatus) => void>();
@@ -127,8 +131,13 @@ export class SyncEngine {
   private async batch(entries: OutboxEntry[], alive: () => boolean): Promise<boolean> {
     if (!alive() || !entries.length) return alive();
     const table = entries[0]!.table;
+    const sending = entries.map((entry) => ({
+      entry,
+      viaPrelude: (entry.prelude?.length ?? 0) > 0,
+      payload: entry.prelude?.[0] ?? entry.payload,
+    }));
     let response;
-    try { response = await this.remote.upsert(table, entries.map((entry) => entry.payload)); }
+    try { response = await this.remote.upsert(table, sending.map((item) => item.payload)); }
     catch { response = { ok: false as const, error: { kind: 'transient' as const, status: null, message: 'network' } }; }
     if (!alive()) return false;
     if (!response.ok) {
@@ -161,11 +170,16 @@ export class SyncEngine {
     }
     await this.db.transaction('rw', this.db.mirror(table), this.db.outbox, async () => {
       if (!alive()) return;
-      for (const sent of entries) {
+      for (const { entry: sent, viaPrelude } of sending) {
         if (sent.seq === undefined) continue;
         const current = await this.db.outbox.get(sent.seq);
         // A local edit during the request owns the mirror and must remain queued.
         if (current?.revision !== sent.revision || current.status !== 'pending') continue;
+        if (viaPrelude) {
+          const rest = current.prelude?.slice(1) ?? [];
+          await this.db.outbox.update(sent.seq, rest.length ? { prelude: rest } : { prelude: [] });
+          continue;
+        }
         const row = acknowledged.get(sent.row_id);
         if (row) { await this.db.mirror(table).put(mirrorRow(table, row)); await this.db.outbox.delete(sent.seq); }
       }
@@ -181,9 +195,13 @@ export class SyncEngine {
       await this.calibrate(alive);
       while (alive()) {
         const pending = await this.db.outbox.where('status').equals('pending').toArray();
-        const table = SYNCED_TABLES.find((candidate) => pending.some((entry) => entry.table === candidate));
+        if (!pending.length) break;
+        // A claim computed from a pre-image must land before the edited source.
+        const generation = Math.min(...pending.map(sendableGeneration));
+        const ready = pending.filter((entry) => sendableGeneration(entry) === generation);
+        const table = SYNCED_TABLES.find((candidate) => ready.some((entry) => entry.table === candidate));
         if (!table) break;
-        const entries = pending.filter((entry) => entry.table === table).slice(0, 100);
+        const entries = ready.filter((entry) => entry.table === table).slice(0, 100);
         if (!await this.batch(entries, alive)) return;
       }
       if (alive()) { this.state.state = 'idle'; this.state.lastSyncedAt = this.clock.now(); }
