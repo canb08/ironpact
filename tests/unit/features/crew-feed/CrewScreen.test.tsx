@@ -17,22 +17,23 @@ afterEach(async () => { await context.close(); vi.restoreAllMocks(); });
 
 function mount() { return render(<RepoProvider repo={context.repo}><CrewScreen /></RepoProvider>); }
 
-it('shows partner sets grouped by session and refreshes new activity through Repo pull', async () => {
+it('shows partner sets grouped by day and pulls new activity without a refresh button', async () => {
   await context.remote.simulateCrewmateActivity();
   await context.repo.sync.pullNow();
   mount();
   const feed = await screen.findByRole('list', { name: copy.crewFeedTitle });
-  await waitFor(() => expect(feed.children).toHaveLength(1));
+  await waitFor(() => expect(feed.querySelectorAll(':scope > li')).toHaveLength(1));
   expect(feed.textContent).toContain('Bench press');
+  expect(screen.queryByRole('button', { name: copy.refresh })).toBeNull();
+  expect(screen.queryByRole('img', { name: /You .+Partner/ })).toBeNull();
+  expect(screen.getByRole('img', { name: /of 3$/ }).getAttribute('aria-label')).toMatch(/^Partner /);
   const pull = vi.spyOn(context.repo.sync, 'pullNow');
   await context.remote.simulateCrewmateActivity();
-  await userEvent.setup().click(screen.getByRole('button', { name: copy.refresh }));
-  await waitFor(() => expect(feed.children).toHaveLength(2));
-  expect(pull).toHaveBeenCalledOnce();
-  await waitFor(() => expect(screen.getByRole('button', { name: copy.refresh }).hasAttribute('disabled')).toBe(false));
   fireEvent.touchStart(screen.getByRole('main'), { touches: [{ clientY: 0 }] });
   fireEvent.touchEnd(screen.getByRole('main'), { changedTouches: [{ clientY: 100 }] });
-  await waitFor(() => expect(pull).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(pull).toHaveBeenCalledOnce());
+  await waitFor(() => expect(feed.querySelectorAll(':scope > li > ul > li')).toHaveLength(2));
+  await waitFor(() => expect(screen.getByRole('button', { name: copy.copyInvite }).hasAttribute('disabled')).toBe(false));
 });
 
 it('filters unshared bodyweight even if stale rows remain cached, then shows it when sharing is on', async () => {
@@ -47,7 +48,7 @@ it('filters unshared bodyweight even if stale rows remain cached, then shows it 
   await waitFor(() => expect(feed).toHaveBeenCalled());
   expect(screen.queryByText(/87\.6/)).toBeNull();
   await act(async () => { await context.db.profiles.update(partner, { show_bodyweight: true }); });
-  expect(await screen.findByText('Weight · 87.6kg')).toBeTruthy();
+  expect(await screen.findByText('Weigh-in 87.6 kg')).toBeTruthy();
   await act(async () => { await context.db.profiles.update(partner, { show_bodyweight: false }); });
   await waitFor(() => expect(screen.queryByText(/87\.6/)).toBeNull());
 });
@@ -91,9 +92,13 @@ it('groups sets without merging different sessions and caps visible entries at 2
   const entries: FeedItem[] = Array.from({ length: 25 }, (_, index) => ({ ...item,
     row: { ...item.row, id: `set-${index}`, set_index: index + 1, session_id: index < 10 ? 'one' : 'two',
       logged_at: new Date(Date.parse('2026-10-25T12:00:00Z') + index * 1000).toISOString() } }));
-  const groups = groupFeed(entries, [defaultProfile(MOCK_USER_IDS.bob, 'UTC')]);
-  expect(groups).toHaveLength(2);
-  expect(groups.flatMap((group) => group.items)).toHaveLength(20);
-  expect(groups[0]?.items[0]?.type === 'set' && groups[0].items[0].row.set_index).toBe(11);
+  const days = groupFeed(entries, [defaultProfile(MOCK_USER_IDS.bob, 'UTC')]);
+  expect(days).toHaveLength(1);
+  expect(days[0]?.entries).toHaveLength(2);
+  expect(days.flatMap((day) => day.entries.flatMap((entry) => entry.items))).toHaveLength(20);
+  expect(days[0]?.entries[0]?.items[0]?.type === 'set' && days[0].entries[0].items[0].row.set_index).toBe(11);
   expect(groupFeed(entries, [])).toHaveLength(0);
+  const dated = entries.map((entry, index) => entry.type === 'set'
+    ? { ...entry, row: { ...entry.row, local_date: index < 10 ? '2026-10-24' : '2026-10-25' } } : entry);
+  expect(groupFeed(dated, [defaultProfile(MOCK_USER_IDS.bob, 'UTC')]).map((day) => day.date)).toEqual(['2026-10-25', '2026-10-24']);
 });

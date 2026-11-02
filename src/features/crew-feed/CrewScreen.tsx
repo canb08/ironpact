@@ -1,44 +1,108 @@
-import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { useRef, useState, useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { formatBodyweight, formatDuration, formatKg, formatKm } from '@shared/export-format.ts';
+import { formatDate } from '../../core/formatDate.ts';
+import { recomputePrs, type PrEventDraft } from '../../core/prs.ts';
 import { spotOffers } from '../../core/streak.ts';
-import type { FeedItem } from '../../data/adapter.ts';
+import type { Exercise, Profile, Session } from '../../core/types.ts';
+import type { Repo, SessionWithSets } from '../../data/adapter.ts';
 import { useRepo } from '../../app/useRepo.ts';
-import { copy, fill } from '../../ui/copy.ts';
+import { BigNumber } from '../../ui/BigNumber.tsx';
 import { Button } from '../../ui/Button.tsx';
+import { Chip } from '../../ui/Chip.tsx';
+import { copy, fill } from '../../ui/copy.ts';
 import { HoldButton } from '../../ui/HoldButton.tsx';
-import { Ring } from '../../ui/Ring.tsx';
+import { ListRow } from '../../ui/ListRow.tsx';
 import { Sheet } from '../../ui/Sheet.tsx';
 import { copyText } from '../export/export.ts';
 import { useOnline } from '../export/useOnline.ts';
-import { BarStrip } from '../duo/BarStrip.tsx';
 import { DuoMoments } from '../duo/DuoMoments.tsx';
-import { FairList } from '../duo/FairList.tsx';
-import { loadDuo, type DuoSnapshot } from '../duo/load.ts';
+import { loadDuo, type MemberWeek } from '../duo/load.ts';
 import { PresenceBanner } from '../duo/PresenceBanner.tsx';
 import { useCrewTick } from '../duo/useCrewTick.ts';
 import { useDebugWeek } from '../duo/useDebugWeek.ts';
 import { usePresence } from '../duo/usePresence.ts';
-import { barTier, formatTonnes, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
-import { groupFeed } from './feed.ts';
+import { barTier, formatRawKg, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
+import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
+import { formatEntry, groupFeed, itemsFromHistory, type FeedDay } from './feed.ts';
+import { longestSharedStreak, monthBounds, plateStates, prsThisWeek, sessionsTogether, topSets, volumeKg } from './stats.ts';
 import '../duo/duo.css';
 import './crew.css';
 
-function entryText(item: FeedItem): string {
-  switch (item.type) {
-    case 'set': {
-      const kg = item.row.weight_kg;
-      const load = item.exercise.kind === 'bw_lift'
-        ? fill(copy.crewBodyLoad, { load: kg === 0 ? '' : `${kg > 0 ? '+' : ''}${formatKg(kg)}kg` })
-        : fill(copy.crewLoad, { kg: formatKg(kg) });
-      return fill(copy.crewSet, { exercise: item.exercise.name, reps: item.row.reps, load });
-    }
-    case 'run': return fill(copy.crewRun, { km: formatKm(item.row.distance_m), duration: formatDuration(item.row.duration_s) });
-    case 'martial': return fill(copy.crewMartial, { discipline: item.row.discipline, minutes: item.row.duration_min });
-    case 'min': return fill(copy.crewMin, { description: item.row.description });
-    case 'weight': return fill(copy.crewWeight, { kg: formatBodyweight(item.row.weight_kg) });
-  }
+interface Hero {
+  partner: MemberWeek;
+  last: SessionWithSets | undefined;
+  prs: PrEventDraft[];
+}
+
+interface MonthStats {
+  sessions: number;
+  volumeKg: number;
+  streak: number;
+}
+
+function shownName(name: string, fallback: string): string {
+  const trimmed = name.trim();
+  return trimmed && trimmed !== copy.x3LegacyName ? trimmed : fallback;
+}
+
+function kindLabel(kind: Session['kind']): string {
+  if (kind === 'gym') return copy.x3Workout;
+  if (kind === 'run') return copy.x3Run;
+  if (kind === 'martial') return copy.x3Fight;
+  return copy.x3Min;
+}
+
+function prLine(event: PrEventDraft, exercises: readonly Exercise[]): { title: string; detail: string } {
+  const title = exercises.find((row) => row.id === event.exercise_id)?.name ?? copy.x7Lift;
+  const type = event.pr_type === 'e1rm' ? copy.x7PrMax
+    : event.pr_type === 'rep_max' ? fill(copy.x7RepMax, { reps: event.reps ?? 0 })
+      : event.pr_type === 'volume' ? copy.x7PrVolume
+        : event.pr_type === 'pace' ? copy.x7PrPace
+          : copy.x7PrDistance;
+  const unit = event.pr_type === 'pace' ? copy.x3SecondsPerKm : event.pr_type === 'distance' ? copy.x3Metres : copy.x3Kg;
+  return { title, detail: fill(copy.x7PrLine, { type, value: formatRawKg(event.value), unit }) };
+}
+
+async function loadCrew(repo: Repo) {
+  const membership = await repo.q.myCrew();
+  const now = new Date().toISOString();
+  const duo = await loadDuo(repo, now);
+  const spots = await repo.duo.spots();
+  if (!membership || !duo) return { membership, duo, spots, profiles: [] as Profile[], exercises: [] as Exercise[], days: [] as FeedDay[], heroes: [] as Hero[], month: null as MonthStats | null };
+  const meId = repo.auth.userId();
+  const partnerIds = duo.partners.map((partner) => partner.id);
+  const [profiles, exercises, partnerItems, meEntries, lasts, histories] = await Promise.all([
+    repo.q.profiles(meId ? [meId, ...partnerIds] : partnerIds),
+    repo.q.exercises(),
+    repo.q.crewFeed(20),
+    meId ? repo.q.entriesBetween(meId, '0000-01-01', '9999-12-31') : Promise.resolve(null),
+    Promise.all(duo.partners.map((partner) => repo.q.lastSessionSummary(partner.id))),
+    Promise.all(duo.partners.map((partner) => repo.q.entriesBetween(partner.id, '0000-01-01', '9999-12-31'))),
+  ]);
+  const mine = meEntries ? itemsFromHistory(meEntries, exercises) : [];
+  const days = groupFeed([...partnerItems, ...mine], profiles, { selfId: meId });
+  const heroes: Hero[] = duo.partners.map((partner, index) => {
+    const history = histories[index];
+    const prs = history ? prsThisWeek(recomputePrs({
+      sessions: history.sessions, sets: history.sets, cardio: history.cardio,
+      bodyweights: history.bodyweight, exercises,
+    }), partner.weekStart, partner.today) : [];
+    return { partner, last: lasts[index], prs };
+  });
+  const bounds = monthBounds(duo.me.today);
+  const members = [
+    ...(meEntries ? [{ entries: meEntries, target: duo.me.target, dates: meEntries.sessions.map((row) => row.local_date), sets: meEntries.sets }] : []),
+    ...duo.partners.map((partner, index) => {
+      const history = histories[index];
+      return { entries: history, target: partner.target, dates: history?.sessions.map((row) => row.local_date) ?? [], sets: history?.sets ?? [] };
+    }),
+  ].filter((member) => member.entries);
+  const month: MonthStats = {
+    sessions: sessionsTogether(members.map((member) => member.dates), bounds.from, bounds.to),
+    volumeKg: members.reduce((sum, member) => sum + volumeKg(member.sets, bounds.from, bounds.to), 0),
+    streak: longestSharedStreak(members.flatMap((member) => member.entries ? [{ entries: member.entries, target: member.target }] : []), duo.me.today),
+  };
+  return { membership, duo, spots, profiles, exercises, days, heroes, month: duo.partners.length > 0 ? month : null };
 }
 
 export default function CrewScreen() {
@@ -59,64 +123,83 @@ function CrewFeed() {
   const [message, setMessage] = useState('');
   const [invite, setInvite] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const [hideAdjusted, setHideAdjusted] = useState(false);
   const locked = useRef(false);
   const touch = useRef<number | null>(null);
   const data = useLiveQuery(async () => {
-    try {
-      const membership = await repo.q.myCrew();
-      const now = new Date().toISOString();
-      const duo = await loadDuo(repo, now);
-      const spots = await repo.duo.spots();
-      if (!membership || !duo) return { membership: undefined, partners: [], groups: [], duo, spots };
-      const ids = membership.members.filter((m) => m.left_at === null && m.user_id !== repo.auth.userId()).map((m) => m.user_id);
-      const [partners, items] = await Promise.all([repo.q.profiles(ids), repo.q.crewFeed(20)]);
-      return { membership, partners, groups: groupFeed(items, partners), duo, spots };
-    } catch { return { error: true as const, partners: [], groups: [], duo: null, spots: [] }; }
+    try { return await loadCrew(repo); }
+    catch { return { error: true as const, profiles: [], exercises: [], days: [], heroes: [], month: null, duo: null, spots: [] }; }
   }, [repo, revision, crewTick]);
 
   async function action(work: () => Promise<void>) {
     if (locked.current) return;
     locked.current = true;
-    setBusy(true); setMessage('');
+    setBusy(true);
+    setMessage('');
     try { await work(); }
     catch { setMessage(copy.networkRetry); }
     finally { locked.current = false; setBusy(false); setRevision((n) => n + 1); }
   }
-  const refresh = () => action(() => repo.sync.pullNow());
-  const owner = data?.membership?.members.some((m) => m.user_id === repo.auth.userId() && m.role === 'owner');
-  const duo: DuoSnapshot | null = data?.duo ?? null;
-  const names = new Map((duo?.partners ?? []).map((partner) => [partner.id, partner.name]));
+
+  const refresh = () => { if (online) void action(() => repo.sync.pullNow()); };
+  const meId = repo.auth.userId();
+  const membership = data && 'membership' in data ? data.membership : undefined;
+  const owner = membership?.members.some((member) => member.user_id === meId && member.role === 'owner') ?? false;
+  const duo = data && 'duo' in data ? data.duo : null;
+  const names = new Map((duo?.partners ?? []).map((partner) => [partner.id, shownName(partner.name, copy.x7Partner)]));
   const colors = new Map((duo?.partners ?? []).map((partner) => [partner.id, partner.color]));
+  const profiles = new Map((data?.profiles ?? []).map((profile) => [profile.id, profile]));
   const liveIds = new Set(presence.rows.map((row) => row.user_id));
   const offers = duo && duo.spotWeek && duo.crewTz ? spotOffers({
     now: duo.nowIso,
     crewTz: duo.crewTz,
     spotter: { userId: duo.me.id, credits: duo.me.credits, target: duo.me.target },
     partners: duo.partners.map((partner) => ({ userId: partner.id, status: partner.status })),
-    spotsGivenOn: (data?.spots ?? []).filter((spot) => spot.user_id === duo.me.id).map((spot) => spot.local_date),
+    spotsGivenOn: (data && 'spots' in data ? data.spots : []).filter((spot) => spot.user_id === duo.me.id).map((spot) => spot.local_date),
   }) : [];
+  const canShare = typeof navigator.share === 'function';
+
+  async function publishInvite(mode: 'copy' | 'share') {
+    await action(async () => {
+      const result = await repo.crew.createInvite();
+      if (!result.ok) {
+        setMessage(result.error === 'not_crew_owner' ? copy.inviteOwnerOnly : copy.networkRetry);
+        return;
+      }
+      const link = new URL(`/join/${encodeURIComponent(result.value)}`, window.location.origin).href;
+      setInvite(link);
+      if (mode === 'share' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: copy.appName, text: copy.x7ShareText, url: link });
+          setMessage(copy.x7Shared);
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+        }
+      }
+      setMessage(await copyText(link) ? copy.inviteCopied : copy.clipboardUnavailable);
+    });
+  }
+
+  const today = duo?.me.today ?? '';
+  const friendly = (date: string) => formatDate(date, today, copy);
 
   return (
-    <main className="crew-screen" onTouchStart={(e) => { touch.current = window.scrollY <= 0 ? e.touches[0]?.clientY ?? null : null; }}
+    <main className="crew-screen" onTouchStart={(event) => { touch.current = window.scrollY <= 0 ? event.touches[0]?.clientY ?? null : null; }}
       onTouchCancel={() => { touch.current = null; }}
-      onTouchEnd={(e) => {
-        const start = touch.current; touch.current = null;
-        if (online && start !== null && (e.changedTouches[0]?.clientY ?? start) - start >= 80) void refresh();
+      onTouchEnd={(event) => {
+        const start = touch.current;
+        touch.current = null;
+        if (start !== null && (event.changedTouches[0]?.clientY ?? start) - start >= 80) refresh();
       }}>
-      <h1>{data?.membership?.crew.name ?? duo?.crewName ?? copy.crewTitle}</h1>
       {duo ? (
         <DuoMoments
           screen="crew"
           crewId={duo.crewId}
           weekStart={duo.me.weekStart}
           members={[
-            {
-              id: duo.me.id, name: duo.me.name, initial: duo.me.initial, color: duo.me.color,
-              target: duo.me.target, credits: duo.me.credits, minCount: duo.me.minCount,
-            },
+            { id: duo.me.id, name: shownName(duo.me.name, copy.x7You), initial: duo.me.initial, color: duo.me.color, target: duo.me.target, credits: duo.me.credits, minCount: duo.me.minCount },
             ...duo.partners.map((partner) => ({
-              id: partner.id, name: partner.name, initial: partner.initial, color: partner.color,
+              id: partner.id, name: shownName(partner.name, copy.x7Partner), initial: partner.initial, color: partner.color,
               target: partner.target, credits: partner.credits, minCount: partner.minCount,
             })),
           ]}
@@ -130,59 +213,74 @@ function CrewFeed() {
       ) : null}
       {duo ? <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} /> : null}
       {!online && <p role="status">{copy.offline}</p>}
-      <div className="crew-actions">
-        <Button variant="secondary" disabled={busy || !online} onClick={() => void refresh()}>{busy ? copy.loading : copy.refresh}</Button>
-        {owner && <Button disabled={busy || !online} onClick={() => void action(async () => {
-          const result = await repo.crew.createInvite();
-          if (!result.ok) { setMessage(result.error === 'not_crew_owner' ? copy.inviteOwnerOnly : copy.networkRetry); return; }
-          const link = new URL(`/join/${encodeURIComponent(result.value)}`, window.location.origin).href;
-          setInvite(link);
-          setMessage(await copyText(link) ? copy.inviteCopied : copy.clipboardUnavailable);
-        })}>{copy.copyInvite}</Button>}
-        {invite && <code className="crew-link">{invite}</code>}
-      </div>
-      <p role="status">{message}</p>
-      {!data ? <p>{copy.loading}</p> : data.error ? <p role="alert">{copy.networkRetry}</p> : !data.membership || !duo ? <p>{copy.noCrew}</p> : <>
-        {duo.partners.length === 0 ? <p>{copy.emptyCrew}</p> : duo.partners.map((partner) => {
+      {!data ? <p>{copy.loading}</p> : 'error' in data && data.error ? <p role="alert">{copy.networkRetry}</p> : !membership || !duo ? <p>{copy.noCrew}</p> : <>
+        {data.heroes.length === 0 ? <p>{copy.x7NoPartner}</p> : data.heroes.map(({ partner, last, prs }) => {
+          const name = shownName(partner.name, copy.x7Partner);
           const status = partnerStatus({ live: liveIds.has(partner.id), lastCredit: partner.lastCredit, today: partner.today });
-          const statusText = status.kind === 'live' ? copy.trainingNow
+          const statusText = status.kind === 'live' ? null
             : status.kind === 'today' ? copy.lastTrainedToday
-            : status.kind === 'days' ? fill(copy.lastTrained, { days: status.days })
-            : copy.notTrainedYet;
+              : status.kind === 'days' ? fill(copy.lastTrained, { days: status.days })
+                : copy.notTrainedYet;
+          const tops = last ? topSets(last.sets) : [];
           return (
-            <section className={`crew-card${duo.archived ? ' is-archived' : ''}`} key={partner.id} aria-label={partner.name}>
-              <h2>{partner.name}</h2>
-              {duo.archived ? <p className="crew-status">{copy.archived}</p> : (
-                <Ring size="personal" reduced={duo.reduceMotion} members={[{
-                  id: partner.id, name: partner.name, initial: partner.initial, color: partner.color,
-                  target: partner.target, credits: partner.credits, minCount: partner.minCount,
-                }]} />
-              )}
-              <p className="crew-status">{statusText}</p>
+            <section className="crew-hero" key={partner.id} aria-labelledby={`partner-${partner.id}`}>
+              <h2 id={`partner-${partner.id}`} className="crew-name">
+                <span className="crew-swatch" style={{ background: partner.color }} aria-hidden="true" />
+                {name}
+              </h2>
+              {statusText ? <p className="crew-muted">{statusText}</p> : null}
+              <div className="crew-plates" role="img" aria-label={fill(copy.x1PlateLabel, { name, credits: partner.credits, target: partner.target })}>
+                {plateStates(partner.credits, partner.target, partner.minCount).map((state, index) => (
+                  <span key={index} className={`crew-plate crew-plate--${state}`} aria-hidden="true" style={state === 'empty' ? undefined : { background: partner.color }} />
+                ))}
+                <span className="crew-plates-count" aria-hidden="true">{fill(copy.x1PlateCount, { credits: partner.credits, target: partner.target })}</span>
+              </div>
+              <h3>{copy.x7Last}</h3>
+              {!last ? <p className="crew-muted">{copy.x7NoWorkout}</p> : tops.length === 0 ? (
+                <ListRow title={kindLabel(last.session.kind)} detail={friendly(last.session.local_date)} />
+              ) : tops.map((set) => (
+                <ListRow key={set.exerciseId}
+                  title={data.exercises.find((row) => row.id === set.exerciseId)?.name ?? copy.x7Lift}
+                  detail={fill(copy.x7TopSet, { date: friendly(last.session.local_date), reps: set.reps, kg: formatRawKg(set.kg) })} />
+              ))}
+              {prs.length > 0 ? <>
+                <h3>{copy.x7Prs}</h3>
+                <ul className="crew-prs">
+                  {prs.map((event) => {
+                    const line = prLine(event, data.exercises);
+                    return <li key={`${event.source_id}:${event.pr_type}`}>
+                      <ListRow className="crew-pr" title={line.title} detail={line.detail} trailing={<Chip tone="pr">{copy.x3Pr}</Chip>} />
+                    </li>;
+                  })}
+                </ul>
+              </> : null}
             </section>
           );
         })}
-        {duo.partners.length > 0 ? <FairList rows={duo.partners.map((partner) => ({ id: partner.id, name: partner.name, fair: partner.fair }))} /> : null}
-        <section className="crew-card" aria-labelledby="together-heading">
-          <h2 id="together-heading">{copy.together}</h2>
-          <p>{fill(copy.togetherSessions, { count: duo.togetherSessions })}</p>
-          <p>{fill(copy.togetherTonnes, { tonnes: formatTonnes(duo.togetherTonnesKg) })}</p>
-          <BarStrip
-            plates={duo.plates}
-            ghost={duo.weekFull}
-            archived={duo.archived}
-            adjusted={duo.adjusted && !hideAdjusted}
-            debugClose={debugClose}
-            onDismissAdjusted={() => setHideAdjusted(true)}
-            reduced={duo.reduceMotion}
-            batterySaver={duo.batterySaver}
-          />
-        </section>
-        {duo.departed.map((partner) => <p key={partner.id} className="is-archived">{partner.name} · {copy.archived}</p>)}
+        {duo.archived ? <p className="crew-muted">{copy.x3Archived}</p> : null}
+        {data.month ? (
+          <section aria-labelledby="crew-month">
+            <h2 id="crew-month">{copy.x7Month}</h2>
+            <div className="crew-month">
+              <p>
+                <BigNumber value={data.month.sessions} size="xl" />
+                <span>{copy.x7Sessions}</span>
+              </p>
+              <p>
+                <BigNumber value={formatRawKg(data.month.volumeKg)} size="xl" unit={copy.x3Kg} />
+                <span>{copy.x7Volume}</span>
+              </p>
+              <p>
+                <BigNumber value={data.month.streak} size="xl" />
+                <span>{data.month.streak === 1 ? copy.x7StreakOne : copy.x7Streak}</span>
+              </p>
+            </div>
+          </section>
+        ) : null}
         {offers.map((offer) => {
-          const name = names.get(offer.coversUserId) ?? copy.partner;
+          const name = names.get(offer.coversUserId) ?? copy.x7Partner;
           return (
-            <section className="crew-card" key={offer.coversUserId}>
+            <section className="crew-spot" key={offer.coversUserId}>
               <p>{fill(offer.eligible ? copy.spotOffer : copy.spotNotEligible, { partner: name })}</p>
               {offer.eligible && duo.spotWeek ? <Button disabled={busy || !online} onClick={() => {
                 const week = duo.spotWeek;
@@ -195,27 +293,44 @@ function CrewFeed() {
             </section>
           );
         })}
+        <div className="crew-actions">
+          {owner ? <>
+            <Button disabled={busy || !online} onClick={() => void publishInvite('copy')}>{copy.copyInvite}</Button>
+            {canShare ? <Button variant="secondary" disabled={busy || !online} onClick={() => void publishInvite('share')}>{copy.x7Share}</Button> : null}
+          </> : <p className="crew-muted">{copy.inviteOwnerOnly}</p>}
+          {invite ? <code className="crew-link">{invite}</code> : null}
+        </div>
+        <p role="status">{message}</p>
         <h2>{copy.crewFeedTitle}</h2>
-          {data.groups.length === 0 && <p>{copy.crewFeedEmpty}</p>}
-          <ol className="crew-feed" aria-label={copy.crewFeedTitle}>
-            {data.groups.map((group) => <li className="crew-card" key={group.id}>
-              <h3>{fill(group.sets ? copy.crewSession : copy.crewEntry, {
-                partner: data.partners.find((p) => p.id === group.user)?.display_name ?? copy.partner, date: group.date,
-              })}</h3>
-              <ul>{group.items.map((item) => <li key={item.row.id}>
-                {entryText(item)}{item.type === 'set' && item.row.is_warmup && <small> · {copy.crewWarmup}</small>}
-              </li>)}</ul>
-            </li>)}
-          </ol>
-        {!owner && <p>{copy.inviteOwnerOnly}</p>}
-        <Button variant="secondary" className="crew-danger" disabled={busy || !online} onClick={() => setConfirmLeave(true)}>{copy.leaveCrew}</Button>
+        {data.days.length === 0 && <p className="crew-muted">{copy.crewFeedEmpty}</p>}
+        <ol className="crew-feed" aria-label={copy.crewFeedTitle}>
+          {data.days.map((day) => <li key={day.date}>
+            <h3><time dateTime={day.date}>{friendly(day.date)}</time></h3>
+            <ul>
+              {day.entries.map((entry) => {
+                const profile = profiles.get(entry.user);
+                const name = shownName(profile?.display_name ?? '', entry.user === meId ? copy.x7You : copy.x7Partner);
+                return <li key={entry.id}>
+                  <p>{name}</p>
+                  <ul>{entry.items.map((item) => <li key={item.row.id}>
+                    {formatEntry(item)}
+                    {item.type === 'set' && item.row.is_warmup ? <small> {copy.x7Warmup}</small> : null}
+                  </li>)}</ul>
+                </li>;
+              })}
+            </ul>
+          </li>)}
+        </ol>
+        {duo.departed.map((partner) => <p key={partner.id} className="crew-muted">{shownName(partner.name, copy.x7Partner)} {copy.archived}</p>)}
+        <Button variant="secondary" className="crew-leave" disabled={busy || !online} onClick={() => setConfirmLeave(true)}>{copy.leaveCrew}</Button>
       </>}
       <Sheet open={confirmLeave} title={copy.leaveCrew} onClose={() => setConfirmLeave(false)}>
         <p>{copy.leaveCrewConfirm}</p>
         <HoldButton aria-label={copy.holdLeaveCrew} variant="secondary" className="crew-danger" disabled={busy || !online} onHoldComplete={() => void action(async () => {
           const result = await repo.crew.leave();
           if (!result.ok) { setMessage(copy.networkRetry); return; }
-          setConfirmLeave(false); setInvite(null);
+          setConfirmLeave(false);
+          setInvite(null);
         })}>{copy.holdLeaveCrew}</HoldButton>
         <Button variant="secondary" onClick={() => setConfirmLeave(false)}>{copy.cancel}</Button>
         <p role="status">{message}</p>
