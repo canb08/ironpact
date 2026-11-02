@@ -70,7 +70,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | H5 | Deploy hardening: CSP per project (gen-headers), drop handler-less function configs, revoke default privileges (H3 G5–G7, L17) | Codex Astra | **E** (owner's Codex out of usage → friend's Codex, owner OK via friend 2026-11-02) | merged #59 (Lead approved contract change: EXECUTE grants on 2 pg_temp test helpers, needed by 0011's global revoke) |
 | H6 | Floor stops blanking on live updates + MIN double-toast guard (flaky Pixel 7 e2e) | Codex Sol | E (lane C engines out) | merged #60 (CI green; local Pixel 7 repeat: 1/10 vs main 3/10 — remaining flake is the AuthGate race in Parked) |
 | H7 | Accessibility fixes: H1's 13 `test.fixme` | Grok | E (lane C screens; Can's Claude welcome to review) | merged #61 (13 fixmes cleared + PR takeover e1RM contrast; settleMotion before axe) |
-| H8 | Perf: lhci measures real screens, /settings CLS, LCP, Lighthouse blocking (L14) | Grok | E | PR #62 — Lead review OK after rework (no fake profile; form inert until loaded); /settings CLS 0.799→0; LCP ~4 s stays report-only (L14); CI |
+| H8 | Perf: lhci measures real screens, /settings CLS, LCP, Lighthouse blocking (L14) | Grok | E | merged #62 (lhci seed measures real screens; /settings CLS 0.799→0 with an inert form, no fake profile; LCP ~4 s stays report-only per L14) |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
@@ -85,6 +85,9 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | merged #47 (report-only per L14; Lead fixed the preview-ready check) |
 | H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | merged #48 (gaps G1-G7 in Parked) |
 | H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | merged #45 |
+
+## Lane E status (friend's Claude, 2026-11-02 ~19:00)
+H5 #59, H6 #60, H7 #61, H8 #62 merged on the friend's engines (owner's Codex out of usage). Open follow-ups for the next ticket round: (1) AuthGate first-run redirect race behind the remaining Pixel 7 p1 flake (lane C, auth) — see Parked; (2) LCP ~4 s vs 2 s budget: render delay behind the lazy data graph, needs a design call before the lighthouse job can block (L14).
 
 ## Lane E status (friend's Claude, 2026-11-02 ~06:45)
 All lane E tickets merged: P3A #28, P3B #34, P3C #27, P3D #29, P3E #39, P3F #33, P3G #49, P3H #36, P4E #46, P4C #52, H1 #51, H2 #47, H3 #48 (P5A #37 merged by Can's Claude). P4G and P5F are lane C. Open follow-ups below, most urgent: the Floor-blanking bug behind the flaky Pixel 7 e2e, then H3's security gaps before G1.
