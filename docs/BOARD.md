@@ -52,7 +52,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3B | Duo data layer + realtime client (L10) | Codex Astra | E | merged #34 (Lead approved mockRepo.ts scope; CI p90 353 ms) |
 | P3E | Crew full + presence + Bar + comeback | Grok (friend's Codex out of usage) | E | merged #39 |
 | P3F | Progress S13: trend chart | Grok | E | merged #33 |
-| P3G | Playwright Phase 3 | Grok | E | running 2026-11-02 (Grok) |
+| P3G | Playwright Phase 3 | Grok | E | merged #49 (PR-run e2e flake in p1-demo on Pixel 7 re-run green) |
 | P3H | Shared credit fixtures: SQL `week_credits` ↔ TS `credits.ts` parity (E5.7, L12) — **new ticket, test-only, no `src/**` or migrations** | Grok | E | merged #36 (24 fixtures, Vitest + pgTAP; PR-run db red = port-in-use flake, push-run db green) |
 
 ## Phase 4–5 queue (fire order in `docs/LANES.md`)
@@ -62,26 +62,31 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | merged #22 (Lead: banner overlay fix) |
 | P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | merged #24 |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Grok | C | merged #40 |
-| P4C | PR takeover + partner shockwave hook | Grok (Codex out of usage) | C | running 2026-11-02 04:24 |
+| P4C | PR takeover + partner shockwave hook | Grok | **E** (moved: owner's Grok ~95% weekly; nothing pushed — start fresh from main) | running 2026-11-02 (friend's Grok, fresh from main) |
 | P5B | S14 completed | Grok | C | merged #38 |
 | P5C | S16 Settings full | Grok | C | merged #42 |
-| P4G | Playwright Phase 4 | Grok | **E** (moved from C to balance lanes, 2026-11-02) | todo — after P4C, P4E |
+| P4G | Playwright Phase 4 | Codex Sol | **C** (owner's call 2026-11-02: owner's Codex) | claimed — fire when P4C merges (P4E merged #46) |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
-| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | pr #46 (reviewed: scope ok, reduced-motion + once-only tests, initial JS 116 kB; local 652 tests green) |
-| P5F | Recompute PRs after an edit + edit notices (L13) | Grok | C | pr #44 (db red: rows rejected by 0007 check; fix running) |
+| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
+| P5F | Recompute PRs after an edit + edit notices (L13) | Codex Astra | C (back from E) | running 2026-11-02 05:12 on owner's Codex (continue PR #44, branch P5F-work) |
+| P5G | S6 fits 375 px (kg/reps overflow, reported by friend's Lead) | Codex Sol | C | running 2026-11-02 05:12 |
 | P5A | S13 Progress full | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #37 |
 
 ## Phase 6 hardening (pre-deploy part; G1 deploy + phone session need the owner)
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
-| H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
-| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | running 2026-11-02 (friend's Grok) |
-| H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | running 2026-11-02 04:32 |
+| H1 | Accessibility pass (axe, 375 px/200%, target sizes) | Grok | **E** (moved: the owner's Grok at 90% weekly) | merged #51 |
+| H2 | Lighthouse CI on the production build | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #47 (CI job report-only per L14; findings in Parked) |
+| H3 | Security checklist audit (§4) + missing pgTAP | Grok | **E** (moved: the owner's Grok at 90% weekly) | pr #48 (pgTAP read in full; gaps G1-G7 in Parked; PR opened by Lead) |
+| H4 | Device test checklist (docs/DEVICE-TEST.md) | Grok | C | merged #45 |
 
 ## Parked / follow-ups
-- **For lane C (seen by friend's Claude, 2026-11-02, mock backend, 375 px wide):** on `/session` after choosing an exercise, the kg and reps inputs overflow the right edge (horizontal scroll). Belongs to the session screen (P2D / S6).
+- **0009 (Lead, on P5F-work):** 0007 rejected every PR tombstone sent by the app's upsert (the INSERT pass of ON CONFLICT runs the value check) → deleting a set with a PR dead-lettered its tombstone since P2F. Fixed with an early exit for unchanged tombstones of existing rows; merges with P5F.
+- **H2 performance findings (L14):** LCP ~3.8 s on slow 4G (budget 2 s); `/settings` layout shift 0.799 (budget 0.05, a real bug); lhci measures `/install` for every URL until the mock gets an install-dismissed + signed-in seed. One perf ticket: fix seed + LCP + settings CLS, then make the `lighthouse` job blocking.
+- **H1 accessibility findings (13, listed as `test.fixme` in `tests/e2e/p6-a11y.spec.ts` with file:line once H1 merges):** session steppers overflow at 375 px / 200% text on S5/S6/S8/S9 (`session.css:22-26`, same as the earlier lane C note) and S14 heading (`progress.css:18`); S6 tab order vs visual order (Warm-up wraps into RPE row, `LoggingCard.tsx:125-132`); RACK IT hold button aria-label doesn't contain the visible text (`LoggingCard.tsx:137`); set list scroll region not keyboard-focusable (`SetList.tsx:26`); prohibited `aria-label` on a span (S15 `DayEditorScreen.tsx:111`) and a pre (S16 `VaultExport.tsx:145`). Mostly lane C screens: one small UI fix ticket, then delete each fixme as it passes.
+- **P5F → Can's Codex (diagnosis by friend's Claude, 2026-11-02):** (1) Scope: `aadb337` rewrote the sync core (`src/data/outbox.ts` prelude/gen chaining, `src/data/sync.ts` send ordering, `src/data/db.ts` OutboxEntry fields), none of which P5F's allowlist permits, and CI still fails both `P5F ...` cases. Recommend reverting `aadb337`. (2) Cause: 0007's `unchanged_tombstone` only applies on **UPDATE**. When a PR claim was never acknowledged by the server and its set is edited offline, `enqueue` coalesces claim + tombstone into one payload, so the server sees an **INSERT** of a deleted claim → falls through to the value check → `pr_value_mismatch` / `pr_source_deleted`. (3) Smaller fix, `repo.ts` only: in `recomputePrs`, if a stale claim still has a pending outbox entry that the server never acknowledged (not in the pulled mirror), **drop that outbox entry and delete the local row** instead of enqueuing a tombstone. Claims the server already has get a tombstone that changes only `deleted_at` (passes 0007 before the source check). New claims go in the same batch as the edited source; `SYNCED_TABLES` order already sends `sets`/`cardio_entries` before `pr_events`. Read `src/data/**` in full on review.
+- **H3 security gaps (from `docs/SECURITY-AUDIT.md` once H3 merges; none is an open write today):** G1 `send_nudge`, G2 `settle_challenge`, G3 `save_push_subscription`, G4 `mark_seen` RPCs missing (G4: owners can still edit `pr_events.seen_by`); G5 CSP `connect-src` is `*.supabase.co`, `scripts/gen-headers.mjs` (E3.6) never written; G6 `push-dispatch` / `rest-alarm` have `verify_jwt = false` but no handler; G7 default privileges may grant client roles on future tables. **Needs tickets before G1 deploy; migrations/RLS → Codex Astra, not Grok.** Owner: whichever Lead has a free Codex first (friend's Codex is out until ~2026-11-08).
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.
 - Size budget: initial JS = entry + modulepreloads; the data layer (Dexie, zod, sync, adapters) is lazy-loaded in `App.tsx` (C5) → initial **100.5 / 170 kB**. Keep screens and backend libraries out of the static import graph.

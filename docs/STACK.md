@@ -119,3 +119,11 @@ Resolved with `npm view @lhci/cli version` on 2026-11-02 and installed with `--s
 `lighthouserc.json` uses Lighthouse's mobile preset: Moto G Power viewport (412×823, DPR 1.75) and simulated slow 4G (`rttMs` 150, `throughputKbps` 1638.4, `cpuSlowdownMultiplier` 4). Those throttling numbers are `throttling.mobileSlow4G` from Lighthouse 12.6.1. URLs: `/install`, `/`, `/session`, `/crew`, `/settings`. Three runs; assertions use `aggregationMethod: "median"` (LHCI does not accept `median-run`). Budgets: LCP ≤2000 ms, CLS ≤0.05, TBT ≤200 ms (INP proxy, spec §7.6), best-practices ≥0.9.
 
 Lighthouse 12 removed the PWA category and the `installable-manifest` audit, so `lighthouserc.json` cannot assert "PWA installable". The `lighthouse` job checks the same preview URLs with Chrome's `Page.getInstallabilityErrors` instead. [Lighthouse v12.0.0](https://github.com/GoogleChrome/lighthouse/releases/tag/v12.0.0).
+
+## H1 accessibility (2026-11-02)
+
+| Package (dev only) | Exact version | Purpose |
+|---|---|---|
+| `@axe-core/playwright` | `4.14.0` | Serious and critical axe scans in `tests/e2e/p6-a11y.spec.ts` |
+
+Resolved with `npm view @axe-core/playwright version` on 2026-11-02. It peers with the existing `@playwright/test@1.64.1` (`playwright-core >= 1.0.0`). Dev-only, so it stays out of the initial JS budget.
