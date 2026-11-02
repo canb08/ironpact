@@ -1,6 +1,8 @@
 import { Suspense, use } from 'react';
 import { RouterProvider } from 'react-router/dom';
 import { RepoProvider } from './app/RepoProvider.tsx';
+import { StatusBanners } from './app/StatusBanners.tsx';
+import { UpdateChip } from './app/UpdateChip.tsx';
 import type { Repo } from './data/adapter.ts';
 import { AuthGate } from './features/auth/AuthGate.tsx';
 import './platform/install.ts';
@@ -11,6 +13,8 @@ import { router } from './router.tsx';
 export function AppShell({ repo }: { repo: Repo }) {
   return (
     <RepoProvider repo={repo}>
+      <StatusBanners />
+      <UpdateChip />
       <AuthGate />
       <RouterProvider router={router} />
     </RepoProvider>

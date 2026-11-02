@@ -18,7 +18,7 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'prompt',
       injectRegister: 'script',
-      injectManifest: { globPatterns: ['**/*.{js,css,html,webmanifest,png}'] },
+      injectManifest: { globPatterns: ['**/*.{js,css,html,webmanifest,png,woff2}'] },
       manifest: {
         id: '/',
         name: copy.appName,

@@ -24,16 +24,9 @@ it('preserves the hex source values through the OKLCH conversion', () => {
   expect(formatHex(colour(dark, 'tier-titanium'))).toBe('#c9ccd1');
 });
 
-// These five source-value conflicts require a SPEC decision, not silent token edits.
-// MDN confirms the thresholds: https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Understanding_WCAG/Perceivable/Color_contrast
-const conflicts = new Set([
-  'dark: tier-obsidian on surface-1',
-  'light: molten on surface-2',
-  'light: tier-iron on surface-1',
-  'light: tier-steel on surface-1',
-  'light: tier-titanium on surface-1',
-]);
-
+// L1: dark keeps its source colours. Obsidian's 3:1 is the molten rim, not the #1A1420 core.
+// Light molten, Iron, Steel and Titanium are darker same-hue variants.
+// MDN: https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Understanding_WCAG/Perceivable/Color_contrast
 for (const [name, theme] of Object.entries({ dark, light })) {
   describe(`${name} contrast (§3.2.4)`, () => {
     const pairs: [string, string, number][] = [];
@@ -54,17 +47,17 @@ for (const [name, theme] of Object.entries({ dark, light })) {
 
     for (const [ink, background, minimum] of pairs) {
       const label = `${name}: ${ink} on ${background}`;
-      if (conflicts.has(label)) {
-        it.fails(`${label} — known SPEC contrast conflict, awaiting contract change`, () => {
-          expect(
-            wcagContrast(colour(theme, ink), colour(theme, background)),
-          ).toBeGreaterThanOrEqual(minimum);
+      if (ink === 'tier-obsidian') {
+        it(`${label} meets ${minimum}:1 on the molten rim (L1)`, () => {
+          expect(wcagContrast(colour(theme, 'molten'), colour(theme, background))).toBeGreaterThanOrEqual(
+            minimum,
+          );
         });
       } else {
         it(`${ink} on ${background} meets ${minimum}:1`, () => {
-          expect(
-            wcagContrast(colour(theme, ink), colour(theme, background)),
-          ).toBeGreaterThanOrEqual(minimum);
+          expect(wcagContrast(colour(theme, ink), colour(theme, background))).toBeGreaterThanOrEqual(
+            minimum,
+          );
         });
       }
     }

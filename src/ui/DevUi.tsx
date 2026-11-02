@@ -1,5 +1,18 @@
 import { useState } from 'react';
 import { setSoundOn, useSound } from '../platform/audio';
+import { Check } from 'lucide-react';
+import {
+  BarbellGlyph,
+  BeltGlyph,
+  FlameGlyph,
+  HandprintGlyph,
+  KettlebellGlyph,
+  MinGlyph,
+  PlateGlyph,
+  ScaleGlyph,
+  ShoeGlyph,
+  StopwatchGlyph,
+} from './icons';
 import {
   BigNumber,
   Button,
@@ -30,9 +43,9 @@ function Gallery() {
   return (
     <main className="ui-gallery">
       <header>
-        <p>{copy.appName}</p>
+        <p className="ui-eyebrow">{copy.appName}</p>
         <h1>{copy.devTitle}</h1>
-        <p>{copy.devIntro}</p>
+        <p>{copy.devFoundation}</p>
       </header>
       <fieldset className="ui-gallery__theme">
         <legend>{copy.devTheme}</legend>
@@ -52,6 +65,38 @@ function Gallery() {
         >
           {copy.devLight}
         </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            delete document.documentElement.dataset.batterySaver;
+          }}
+        >
+          {copy.devGrainOn}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            document.documentElement.dataset.batterySaver = 'on';
+          }}
+        >
+          {copy.devBatterySaver}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            delete document.documentElement.dataset.reducedMotion;
+          }}
+        >
+          {copy.devMotion}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            document.documentElement.dataset.reducedMotion = 'on';
+          }}
+        >
+          {copy.devReduceMotion}
+        </Button>
       </fieldset>
       <section>
         <h2>{copy.devButtons}</h2>
@@ -67,10 +112,14 @@ function Gallery() {
           <Button size="xl" onClick={notify}>
             {copy.logSet}
           </Button>
+          <Button variant="secondary" onClick={notify}>
+            <Check size={24} strokeWidth={2} aria-hidden="true" />
+            {copy.devSaved}
+          </Button>
         </div>
       </section>
-      <section>
-        <h2>{copy.devNumbers}</h2>
+      <section className="ui-edge-steel">
+        <h2>{copy.devEdge}</h2>
         <BigNumber value={weight} unit={copy.kg} />
         <div className="ui-gallery__row">
           <Chip>{copy.baselineBuilding}</Chip>
@@ -90,9 +139,58 @@ function Gallery() {
       </section>
       <section>
         <h2>{copy.devHold}</h2>
-        <HoldButton size="xl" onHoldComplete={notify}>
-          {copy.finish}
+        <HoldButton className="ui-knurl" size="xl" onHoldComplete={notify}>
+          {copy.rackIt}
         </HoldButton>
+      </section>
+      <section>
+        <h2>{copy.devGlyphs}</h2>
+        <div className="ui-glyphs">
+          <p>
+            <BarbellGlyph />
+            {copy.glyphBarbell}
+          </p>
+          <p>
+            <PlateGlyph />
+            {copy.glyphPlate}
+          </p>
+          <p>
+            <KettlebellGlyph />
+            {copy.glyphKettlebell}
+          </p>
+          <p>
+            <BeltGlyph />
+            {copy.glyphBelt}
+          </p>
+          <p>
+            <ShoeGlyph />
+            {copy.glyphShoe}
+          </p>
+          <p>
+            <ScaleGlyph />
+            {copy.glyphScale}
+          </p>
+          <p>
+            <MinGlyph />
+            {copy.min}
+          </p>
+          <p>
+            <FlameGlyph />
+            {copy.glyphFlame}
+          </p>
+          <p>
+            <HandprintGlyph />
+            {copy.chalkHandprint}
+          </p>
+          <p>
+            <StopwatchGlyph />
+            {copy.glyphWatch}
+          </p>
+        </div>
+      </section>
+      <section>
+        <h2>{copy.devGlass}</h2>
+        <div className="ui-glass ui-glass-bar">{copy.devGlass}</div>
       </section>
       <section>
         <h2>{copy.devSheet}</h2>

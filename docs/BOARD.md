@@ -39,9 +39,9 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
 | C6 | Router + copy anchors for Phase 2–3 | Claude | C | merged (direct) |
-| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Codex Astra | C | running 2026-11-02 |
-| P2F | Server re-check of PR events (0007) | Codex Sol | C | running 2026-11-02 |
-| P2B | Core: PRs, progression, readiness, prefill | Grok | C | running 2026-11-02 |
+| P2A | Data contract: history, PR events, prefs, day, edits (L9) | Grok (Codex hit usage limit) | C | running 2026-11-02 01:50 |
+| P2F | Server re-check of PR events (0007) | Grok (Codex hit usage limit) | C | running 2026-11-02 01:50 |
+| P2B | Core: PRs, progression, readiness, prefill | Grok | C | merged #21 |
 | P2C | Rest timer engine + Wake Lock + haptics | Grok | C | merged #20 |
 | P2D | Session engine UI (prefill, nudge, timer, PR card, RACK IT, summary, readiness) | Codex Sol | C | todo — after P2A, P2B, P2C |
 | P2E | S14 exercise detail + S15 day editor | Grok | C | todo — after P2A |
@@ -57,8 +57,8 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 ## Phase 4–5 queue (fire order in `docs/LANES.md`)
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | running 2026-11-02 01:05 |
-| P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | running 2026-11-02 01:05 |
+| P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | merged #23 |
+| P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | merged #22 (Lead: banner overlay fix) |
 | P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | running 2026-11-02 01:22 |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Codex Sol | C | todo — after P4A, P2D |
 | P4C | PR takeover + partner shockwave hook | Codex Sol | C | todo — after P4B, P2D |

@@ -1,8 +1,9 @@
 import type { Table } from 'dexie';
 import type { z } from 'zod';
-import type { BodyweightEntry, CardioEntry, MartialEntry, MinEntry, Result, Session, SyncedTable, SyncFields } from '../core/types.ts';
-import { bodyweightFormSchema, cardioFormSchema, disciplineInNamespaceSchema, exerciseSchema, martialFormSchema, minEntrySchema, profileFormSchema, sessionSchema, setFormSchema } from '../core/validate.ts';
-import type { FeedItem, Repo, RepoQueries, RepoWrites, StartSessionInput, WriteError } from './adapter.ts';
+import { v5 } from 'uuid';
+import type { BodyweightEntry, CardioEntry, MartialEntry, MinEntry, Result, Session, SetRow, SyncedTable, SyncFields } from '../core/types.ts';
+import { bodyweightFormSchema, cardioFormSchema, disciplineInNamespaceSchema, exercisePrefSchema, exerciseSchema, martialFormSchema, minEntrySchema, prEventSchema, profileFormSchema, sessionSchema, setFormSchema } from '../core/validate.ts';
+import type { ExercisePref, FeedItem, PrEvent, Repo, RepoQueries, RepoWrites, SessionPatch, SessionWithSets, StartSessionInput, WriteError } from './adapter.ts';
 import { compareInstant, createClock, localDateIn, type Clock } from './clock.ts';
 import { asRemote, IronpactDB } from './db.ts';
 import { defaultProfile } from './defaults.ts';
@@ -10,6 +11,13 @@ import { bodyweightId, newId } from './ids.ts';
 import { enqueue, isPending, type Mutation } from './outbox.ts';
 import type { Remote } from './adapter.ts';
 import { browserEnvironment, SyncEngine, type SyncEnvironment } from './sync.ts';
+
+/** E4.6 natural key. UUIDv5 of `ironpact.exercise_prefs` in the DNS namespace (L9). */
+const NS_EXERCISE_PREF = 'bcd6de86-04e6-52f5-ae97-a0323dde2be5';
+function exercisePrefId(userId: string, exerciseId: string): string {
+  return v5(`${userId}:${exerciseId}`, NS_EXERCISE_PREF);
+}
+const SESSION_CHILDREN = ['sets', 'cardio_entries', 'martial_entries', 'min_entries'] as const;
 
 export interface DataRepoOptions { db?: IronpactDB; clock?: Clock; environment?: SyncEnvironment; autoStart?: boolean }
 export interface ManagedRepo extends Repo { ready: Promise<void>; close(): void }
@@ -110,6 +118,9 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     if (!(await visibleUsers()).has(user)) return [];
     return table.filter((row) => row.user_id === user && active(row) && row.local_date >= from && row.local_date <= to).toArray();
   }
+  function cap(limit: number): number {
+    return Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 0;
+  }
   const q: RepoQueries = {
     me: () => read(async () => { const user = remote.currentUserId(); return user ? db.profiles.get(user) : undefined; }),
     profiles: (ids) => read(async () => { const users = await visibleUsers(); return (await db.profiles.bulkGet(ids.filter((id) => users.has(id)))).filter((row) => row !== undefined); }),
@@ -161,6 +172,88 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     }),
     isPending: (id) => read(() => isPending(db, id)),
     deadLetters: () => read(async () => (await db.outbox.where('status').equals('dead').toArray()).flatMap((entry) => entry.seq === undefined ? [] : [{ seq: entry.seq, table: entry.table, row_id: entry.row_id, last_error: entry.last_error ?? '', created_at: entry.created_at }])),
+    exerciseHistory: (exerciseId, limitSessions) => read(async () => {
+      const user = remote.currentUserId();
+      const limit = cap(limitSessions);
+      if (!user || limit === 0) return [];
+      const sets = await db.sets.filter((row) => row.user_id === user && row.exercise_id === exerciseId && active(row)).toArray();
+      const bySession = new Map<string, SetRow[]>();
+      for (const set of sets) {
+        const list = bySession.get(set.session_id);
+        if (list) list.push(set);
+        else bySession.set(set.session_id, [set]);
+      }
+      const sessions = (await db.sessions.bulkGet([...bySession.keys()])).filter((row): row is Session => !!row && row.user_id === user && active(row));
+      sessions.sort((a, b) => b.started_at.localeCompare(a.started_at) || b.id.localeCompare(a.id));
+      return sessions.slice(0, limit).map((session): SessionWithSets => ({
+        session,
+        sets: (bySession.get(session.id) ?? []).sort((a, b) => a.set_index - b.set_index || a.id.localeCompare(b.id)),
+      }));
+    }),
+    recentSessionsWithSets: (limit) => read(async () => {
+      const user = remote.currentUserId();
+      const count = cap(limit);
+      if (!user || count === 0) return [];
+      const sessions = (await db.sessions.filter((row) => row.user_id === user && active(row) && row.kind === 'gym' && row.ended_at !== null).toArray())
+        .sort((a, b) => b.started_at.localeCompare(a.started_at) || b.id.localeCompare(a.id))
+        .slice(0, count);
+      const result: SessionWithSets[] = [];
+      for (const session of sessions) {
+        const sets = (await db.sets.where('session_id').equals(session.id).filter(active).toArray())
+          .sort((a, b) => a.set_index - b.set_index || a.id.localeCompare(b.id));
+        result.push({ session, sets });
+      }
+      return result;
+    }),
+    prEvents: (filter) => read(async () => {
+      const user = remote.currentUserId();
+      if (!user) return [];
+      let sourceIds: Set<string> | undefined;
+      if (filter.sessionId) {
+        const session = await db.sessions.get(filter.sessionId);
+        if (!session || session.user_id !== user) return [];
+        const [sets, cardio] = await Promise.all([
+          db.sets.where('session_id').equals(filter.sessionId).toArray(),
+          db.cardio_entries.where('session_id').equals(filter.sessionId).toArray(),
+        ]);
+        sourceIds = new Set([...sets, ...cardio].map((row) => row.id));
+      }
+      const rows = await db.mirror('pr_events').where('user_id').equals(user).filter((row) => {
+        if (row.deleted_at) return false;
+        if (filter.exerciseId && row.exercise_id !== filter.exerciseId) return false;
+        if (filter.since && String(row.local_date) < filter.since) return false;
+        if (sourceIds && !sourceIds.has(String(row.source_id))) return false;
+        return true;
+      }).toArray();
+      const events: PrEvent[] = [];
+      for (const row of rows) {
+        const parsed = prEventSchema.safeParse({ seen_by: [], ...row });
+        if (parsed.success) events.push(parsed.data);
+      }
+      events.sort((a, b) => b.local_date.localeCompare(a.local_date) || b.client_updated_at.localeCompare(a.client_updated_at) || b.id.localeCompare(a.id));
+      return events;
+    }),
+    exercisePref: (exerciseId) => read(async () => {
+      const user = remote.currentUserId();
+      if (!user) return undefined;
+      const row = await db.mirror('exercise_prefs').where('[user_id+exercise_id]').equals([user, exerciseId]).first();
+      if (!row || row.deleted_at) return undefined;
+      const parsed = exercisePrefSchema.safeParse(row);
+      return parsed.success ? parsed.data : undefined;
+    }),
+    day: (date) => read(async () => {
+      const user = remote.currentUserId();
+      if (!user) return { sessions: [], sets: [], cardio: [], martial: [], min: [], bodyweight: [] };
+      const entries = await q.entriesBetween(user, date, date);
+      return {
+        sessions: [...entries.sessions].sort((a, b) => a.started_at.localeCompare(b.started_at) || a.id.localeCompare(b.id)),
+        sets: [...entries.sets].sort((a, b) => a.logged_at.localeCompare(b.logged_at) || a.set_index - b.set_index || a.id.localeCompare(b.id)),
+        cardio: [...entries.cardio].sort((a, b) => a.logged_at.localeCompare(b.logged_at) || a.id.localeCompare(b.id)),
+        martial: [...entries.martial].sort((a, b) => a.logged_at.localeCompare(b.logged_at) || a.id.localeCompare(b.id)),
+        min: [...entries.min].sort((a, b) => a.logged_at.localeCompare(b.logged_at) || a.id.localeCompare(b.id)),
+        bodyweight: [...entries.bodyweight].sort((a, b) => a.measured_at.localeCompare(b.measured_at) || a.id.localeCompare(b.id)),
+      };
+    }),
   };
 
   async function deletion(table: Parameters<RepoWrites['softDelete']>[0], id: string, deleted: boolean, user: string): Promise<void> {
@@ -174,6 +267,58 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     }
     await enqueue(db, mutations, now);
     if (table === 'sessions' && deleted) await db.meta.delete('active_session_id');
+  }
+  async function syncActive(session: Session): Promise<void> {
+    if (session.ended_at !== null) {
+      const active = await db.meta.get('active_session_id');
+      if (active?.value === session.id) await db.meta.delete('active_session_id');
+      return;
+    }
+    await db.meta.put({ key: 'active_session_id', value: session.id });
+  }
+  /** Session edit plus child date moves. Children keep `client_updated_at` (propagate_session_local_date). */
+  async function planSession(session: Session, patch: SessionPatch, user: string, now: string): Promise<{ next: Session; mutations: Mutation[] }> {
+    const next = validate(sessionSchema, { ...session, ...patch, id: session.id, user_id: user, client_updated_at: now });
+    if (next.ended_at === null && session.ended_at !== null) {
+      const open = await openSession(user);
+      if (open && open.id !== session.id) throw new WriteFailure('session_already_open');
+    }
+    const mutations: Mutation[] = [{ table: 'sessions', row: asRemote(next) }];
+    if (next.local_date !== session.local_date) {
+      for (const table of SESSION_CHILDREN) {
+        const children = await db.mirror(table).where('session_id').equals(session.id).toArray();
+        for (const child of children) {
+          if (child.local_date === next.local_date) continue;
+          mutations.push({ table, row: { ...child, local_date: next.local_date } });
+        }
+      }
+    }
+    return { next, mutations };
+  }
+  async function rewriteBodyweight(user: string, id: string, patch: { weight_kg?: number; measured_at?: string; local_date?: string }): Promise<BodyweightEntry> {
+    const old = await db.bodyweight_entries.get(id);
+    if (!old || old.user_id !== user || !active(old)) throw new WriteFailure('no_open_session');
+    const now = clock.now();
+    const date = patch.local_date ?? old.local_date;
+    const nextId = bodyweightId(user, date);
+    const measured = patch.measured_at ?? old.measured_at;
+    const weight = patch.weight_kg ?? old.weight_kg;
+    if (nextId === old.id) {
+      const row = validate(bodyweightFormSchema, { ...old, id: old.id, user_id: user, weight_kg: weight, measured_at: measured, local_date: date, client_updated_at: now, deleted_at: null });
+      await save('bodyweight_entries', row);
+      return row;
+    }
+    const occupant = await db.bodyweight_entries.get(nextId);
+    if (occupant && occupant.user_id !== user) throw new WriteFailure('world_record');
+    const row = validate(bodyweightFormSchema, {
+      ...(occupant ?? {}),
+      id: nextId, user_id: user, local_date: date, weight_kg: weight, measured_at: measured, client_updated_at: now, deleted_at: null,
+    });
+    await enqueue(db, [
+      { table: 'bodyweight_entries', row: asRemote({ ...old, deleted_at: now, client_updated_at: now }) },
+      { table: 'bodyweight_entries', row: asRemote(row) },
+    ], now);
+    return row;
   }
   const w: RepoWrites = {
     upsertMyProfile: (patch) => ordinary(async (user) => {
@@ -244,6 +389,81 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     }),
     softDelete: (table, id) => ordinary((user) => deletion(table, id, true, user)),
     restore: (table, id) => ordinary((user) => deletion(table, id, false, user)),
+    recordPrEvents: (rows) => ordinary(async (user) => {
+      const now = clock.now();
+      const saved: PrEvent[] = [];
+      const mutations: Mutation[] = [];
+      for (const draft of rows) {
+        if (draft.user_id !== user) throw new WriteFailure('world_record');
+        if (draft.exercise_id) {
+          const exercise = await db.exercises.get(draft.exercise_id);
+          const users = await visibleUsers();
+          if (!exercise || !active(exercise) || (exercise.owner_id !== null && !users.has(exercise.owner_id))) throw new WriteFailure('world_record');
+        }
+        const row = validate(prEventSchema, {
+          id: newId(), user_id: user, exercise_id: draft.exercise_id, source_id: draft.source_id,
+          pr_type: draft.pr_type, reps: draft.reps, value: draft.value, previous_value: draft.previous_value,
+          pct_over_previous: draft.pct_over_previous, seen_by: [], local_date: draft.local_date,
+          client_updated_at: now, deleted_at: null,
+        });
+        mutations.push({ table: 'pr_events', row: asRemote(row) });
+        saved.push(row);
+      }
+      if (mutations.length > 0) await enqueue(db, mutations, now);
+      return saved;
+    }),
+    setExercisePref: (exerciseId, patch) => ordinary(async (user) => {
+      const exercise = await db.exercises.get(exerciseId);
+      const users = await visibleUsers();
+      if (!exercise || !active(exercise) || (exercise.owner_id !== null && !users.has(exercise.owner_id))) throw new WriteFailure('world_record');
+      const now = clock.now();
+      const existing = await db.mirror('exercise_prefs').where('[user_id+exercise_id]').equals([user, exerciseId]).first();
+      const row: ExercisePref = validate(exercisePrefSchema, {
+        ...(existing ?? {}),
+        id: typeof existing?.id === 'string' ? existing.id : exercisePrefId(user, exerciseId),
+        user_id: user, exercise_id: exerciseId, rest_s: patch.rest_s,
+        local_date: localDateIn(clock.timezone(), now), client_updated_at: now, deleted_at: null,
+      });
+      await save('exercise_prefs', row);
+      return row;
+    }),
+    updateSession: (id, patch) => ordinary(async (user) => {
+      const session = await ownedSession(id, user);
+      const now = clock.now();
+      const planned = await planSession(session, patch, user, now);
+      await enqueue(db, planned.mutations, now);
+      await syncActive(planned.next);
+      return planned.next;
+    }),
+    updateEntry: (async (table, id, patch) => {
+      if (table === 'bodyweight_entries') return ordinary((user) => rewriteBodyweight(user, id, patch));
+      return ordinary(async (user) => {
+        const old = await db.mirror(table).get(id);
+        if (!old || old.user_id !== user || !active(old as { deleted_at?: string | null })) throw new WriteFailure('no_open_session');
+        const now = clock.now();
+        const mutations: Mutation[] = [];
+        let localDate = String(old.local_date);
+        const nextDate = 'local_date' in patch ? patch.local_date : undefined;
+        if (nextDate && nextDate !== localDate) {
+          const session = await ownedSession(String(old.session_id), user);
+          const planned = await planSession(session, { local_date: nextDate }, user, now);
+          mutations.push(...planned.mutations);
+          localDate = planned.next.local_date;
+          await syncActive(planned.next);
+        }
+        const merged = { ...old, ...patch, id, user_id: user, local_date: localDate, client_updated_at: now, deleted_at: null };
+        if (table === 'martial_entries') {
+          const labels = (await db.exercises.filter((exercise) => (exercise.owner_id === user || exercise.owner_id === null) && ['lift', 'bw_lift'].includes(exercise.kind) && active(exercise)).toArray()).map((exercise) => exercise.export_label);
+          validate(disciplineInNamespaceSchema(labels), String(merged.discipline));
+        }
+        const row = table === 'cardio_entries' ? validate(cardioFormSchema, merged)
+          : table === 'martial_entries' ? validate(martialFormSchema, merged)
+          : validate(minEntrySchema, merged);
+        mutations.push({ table, row: asRemote(row) });
+        await enqueue(db, mutations, now);
+        return row;
+      });
+    }) as RepoWrites['updateEntry'],
   };
 
   async function closeStaleSession(user: string, generation: number): Promise<void> {

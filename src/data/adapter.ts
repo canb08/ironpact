@@ -24,6 +24,7 @@ import type {
   Session,
   SessionKind,
   SetRow,
+  SyncFields,
   SyncedTable,
   Uuid,
 } from '../core/types.ts';
@@ -149,6 +150,112 @@ export type FeedItem =
   | { type: 'min'; row: MinEntry }
   | { type: 'weight'; row: BodyweightEntry };
 
+/** One of my sessions plus its live sets, ordered by `set_index` (S14, F4). */
+export interface SessionWithSets {
+  session: Session;
+  sets: SetRow[];
+}
+
+/** `exercise_prefs` row. Big jumps is not stored here (`profiles.big_jumps`). */
+export interface ExercisePref extends SyncFields {
+  exercise_id: Uuid;
+  rest_s: number; // 15–600
+}
+
+export type PrType = 'e1rm' | 'rep_max' | 'volume' | 'distance' | 'pace';
+
+/** Columns of `pr_events`. Draft-only fields (`display`, `bucket_label`) are not stored. */
+export interface PrEvent extends SyncFields {
+  exercise_id: Uuid | null;
+  source_id: Uuid;
+  pr_type: PrType;
+  reps: number | null;
+  value: number;
+  previous_value: number | null;
+  pct_over_previous: number | null;
+  seen_by: Uuid[];
+}
+
+/**
+ * Shape produced by `core/prs.ts`. Extra draft fields are ignored.
+ * `id`, `seen_by` and sync timestamps are filled by `recordPrEvents`.
+ */
+export interface PrEventDraftRow {
+  exercise_id: Uuid | null;
+  source_id: Uuid;
+  pr_type: PrType;
+  reps: number | null;
+  value: number;
+  previous_value: number | null;
+  pct_over_previous: number | null;
+  user_id: Uuid;
+  local_date: LocalDate;
+}
+
+export interface PrEventFilter {
+  exerciseId?: Uuid;
+  sessionId?: Uuid;
+  /** Inclusive `local_date` lower bound (YYYY-MM-DD). */
+  since?: LocalDate;
+}
+
+export interface SessionPatch {
+  started_at?: Instant;
+  ended_at?: Instant | null;
+  note?: string | null;
+  readiness?: Readiness | null;
+  local_date?: LocalDate;
+}
+
+export interface CardioPatch {
+  distance_m?: number;
+  duration_s?: number;
+  rpe?: number | null;
+  note?: string | null;
+  local_date?: LocalDate;
+}
+export interface MartialPatch {
+  discipline?: string;
+  duration_min?: number;
+  rounds?: number | null;
+  rpe?: number | null;
+  note?: string | null;
+  local_date?: LocalDate;
+}
+export interface MinPatch {
+  description?: string;
+  duration_min?: number | null;
+  local_date?: LocalDate;
+}
+export interface BodyweightPatch {
+  weight_kg?: number;
+  measured_at?: Instant;
+  local_date?: LocalDate;
+}
+
+export interface EntryPatchMap {
+  cardio_entries: CardioPatch;
+  martial_entries: MartialPatch;
+  min_entries: MinPatch;
+  bodyweight_entries: BodyweightPatch;
+}
+export interface EntryRowMap {
+  cardio_entries: CardioEntry;
+  martial_entries: MartialEntry;
+  min_entries: MinEntry;
+  bodyweight_entries: BodyweightEntry;
+}
+
+/** Same bundle as `entriesBetween`, scoped to one of my local dates (S15). */
+export interface DayEntries {
+  sessions: Session[];
+  sets: SetRow[];
+  cardio: CardioEntry[];
+  martial: MartialEntry[];
+  min: MinEntry[];
+  bodyweight: BodyweightEntry[];
+}
+
 /**
  * Query functions read only the local mirror (Dexie) and are safe inside
  * `useLiveQuery(() => repo.q.x(...))` — they re-run when the mirror changes.
@@ -176,6 +283,16 @@ export interface RepoQueries {
   /** true while any pending outbox entry exists for the row: grey tick vs chalk tick. */
   isPending(rowId: Uuid): Promise<boolean>;
   deadLetters(): Promise<DeadLetter[]>;
+  /** My sessions that contain this exercise, newest first, each with its live sets (S14, F4, F5). */
+  exerciseHistory(exerciseId: Uuid, limitSessions: number): Promise<SessionWithSets[]>;
+  /** My last N finished gym sessions with sets ordered by `set_index` (next-exercise guess, F4). */
+  recentSessionsWithSets(limit: number): Promise<SessionWithSets[]>;
+  /** My live (non-deleted) PR events. `sessionId` matches set and run sources. */
+  prEvents(filter: PrEventFilter): Promise<PrEvent[]>;
+  /** My `exercise_prefs` row, or `undefined` when unset or soft-deleted. */
+  exercisePref(exerciseId: Uuid): Promise<ExercisePref | undefined>;
+  /** Every entry of mine on that local date (S15). */
+  day(date: LocalDate): Promise<DayEntries>;
 }
 
 export interface RepoWrites {
@@ -194,6 +311,18 @@ export interface RepoWrites {
   /** Soft delete through the outbox; a set's PR events go in the same batch (§4.6). */
   softDelete(table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries', id: Uuid): Promise<Result<void, WriteError>>;
   restore(table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries' | 'min_entries' | 'bodyweight_entries', id: Uuid): Promise<Result<void, WriteError>>;
+  /** Insert PR drafts from `core/prs.ts` in one outbox transaction. Non-columns are dropped. */
+  recordPrEvents(rows: readonly PrEventDraftRow[]): Promise<Result<PrEvent[], WriteError>>;
+  /** Rest seconds only. Big jumps is `profiles.big_jumps` via `q.me()` / `upsertMyProfile`. */
+  setExercisePref(exerciseId: Uuid, patch: { rest_s: number }): Promise<Result<ExercisePref, WriteError>>;
+  /** `local_date` moves children in the same batch (E5.5). */
+  updateSession(id: Uuid, patch: SessionPatch): Promise<Result<Session, WriteError>>;
+  /**
+   * Edit one quick-log or bodyweight row.
+   * A `local_date` on a session child moves that session (and its other children).
+   * A bodyweight date change soft-deletes the old id and writes the uuidv5 id for the new date (E4.6).
+   */
+  updateEntry<T extends keyof EntryPatchMap>(table: T, id: Uuid, patch: EntryPatchMap[T]): Promise<Result<EntryRowMap[T], WriteError>>;
 }
 
 export interface RepoAuth {

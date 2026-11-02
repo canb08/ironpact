@@ -117,6 +117,11 @@ export function mockRepo(partial: {
     crewFeed: async () => [],
     isPending: async () => false,
     deadLetters: async () => [],
+    exerciseHistory: async () => [],
+    recentSessionsWithSets: async () => [],
+    prEvents: async () => [],
+    exercisePref: async () => undefined,
+    day: async () => ({ sessions: [], sets: [], cardio: [], martial: [], min: [], bodyweight: [] }),
     ...partial.q,
   };
   const w: RepoWrites = {
@@ -133,6 +138,10 @@ export function mockRepo(partial: {
     logBodyweight: async () => ({ ok: false, error: 'storage_full' }),
     softDelete: async () => ({ ok: false, error: 'storage_full' }),
     restore: async () => ({ ok: false, error: 'storage_full' }),
+    recordPrEvents: async () => ({ ok: true, value: [] }),
+    setExercisePref: async () => ({ ok: false, error: 'storage_full' }),
+    updateSession: async () => ({ ok: false, error: 'storage_full' }),
+    updateEntry: async () => ({ ok: false, error: 'storage_full' }),
     ...partial.w,
   };
   const exportTokens: RepoExport = {
