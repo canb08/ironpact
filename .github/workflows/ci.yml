@@ -87,7 +87,7 @@ jobs:
           config_path.write_text(source)
           PY
           stack_root="$RUNNER_TEMP/a5-stack"
-          supabase --workdir "$stack_root" start --exclude studio,imgproxy,storage-api,realtime,postgres-meta,logflare,vector,supavisor,edge-runtime > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { grep -iE "error|fail|denied|invalid|unhealthy" "$RUNNER_TEMP/supabase-start.log" | grep -viE "key|secret|jwt" | head -40; exit 1; }
+          supabase --workdir "$stack_root" start --exclude studio,imgproxy,storage-api,postgres-meta,logflare,vector,supavisor,edge-runtime > "$RUNNER_TEMP/supabase-start.log" 2>&1 || { grep -iE "error|fail|denied|invalid|unhealthy" "$RUNNER_TEMP/supabase-start.log" | grep -viE "key|secret|jwt" | head -40; exit 1; }
           supabase --workdir "$stack_root" functions serve > "$RUNNER_TEMP/supabase-functions.log" 2>&1 &
           echo "$!" > "$RUNNER_TEMP/supabase-functions.pid"
       - name: Run Edge Function integration tests
@@ -132,6 +132,7 @@ jobs:
           printf '::add-mask::%s\n' "$SUPABASE_SERVICE_ROLE_KEY" "$SUPABASE_ANON_KEY"
           npm ci
           RUN_SUPABASE_INTEGRATION=1 npx vitest run --coverage.enabled=false --reporter=verbose tests/unit/data/repo.mock.test.ts tests/integration/repo.supabase.test.ts
+          RUN_SUPABASE_INTEGRATION=1 npx vitest run --coverage.enabled=false --reporter=verbose tests/integration/realtime.supabase.test.ts
       - name: Show local container status on failure
         if: failure()
         # Do not dump CLI output, environment or request logs: they may contain keys.

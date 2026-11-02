@@ -11,6 +11,7 @@ import { bodyweightId, newId } from './ids.ts';
 import { enqueue, isPending, type Mutation } from './outbox.ts';
 import type { Remote } from './adapter.ts';
 import { browserEnvironment, SyncEngine, type SyncEnvironment } from './sync.ts';
+import { createDuo } from './duo.ts';
 
 /** E4.6 natural key. UUIDv5 of `ironpact.exercise_prefs` in the DNS namespace (L9). */
 const NS_EXERCISE_PREF = 'bcd6de86-04e6-52f5-ae97-a0323dde2be5';
@@ -19,7 +20,7 @@ function exercisePrefId(userId: string, exerciseId: string): string {
 }
 const SESSION_CHILDREN = ['sets', 'cardio_entries', 'martial_entries', 'min_entries'] as const;
 
-export interface DataRepoOptions { db?: IronpactDB; clock?: Clock; environment?: SyncEnvironment; autoStart?: boolean }
+export interface DataRepoOptions { db?: IronpactDB; clock?: Clock; environment?: SyncEnvironment; autoStart?: boolean; realtime?: boolean }
 export interface ManagedRepo extends Repo { ready: Promise<void>; close(): void }
 class WriteFailure extends Error { constructor(readonly code: WriteError | 'label_taken') { super(code); } }
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
@@ -30,6 +31,8 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
   const clock = options.clock ?? createClock();
   const environment = options.environment ?? browserEnvironment();
   const engine = new SyncEngine(db, remote, clock, environment);
+  const duo = createDuo(db, remote, clock, environment, () => engine.pullNow());
+  const realtimeEnabled = options.realtime ?? options.autoStart !== false;
   let closed = false;
   let epoch = 0;
   let gate: Promise<void> = Promise.resolve();
@@ -466,6 +469,33 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     }) as RepoWrites['updateEntry'],
   };
 
+  // Publish only after the local transaction commits. Presence failure must
+  // never delay/reject an offline write or leave a session marked active.
+  const startSession = w.startSession;
+  w.startSession = async (input) => {
+    const result = await startSession(input);
+    if (result.ok) duo.activity(result.value.id);
+    return result;
+  };
+  const logSet = w.logSet;
+  w.logSet = async (input) => {
+    const result = await logSet(input);
+    if (result.ok) duo.activity(result.value.session_id, result.value.exercise_id);
+    return result;
+  };
+  const finishSession = w.finishSession;
+  w.finishSession = async (id, note) => {
+    const result = await finishSession(id, note);
+    if (result.ok) duo.finish(id);
+    return result;
+  };
+  const discardSession = w.discardSession;
+  w.discardSession = async (id) => {
+    const result = await discardSession(id);
+    if (result.ok) duo.finish(id);
+    return result;
+  };
+
   async function closeStaleSession(user: string, generation: number): Promise<void> {
     await db.transaction('rw', db.tables, async () => {
       if (closed || generation !== epoch) return;
@@ -518,20 +548,26 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
   gate = initialize(initialUser, initialGeneration);
   armNetwork(initialUser, initialGeneration, gate);
   const unsubscribeAuth = remote.onAuthChange((user) => {
+    duo.stop();
     const generation = ++epoch; engine.invalidate();
     const local = gate.catch(() => {}).then(() => initialize(user, generation));
     gate = local.then(() => {
       if (!closed && generation === epoch) {
+        if (realtimeEnabled) duo.start();
         for (const cb of authListeners) cb(user);
         if (options.autoStart !== false) engine.afterWrite();
       }
     });
     armNetwork(user, generation, local);
   });
-  const ready = gate.then(() => { if (!closed && options.autoStart !== false) engine.start(); });
+  const ready = gate.then(() => { if (!closed) { if (realtimeEnabled) duo.start(); if (options.autoStart !== false) engine.start(); } });
   const repo: ManagedRepo = {
     backend: remote.kind, ready,
-    close() { closed = true; epoch++; unsubscribeAuth(); engine.close(); authListeners.clear(); if (!options.db) db.close(); },
+    duo: { ...duo.api, useSpot: (week) => rpc(async (valid) => {
+      await engine.flushNow();
+      return valid() ? duo.api.useSpot(week) : { ok: false, error: 'network' as const };
+    }) },
+    close() { closed = true; epoch++; duo.close(); unsubscribeAuth(); engine.close(); authListeners.clear(); if (!options.db) db.close(); },
     auth: {
       userId: () => remote.currentUserId(),
       onChange(cb) { authListeners.add(cb); return () => { authListeners.delete(cb); }; },

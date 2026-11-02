@@ -6,6 +6,7 @@ import { defaultProfile } from './defaults.ts';
 import { newId } from './ids.ts';
 import { compareInstant, localDateIn } from './clock.ts';
 import { compareCursor, cursorFor } from './pull.ts';
+import { createMockRealtime, mockUseSpot } from './realtime.mock.ts';
 
 export const MOCK_USER_IDS = { alice: '00000000-0000-4000-8000-000000000001', bob: '00000000-0000-4000-8000-000000000002' } as const;
 export const MOCK_EXERCISE_ID = '00000000-0000-4000-8000-000000000010';
@@ -109,6 +110,17 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
     return null;
   }
   const remote: MockRemote = {
+    async useSpot(weekStart) {
+      const actor = userId; await pause();
+      if (actor !== userId) return { ok: false, error: 'network' };
+      return mockUseSpot(actor, weekStart, instant(), rows, seed);
+    },
+    async subscribeCrew(crewId, callbacks) {
+      const actor = userId;
+      if (!actor || !member(actor, crewId)) throw new Error('Realtime requires crew membership');
+      return createMockRealtime(tables, crewId, callbacks, () => JSON.stringify(
+        PULLED_TABLES.map((table) => rows(table).filter((row) => actor === userId && visible(table, row, actor)))));
+    },
     kind: 'mock', currentUserId: () => userId,
     onAuthChange(cb) { authListeners.add(cb); return () => { authListeners.delete(cb); }; },
     async sendCode(email) { await pause(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? success(undefined) : { ok: false, error: 'invalid_email' }; },
