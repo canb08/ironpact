@@ -65,7 +65,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P5B | S14 completed | Grok | C | todo — after P2E |
 | P5C | S16 Settings full | Codex Sol | C | todo — after P2A, P5D |
 | P4G | Playwright Phase 4 | Grok | C | todo — after P4C, P4E |
-| P5D | Delete account function + 30-day purge (L11) | Codex Astra | E | todo — no deps |
+| P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (Can's Codex took it: lane C idle, P5C needs it; Can's Claude reviews + merges) | running 2026-11-02 02:48 |
 | P4F | S1 install gate full + Floor install chip | Grok | E | todo — after P4A |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Codex Sol | E | todo — after P4B, P3E |
 | P5A | S13 Progress full | Grok | E | todo — after P3F |
