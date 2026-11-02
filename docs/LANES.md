@@ -41,8 +41,8 @@ Never force-push (auto mode blocks it): update an old branch by **merging `main`
 ## Queue after Phase 2–3 (Phase 4 visuals, Phase 5 polish) — fire as soon as "Starts after" is met
 | Lane | Codex | Grok |
 |---|---|---|
-| **C** | P4B motion + moment queue (after P4A, P2D) → P4C PR takeover (after P4B, P2D) → P5C Settings full (after P2A, P5D) | **P4A design foundation (no deps — fire the moment a Grok is free)** · P5E banners/update chip (no deps) · P4D sound (after P2C) · P5B S14 complete (after P2E) · P4G Playwright p4 (after P4C, P4E) |
-| **E** | **P5D delete account + purge (no deps — fire the moment a Codex is free)** → P4E duo moments (after P4B, P3E) | P4F install gate full (after P4A) · P5A Progress full (after P3F) |
+| **C** | P4B motion + moment queue (after P4A, P2D) → P4C PR takeover (after P4B, P2D) → P5C Settings full (after P2A, P5D) | **P4A design foundation (no deps — fire the moment a Grok is free)** · P5E banners/update chip (no deps) · P4D sound (after P2C) · P5B S14 complete (after P2E) |
+| **E** | **P5D delete account + purge (no deps — fire the moment a Codex is free)** → P4E duo moments (after P4B, P3E) | P4F install gate full (after P4A) · P5A Progress full (after P3F) · **P4G Playwright p4 (after P4C, P4E; moved from lane C)** |
 
 Lane E: P4F and P4E both touch `src/features/floor/` — run them one after the other, not in parallel.
 **Grok has no 5-hour limit (trial, weekly pool only): run every Grok-ready ticket as its own parallel chat, and give a ready Codex ticket to Grok when Codex is busy.**
