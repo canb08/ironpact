@@ -124,7 +124,13 @@ export default function DayEditorScreen() {
           const dots = dotsFor(dayKey, span);
           const mark = <DayDots dots={dots} />;
           if (dayKey === date) {
-            return <span key={dayKey} className="progress-day is-current" aria-current="date" aria-label={dayKey}><span aria-hidden="true">{dayKey.slice(-2)}</span>{mark}</span>;
+            return (
+              <span key={dayKey} className="progress-day is-current" aria-current="date">
+                <span className="progress-sr">{dayKey}</span>
+                <span aria-hidden="true">{dayKey.slice(-2)}</span>
+                {mark}
+              </span>
+            );
           }
           return (
             <Link key={dayKey} className="progress-day" to={`/day/${dayKey}`} aria-label={dayKey}>

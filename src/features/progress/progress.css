@@ -1,18 +1,28 @@
 .progress {
   box-sizing: border-box;
+  width: 100%;
   max-width: 40rem;
+  min-width: 0;
   margin-inline: auto;
   padding: var(--gutter);
   padding-bottom: max(var(--s-6), env(safe-area-inset-bottom));
   display: grid;
   gap: var(--s-4);
+  overflow-wrap: anywhere;
+  position: relative;
+  overflow-x: clip;
 }
+
+.progress > * { min-width: 0; max-width: 100%; }
 
 .progress h1,
 .progress h2,
 .progress h3 {
   margin: 0;
   font-weight: 650;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .progress h1 { font-size: var(--t-lg); }
@@ -130,6 +140,7 @@
 
 .progress-table-wrap {
   max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
 }
 
@@ -150,6 +161,7 @@
   position: absolute;
   width: 1px;
   height: 1px;
+  max-width: 1px;
   padding: 0;
   margin: -1px;
   overflow: hidden;

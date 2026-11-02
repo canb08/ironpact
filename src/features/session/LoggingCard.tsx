@@ -134,8 +134,8 @@ export function LoggingCard({ session, exercise, sets, prefillSets, pending, res
       {resting && <RestTimerOverlay part="controls" onSkipHold={rack} />}
       <div className="session-actions">
         <Button size="xl" variant="secondary" disabled={write.busy} onClick={onNext}>{copy.nextExercise}</Button>
-        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} disabled={write.busy} aria-label={copy.finish} onHoldComplete={rack}>
-          {copy.rackIt}
+        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} disabled={write.busy} aria-label={copy.rackItName} onHoldComplete={rack}>
+          {`${copy.rackIt} `}
           <span className="session-hold-hint">{copy.finish}</span>
         </HoldButton>
       </div>

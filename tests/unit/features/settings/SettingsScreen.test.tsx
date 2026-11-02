@@ -23,6 +23,13 @@ function mount() {
   return render(<RepoProvider repo={context.repo}><SettingsScreen /></RepoProvider>);
 }
 
+function previewBody(): HTMLPreElement {
+  const region = screen.getByRole('region', { name: copy.exportPreview });
+  const pre = region.querySelector('pre');
+  expect(pre).toBeTruthy();
+  return pre as HTMLPreElement;
+}
+
 async function hold(button: HTMLElement, duration = 1250) {
   vi.useRealTimers();
   fireEvent.keyDown(button, { key: 'Enter' });
@@ -127,11 +134,11 @@ it('renders byte-exact seeded local previews in every format, saves through Repo
     const button = await screen.findByRole('button', { name: label });
     await waitFor(() => expect(button.hasAttribute('disabled')).toBe(false));
     await user.click(button);
-    await waitFor(() => expect(screen.getByLabelText(copy.exportPreview, { selector: 'pre' }).textContent).toBe(formatExport(input, format, '2026-10-19')));
+    await waitFor(() => expect(previewBody().textContent).toBe(formatExport(input, format, '2026-10-19')));
     expect((await repo.q.me())?.export_format).toBe(format);
   }
   await act(async () => { unwrap(await repo.w.logMin('new local entry')); });
-  await waitFor(() => expect(screen.getByLabelText(copy.exportPreview, { selector: 'pre' }).textContent).toContain('new local entry'));
+  await waitFor(() => expect(previewBody().textContent).toContain('new local entry'));
 });
 
 it('copies the exact canonical E2.7/E6.2 text, with URL, format, header and no token', async () => {
@@ -167,7 +174,9 @@ it('uses seven local calendar dates across DST and year boundaries', () => {
 
 it('disables remote token actions offline but keeps local format selection and preview', async () => {
   mount();
-  await screen.findByLabelText(copy.exportPreview, { selector: 'pre' });
+  await waitFor(() => {
+    expect(previewBody().getAttribute('aria-label')).toBeNull();
+  });
   await act(async () => { vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false); window.dispatchEvent(new Event('offline')); });
   expect(screen.getByRole('button', { name: copy.generateToken }).hasAttribute('disabled')).toBe(true);
   expect(screen.getByRole('button', { name: copy.exportJson }).hasAttribute('disabled')).toBe(false);

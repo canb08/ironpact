@@ -142,7 +142,7 @@ export function VaultExport({ repo }: { repo: Repo }) {
       <section className="vault-panel" aria-labelledby="preview-title">
         <h3 id="preview-title">{copy.exportPreview}</h3>
         {!data ? <p>{copy.loading}</p> : data.error ? <p role="alert">{copy.exportPreviewError}</p> : !profile ? <p>{copy.profileNeeded}</p> :
-          <><pre className="vault-well vault-preview" aria-label={copy.exportPreview}>{data.preview?.body}</pre>
+          <><pre className="vault-well vault-preview">{data.preview?.body}</pre>
             {data.preview?.body === '' && <p>{copy.exportEmpty}</p>}</>}
         {data?.error && <Button variant="secondary" onClick={() => setRevision((n) => n + 1)}>{copy.retry}</Button>}
       </section>
