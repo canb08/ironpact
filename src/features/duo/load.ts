@@ -35,6 +35,10 @@ export interface DuoSnapshot {
   togetherTonnesKg: number;
   spotWeek: LocalDate | null;
   nowIso: string;
+  crewId: string | null;
+  reduceMotion: boolean;
+  batterySaver: boolean;
+  openSession: boolean;
 }
 
 function line(credits: number, target: number, minCount: number): string {
@@ -95,6 +99,7 @@ export async function loadDuo(repo: Repo, nowIso: string): Promise<DuoSnapshot |
   });
   const mine = await memberWeek(repo, me, nowIso);
   const bar = await repo.duo.bar();
+  const open = await repo.q.openSession();
   const latest = bar.history.at(-1);
   const everyone = [mine, ...partners];
   const spotWeek = crew ? crewWeekBounds(nowIso, crew.crew.tz).weekStart : mine.weekStart;
@@ -124,5 +129,9 @@ export async function loadDuo(repo: Repo, nowIso: string): Promise<DuoSnapshot |
     togetherTonnesKg,
     spotWeek,
     nowIso,
+    crewId: crew?.crew.id ?? null,
+    reduceMotion: me.reduce_motion,
+    batterySaver: me.battery_saver,
+    openSession: open !== undefined,
   };
 }
