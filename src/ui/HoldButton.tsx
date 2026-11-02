@@ -24,6 +24,7 @@ export function HoldButton({
   onHoldComplete,
   disabled,
   children,
+  variant = 'destructive-hold',
   ...props
 }: HoldButtonProps) {
   const progress = useRef<HTMLProgressElement>(null);
@@ -78,6 +79,7 @@ export function HoldButton({
   return (
     <Button
       {...props}
+      variant={variant}
       disabled={disabled}
       className={`ui-hold ${props.className ?? ''}`}
       onPointerDown={(event) => {

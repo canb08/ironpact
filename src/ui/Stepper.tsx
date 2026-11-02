@@ -10,6 +10,7 @@ export interface StepperProps {
   min?: number;
   max?: number;
   disabled?: boolean;
+  unit?: string;
 }
 
 export function Stepper({
@@ -20,6 +21,7 @@ export function Stepper({
   min = -Infinity,
   max = Infinity,
   disabled = false,
+  unit,
 }: StepperProps) {
   const id = useId();
   if (!Number.isFinite(step) || step <= 0 || min > max) throw new Error('Invalid stepper range');
@@ -30,9 +32,12 @@ export function Stepper({
   };
   return (
     <div className="ui-stepper">
-      <label id={`${id}-label`} htmlFor={id}>
-        {label}
-      </label>
+      <div className="ui-stepper__heading">
+        <label id={`${id}-label`} htmlFor={id}>{label}</label>
+        <span id={`${id}-step`} className="ui-stepper__step">
+          {fill(copy.x1Step, { step })}{unit ? ` ${unit}` : ''}
+        </span>
+      </div>
       <div className="ui-stepper__controls">
         <Button
           size="xl"
@@ -45,6 +50,7 @@ export function Stepper({
         </Button>
         <input
           id={id}
+          aria-describedby={`${id}-step`}
           type="number"
           inputMode="decimal"
           value={value}

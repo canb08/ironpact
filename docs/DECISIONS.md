@@ -185,3 +185,7 @@ Authority: SPEC §10, then §1.6, then §1.1. These are decisions, not claims th
 
 - Supersedes L6's "Supabase built-in email". Hosted Supabase only lets you edit email templates once custom SMTP is set, and the default template has a link but no code. The app signs in by 6-digit code (an iOS home-screen app can't take a magic link), so the owner chose Gmail SMTP: `smtp.gmail.com:465`, sender "SPOTTER", Google app password (entered by the owner in the dashboard only).
 - Hosted Auth: email OTP length 6, expiry 600 s (it defaulted to 8 digits, matching `config.toml`'s `otp_length = 6`). "Magic link or OTP" and "Confirm sign up" templates both carry `Your code: {{ .Token }}` with the link as a fallback.
+
+## L19 · Owner-requested redesign R2 (2026-11-02)
+
+Owner-requested redesign R2; docs/REDESIGN.md supersedes SPEC §3 and §2 layouts; product rules unchanged.
