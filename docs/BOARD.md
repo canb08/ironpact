@@ -121,7 +121,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
-| Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | **running** — friend's Grok (parallel chat, run files only) |
+| Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
 | Y7 | Voice log (experimental) | Grok Build | E | queued (after Y3) |
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
