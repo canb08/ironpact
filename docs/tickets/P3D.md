@@ -1,5 +1,5 @@
 # P3D · Ring component (personal + co-op)
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3D-ring` · **Starts after:** nothing (fire first)
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3D-ring` · **Starts after:** nothing (fire first)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2 F14, §3.9.1 (build only the plain geometry now; motion/texture is Phase 4), §3.2.2 (member colours), §3.11, §6 Phase 3 DoD (3 members).

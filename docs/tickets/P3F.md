@@ -1,5 +1,5 @@
 # P3F · Progress S13 minimal: trend chart
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3F-progress` · **Starts after:** P3C merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P3F-progress` · **Starts after:** P3C merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S13, §2 F18, §2.8 (rebasing), §6 Phase 3.

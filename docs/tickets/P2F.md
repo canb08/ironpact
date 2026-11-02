@@ -1,5 +1,5 @@
 # P2F · Server re-check of PR events
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build (moved from Codex: usage limit) · **Branch:** `P2F-server` · **Starts after:** nothing (fire first, parallel with P2A)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build (moved from Codex: usage limit) · **Branch:** `P2F-server` · **Starts after:** nothing (fire first, parallel with P2A)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2 F7 ("inserted locally and re-checked on the server"), §4.3 `pr_events`, §4.4, §10 E7.2. Existing migrations 0001–0003, 0006.

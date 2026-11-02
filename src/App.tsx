@@ -1,4 +1,4 @@
-import { Suspense, use } from 'react';
+import { Suspense, lazy, use } from 'react';
 import { RouterProvider } from 'react-router/dom';
 import { RepoProvider } from './app/RepoProvider.tsx';
 import { StatusBanners } from './app/StatusBanners.tsx';
@@ -9,10 +9,14 @@ import './platform/install.ts';
 import './platform/storage.ts';
 import { router } from './router.tsx';
 
+// Lazy so Dexie (live query) stays out of initial JS.
+const ProfileFeel = lazy(() => import('./app/ProfileFeel.tsx'));
+
 /** Signed-in shell. Tests pass a mock repo; production uses createRepo(). */
 export function AppShell({ repo }: { repo: Repo }) {
   return (
     <RepoProvider repo={repo}>
+      <Suspense fallback={null}><ProfileFeel /></Suspense>
       <StatusBanners />
       <UpdateChip />
       <AuthGate />

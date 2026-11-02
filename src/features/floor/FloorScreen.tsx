@@ -1,58 +1,37 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { MinEntry, Session, SetRow } from '../../core/types.ts';
-import { weekCredits } from '../../core/credits.ts';
-import { localDateOf, weekDates, weekStartOf } from '../../core/weeks.ts';
+import { comebackState } from '../../core/comeback.ts';
 import type { Repo } from '../../data/adapter.ts';
 import { useRepo } from '../../app/useRepo.ts';
-import { Button, ToastProvider, copy, fill, useToast } from '../../ui';
-import { formatWeekText } from './formatWeekText.ts';
+import { Button, Ring, ToastProvider, copy, fill, useToast } from '../../ui';
+import { BarStrip } from '../duo/BarStrip.tsx';
+import { DuoMoments } from '../duo/DuoMoments.tsx';
+import { loadDuo } from '../duo/load.ts';
+import { PresenceBanner } from '../duo/PresenceBanner.tsx';
+import { useCrewTick } from '../duo/useCrewTick.ts';
+import { useDebugWeek } from '../duo/useDebugWeek.ts';
+import { usePresence } from '../duo/usePresence.ts';
+import { barTier, partnerStatus, platesAfterDebugClose } from '../duo/view.ts';
 import { useRepoQuery } from './useRepoQuery.ts';
 import { InstallChip } from './InstallChip.tsx';
+import '../duo/duo.css';
 import './floor.css';
 
-interface PartnerLine {
-  id: string;
-  name: string;
-  line: string;
-}
-
 interface FloorData {
-  mine: string;
-  partners: PartnerLine[];
+  duo: NonNullable<Awaited<ReturnType<typeof loadDuo>>>;
   last: { session: Session; sets: SetRow[] } | undefined;
-}
-
-async function weekLine(repo: Repo, userId: string, tz: string, target: number, now: string): Promise<string> {
-  const start = weekStartOf(localDateOf(now, tz));
-  const dates = weekDates(start);
-  const from = dates[0];
-  const to = dates[6];
-  if (from === undefined || to === undefined) throw new Error('Week has no dates');
-  const entries = await repo.q.entriesBetween(userId, from, to);
-  const credits = weekCredits(entries, start, target);
-  return formatWeekText(credits.credits, target, credits.minCount);
+  comeback: boolean;
 }
 
 async function loadFloor(repo: Repo): Promise<FloorData | null> {
-  const profile = await repo.q.me();
-  if (!profile) return null;
   const now = new Date().toISOString();
-  const crew = await repo.q.myCrew();
-  const partnerIds = (crew?.members ?? []).map((member) => member.user_id).filter((id) => id !== profile.id);
-  const partnerProfiles = await repo.q.profiles(partnerIds);
-  const partners: PartnerLine[] = [];
-  for (const partner of partnerProfiles) {
-    partners.push({
-      id: partner.id,
-      name: partner.display_name,
-      line: await weekLine(repo, partner.id, partner.tz, partner.weekly_target, now),
-    });
-  }
+  const duo = await loadDuo(repo, now);
+  if (!duo) return null;
   return {
-    mine: await weekLine(repo, profile.id, profile.tz, profile.weekly_target, now),
-    partners,
-    last: await repo.q.lastSessionSummary(profile.id),
+    duo,
+    last: await repo.q.lastSessionSummary(duo.me.id),
+    comeback: comebackState(duo.me.lastCredit, duo.me.today).active,
   };
 }
 
@@ -71,14 +50,26 @@ function heaviestWorkingSet(sets: readonly SetRow[]): SetRow | undefined {
   }, undefined);
 }
 
+function statusLine(member: FloorData['duo']['me'], live: boolean): string {
+  const status = partnerStatus({ live, lastCredit: member.lastCredit, today: member.today });
+  if (status.kind === 'live') return copy.trainingNow;
+  if (status.kind === 'today') return copy.lastTrainedToday;
+  if (status.kind === 'days') return fill(copy.lastTrained, { days: status.days });
+  return copy.notTrainedYet;
+}
+
 function FloorBody() {
   const repo = useRepo();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [tick, setTick] = useState(0);
+  const [hideAdjusted, setHideAdjusted] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
-  const data = useRepoQuery(() => loadFloor(repo), [repo, tick]);
+  const crewTick = useCrewTick(repo);
+  const debugClose = useDebugWeek();
+  const presence = usePresence(repo);
+  const data = useRepoQuery(() => loadFloor(repo), [repo, tick, crewTick]);
 
   async function undoMin(entry: MinEntry) {
     const removed = await repo.w.softDelete('min_entries', entry.id);
@@ -125,27 +116,86 @@ function FloorBody() {
     );
   }
 
+  const { duo } = data;
+  const names = new Map(duo.partners.map((partner) => [partner.id, partner.name]));
+  const colors = new Map(duo.partners.map((partner) => [partner.id, partner.color]));
+  const liveIds = new Set(presence.rows.map((row) => row.user_id));
   const top = data.last ? heaviestWorkingSet(data.last.sets) : undefined;
+  const shownPlates = debugClose ? platesAfterDebugClose(duo.plates) : duo.plates;
+  const meRing = {
+    id: duo.me.id, name: duo.me.name, initial: duo.me.initial, color: duo.me.color,
+    target: duo.me.target, credits: duo.me.credits, minCount: duo.me.minCount,
+  };
+  const coop = [meRing, ...duo.partners.map((partner) => ({
+    id: partner.id, name: partner.name, initial: partner.initial, color: partner.color,
+    target: partner.target, credits: partner.credits, minCount: partner.minCount,
+  }))];
 
   return (
     <main className="floor">
       <InstallChip />
+      <DuoMoments
+        screen="floor"
+        crewId={duo.crewId}
+        weekStart={duo.me.weekStart}
+        members={coop}
+        weekFull={duo.weekFull}
+        plates={shownPlates}
+        tier={barTier(shownPlates)}
+        reduced={duo.reduceMotion}
+        archived={duo.archived}
+        inSession={duo.openSession}
+      />
       <h1>{copy.floor}</h1>
-      <section className="floor-card" aria-labelledby="my-week-heading">
-        <h2 id="my-week-heading">{copy.myWeek}</h2>
-        <p className="floor-week" data-testid="my-week">{data.mine}</p>
-      </section>
-      {data.partners.length === 0 ? null : (
-        <section className="floor-card" aria-labelledby="partner-week-heading">
-          <h2 id="partner-week-heading">{copy.partnerWeek}</h2>
-          {data.partners.map((partner) => (
-            <div key={partner.id}>
-              <h3>{partner.name}</h3>
-              <p className="floor-week" data-testid="partner-week">{partner.line}</p>
-            </div>
-          ))}
+      <PresenceBanner rows={presence.rows} names={names} colors={colors} nowMs={presence.nowMs} />
+      {data.comeback ? (
+        <section className="comeback" aria-label={copy.comeback}>
+          <h2>{copy.comeback}</h2>
+          <Button size="xl" onClick={() => navigate('/session')}>{copy.shortSession}</Button>
+          <Button size="xl" variant="secondary" disabled={saving} onClick={() => { void onMin(); }}>{copy.justMin}</Button>
         </section>
+      ) : (
+        <div className="rings">
+          <section className="floor-card" aria-labelledby="my-week-heading">
+            <h2 id="my-week-heading">{copy.myWeek}</h2>
+            <p className="floor-week" data-testid="my-week">{duo.me.line}</p>
+            <Ring members={[meRing]} size="personal" reduced={duo.reduceMotion} announceMin />
+            <p className="floor-status">{fill(copy.weeksOn, { count: shownPlates })}</p>
+          </section>
+          {duo.partners.length === 0 ? (
+            <section className="floor-card" aria-labelledby="partner-week-heading">
+              <h2 id="partner-week-heading">{copy.partnerWeek}</h2>
+              {duo.archived ? <p className="is-archived">{copy.archived}</p> : <p>{copy.emptyCrew}</p>}
+              {duo.departed.map((partner) => <p key={partner.id} className="is-archived">{partner.name}</p>)}
+            </section>
+          ) : (
+            <section className="floor-card" aria-labelledby="partner-week-heading">
+              <h2 id="partner-week-heading">{copy.partnerWeek}</h2>
+              {duo.archived ? <p className="is-archived">{copy.archived}</p> : (
+                <Ring members={coop} size="coop" reduced={duo.reduceMotion} />
+              )}
+              {duo.partners.map((partner) => (
+                <div key={partner.id}>
+                  <h3>{partner.name}</h3>
+                  <p className="floor-week" data-testid="partner-week">{partner.line}</p>
+                  <p className="floor-status">{statusLine(partner, liveIds.has(partner.id))}</p>
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
       )}
+      <BarStrip
+        plates={duo.plates}
+        ghost={duo.weekFull}
+        archived={duo.archived}
+        adjusted={duo.adjusted && !hideAdjusted}
+        debugClose={debugClose}
+        onDismissAdjusted={() => setHideAdjusted(true)}
+        platesTestId="bar-plates"
+        reduced={duo.reduceMotion}
+        batterySaver={duo.batterySaver}
+      />
       <section className="floor-card" aria-labelledby="last-time-heading">
         <h2 id="last-time-heading">{copy.lastTime}</h2>
         {data.last ? (

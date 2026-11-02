@@ -1,5 +1,5 @@
 # P2A · Data contract for the workout engine
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build (moved from Codex: usage limit) · **Branch:** `P2A-data` · **Starts after:** nothing (fire first)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build (moved from Codex: usage limit) · **Branch:** `P2A-data` · **Starts after:** nothing (fire first)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.3 F4–F13, §2.4 S5, S6, S8–S10, S14, S15, §4.3 (`sets`, `sessions`, `pr_events`, `exercise_prefs`, `cardio_entries`, `martial_entries`, `min_entries`, `bodyweight_entries`), §10 E5.x, E7.2. `src/data/adapter.ts`, `src/data/repo.ts`, `tests/unit/data/repo.contract.ts`.

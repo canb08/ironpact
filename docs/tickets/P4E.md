@@ -1,5 +1,5 @@
 # P4E · Duo moments: ring close, Bar tier-up, forge flame, shockwave, segment fill
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Codex · GPT-6.1 Sol, High · **Branch:** `P4E-duo` · **Starts after:** P4B merged and P3E merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** ~~Codex · GPT-6.1 Sol, High~~ → **Grok · Build** (friend's Codex weekly limit used up 2026-11-02; UI/motion only, allowed on Grok per CLAUDE.md §2) · **Branch:** `P4E-duo` · **Starts after:** P4B merged and P3E merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §3.9.1 (ring close), §3.9.2 (the Bar + forge flame, D7), §3.7.2, §6 Phase 4 Tier 1/Tier 2 bullets. P4B's motion + moment queue, P4C's `usePartnerPrShockwave()`.

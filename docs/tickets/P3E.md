@@ -1,5 +1,5 @@
 # P3E · Crew full + presence banner + the Bar + comeback
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** ~~Codex · GPT-6.1 Sol, High~~ → **Grok · Build** (friend's Codex weekly limit used up 2026-11-02; UI-only ticket, allowed on Grok per CLAUDE.md §2) · **Branch:** `P3E-crew` · **Starts after:** P3B, P3C, P3D merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** ~~Codex · GPT-6.1 Sol, High~~ → **Grok · Build** (friend's Codex weekly limit used up 2026-11-02; UI-only ticket, allowed on Grok per CLAUDE.md §2) · **Branch:** `P3E-crew` · **Starts after:** P3B, P3C, P3D merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S4, S12 (full), §2 F14–F16, §2.8, §6 Phase 3 + Demo script, §3.10.1 strings. P3B `repo.duo`, P3C core, P3D `Ring`.

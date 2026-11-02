@@ -1,5 +1,5 @@
 # P4D · Sound (Web Audio) + iOS haptics flag
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P4D-sound` · **Starts after:** P2C merged
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P4D-sound` · **Starts after:** P2C merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §3.8 (sound and haptics), §1.6 D16, §6 Phase 4 sound bullet, §3.13 (⚠️ verify on device). P2C's `src/platform/haptics.ts`.

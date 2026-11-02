@@ -14,10 +14,10 @@ status: seed
 
 ## 0. What you are building and for whom
 
-You are building **SPOTTER**, an installable, offline-first, dark "Iron & Chalk" gym PWA for a small crew of friends. Version 1 has two members, **Eytan** and **[FRIEND]**, and must take a third member without schema changes.
+You are building **SPOTTER**, an installable, offline-first, dark "Iron & Chalk" gym PWA for a small crew of friends. Version 1 has two members, **the friend** and **[FRIEND]**, and must take a third member without schema changes.
 It logs four kinds of training (lifting, martial arts, running, plus a MIN) and bodyweight. Each member sees the others' progress live on their phone: iPhone Safari PWA first, Android second.
 The users need zero-friction logging. Logging must take almost no taps. Every commitment has a MIN that counts as done. The UI never guilt-trips anyone, and the app never asks to be maintained.
-**Each user's own notes vault** (both Eytan and [FRIEND] keep one, each run by their own AI agent) pulls that user's data, and only that user's, through a per-user, revocable, read-only export URL. The default format is a fixed line format; JSON and CSV are optional.
+**Each user's own notes vault** (both the friend and [FRIEND] keep one, each run by their own AI agent) pulls that user's data, and only that user's, through a per-user, revocable, read-only export URL. The default format is a fixed line format; JSON and CSV are optional.
 Everything runs on free tiers: Supabase, Cloudflare Pages and GitHub Actions. Nobody writes code by hand, and you build it end to end from this prompt. [FRIEND] does only the human steps in §8.
 
 ---
@@ -40,7 +40,7 @@ Everything runs on free tiers: Supabase, Cloudflare Pages and GitHub Actions. No
   - `.env` is git-ignored, and `.env.example` lists every key with an empty value.
   - CI runs a secret scan (gitleaks or an equivalent grep for `sb_secret_`, `service_role`, `eyJhbGci` and `ipx_` in tracked files) and fails on a hit.
   - Never echo a secret in logs, commit messages or checkpoint reports.
-- **No hardcoded people.** No names, surnames or emails in code, seed data, fixtures or copy. Test users are `alice@example.test` and `bob@example.test`. Display names come from `profiles.display_name`. `[FRIEND]` and `Eytan` appear only in this prompt.
+- **No hardcoded people.** No names, surnames or emails in code, seed data, fixtures or copy. Test users are `alice@example.test` and `bob@example.test`. Display names come from `profiles.display_name`. `[FRIEND]` and `the friend` appear only in this prompt.
 - **No server of your own.** Logic lives in Postgres (RLS, RPCs, triggers, `pg_cron`) or in Supabase Edge Functions. Cloudflare Pages serves static files only.
 - **Commit per phase, and per green sub-step within a phase.** Use plain-English commit messages that name the phase, e.g. `P1: outbox replays on online/visibility, 20-set flight test green`. Tag the end of each phase `phase-N-done`. Never force-push `main`. Agents work on branches `pN/<area>` and merge to `main` only through the phase gate (§1.3 step 6).
 - **Real devices beat emulators** for iOS claims. Playwright WebKit is not iOS Safari. Every "works on iPhone" claim in a checkpoint report either cites [FRIEND]'s on-device test or is marked ⚠️ unverified.
@@ -122,7 +122,7 @@ This list is binding on every section.
 | D10 | Progression nudge without RPE | nudge vs no nudge | **Nudge** if every working set reached its target reps and either max RPE ≤8 or no RPE was logged at all. No nudge after a gap of more than 14 days. |
 | D11 | Push events | partner PR pushes vs PRs never push | **§2 §4 table wins**: partner PR push (on after opt-in), nudge, weekly recap, spot available, partner started session (off by default). Hype reactions never push. Cap 3 per recipient per day; quiet hours 22:00–08:00 in the recipient's tz. |
 | D12 | Export details | §2 vs §4 (runs per session vs per day; RPE rule; note cap; in-day ordering) | **§5 is authoritative.** If §5 is silent, §4 (technical) wins: runs summed per day, martial arts summed per discipline per day, RPE = max over working sets, notes are distinct set notes joined with `; ` and capped at 120 characters, in-day order is Weight → lifts (by first `logged_at`) → martial arts → Run → MIN. |
-| D13 | Vault export ownership | the docs say "Eytan's vault" | **Symmetric.** Every user has their own tokens (max 3 active), their own format setting (`profiles.export_format in ('lines','json','csv') default 'lines'`, overridable per request with `?format=`) and a **Copy for my AI** button. A token only ever returns its own user's rows. |
+| D13 | Vault export ownership | the docs say "the friend's vault" | **Symmetric.** Every user has their own tokens (max 3 active), their own format setting (`profiles.export_format in ('lines','json','csv') default 'lines'`, overridable per request with `?format=`) and a **Copy for my AI** button. A token only ever returns its own user's rows. |
 | D14 | Ranges | RPE 6–10 vs 5–10; bodyweight 30–250 vs 30–300; display name 16 vs 20 | DB checks follow §4 (RPE 5–10 step 0.5, bodyweight 30–300, `display_name` 1–20). The UI offers RPE **6–10** and caps names at **16** characters. Out-of-range input shows "That's a world record. Check it." |
 | D15 | Rest overlay position | top 60% vs bottom 55% glass sheet | **§3 wins**: a glass sheet covers the bottom 55%, with controls at 64px, and swipes down to a 56px pill. The set card stays visible above it. |
 | D16 | Timer-zero vibration | `[200,100,200]` vs `[80,60,80,60,200]` | `[80,60,80,60,200]` (Android only). Set logged `[18]`, PR `[30,40,30,40,120]`. |
@@ -1046,7 +1046,7 @@ This section covers the look, feel, motion, sound, copy and accessibility of **S
 - The maskable safe zone is the inner 80%.
 - The 180px `apple-touch-icon` has an opaque background.
 
-**Names:** display names always come from `profiles.display_name`. Neither "Eytan" nor "[FRIEND]" appears anywhere in code, fixtures or copy files. Copy templates use `{name}` and `{partner}` tokens.
+**Names:** display names always come from `profiles.display_name`. Neither "the friend" nor "[FRIEND]" appears anywhere in code, fixtures or copy files. Copy templates use `{name}` and `{partner}` tokens.
 
 ---
 
@@ -1347,7 +1347,7 @@ Triggered by `prefers-reduced-motion: reduce` **or** Settings → "Reduce motion
 - **iOS:** there is no Vibration API.
   - An optional enhancement sits behind the feature flag `iosHapticsTrick` (default **off**): the hidden `<input type="checkbox" switch>` label-click technique (as used by the `ios-haptics` package) ⚠️.
   - One tester reports Apple patched it in iOS 26.5; that is unconfirmed. Treat it as a bonus if it works and assume it doesn't.
-  - If it can't be confirmed on [FRIEND]'s or Eytan's iPhone, leave it off and say so in the Phase report (§6).
+  - If it can't be confirmed on [FRIEND]'s or the friend's iPhone, leave it off and say so in the Phase report (§6).
 - **Every haptic has a visual twin, and no haptic carries meaning on its own.** On iPhone, timer zero is a full-screen molten flash plus sound (if on) plus "Bar's loaded."
 
 ---
@@ -2407,7 +2407,7 @@ document.addEventListener('visibilitychange', () => {
 
 ## 5. Export contract (each user's vault)
 
-**Every user has their own vault and their own export.** Eytan's laptop agent and [FRIEND]'s agent pull the same way: one authenticated `GET` with the user's own token, returning **only that user's rows**. Partner data, readiness scores, reactions, nudges and presence are never exported. The token, not the request, decides whose data is returned. The default format is the line format below. Each user can switch their own export to JSON or CSV in Settings → Vault export.
+**Every user has their own vault and their own export.** the friend's laptop agent and [FRIEND]'s agent pull the same way: one authenticated `GET` with the user's own token, returning **only that user's rows**. Partner data, readiness scores, reactions, nudges and presence are never exported. The token, not the request, decides whose data is returned. The default format is the line format below. Each user can switch their own export to JSON or CSV in Settings → Vault export.
 
 ### 5.1 Endpoint
 
@@ -2931,7 +2931,7 @@ Rule: **Phase 1 ends with a deployed, two-user logging loop with a working expor
 - Update `docs/PLATFORM-NOTES.md` with the device results.
 - Rerun the export fixtures against production.
 
-**Definition of done:** every MVP item in §9 is ticked with evidence; tag `mvp-rc`. Then [FRIEND] performs §8 steps 8–10 (invite Eytan and wire both vaults).
+**Definition of done:** every MVP item in §9 is ticked with evidence; tag `mvp-rc`. Then [FRIEND] performs §8 steps 8–10 (invite the friend and wire both vaults).
 
 **Demo script:** the §9 acceptance checklist itself, run by the Lead, then the on-device subset by [FRIEND].
 
@@ -3181,7 +3181,7 @@ These need Docker. Without it, run the same assertions as a Deno script against 
 - **Screen readers:**
   - Semantic buttons, and `aria-label` on every icon-only button.
   - The rest timer is `aria-live="polite"` and announces only at 10 s and at 0.
-  - Rings expose text, e.g. "Week: 4 of 6 sessions, Eytan 2, [name] 2" with names read from `profiles`, never hardcoded.
+  - Rings expose text, e.g. "Week: 4 of 6 sessions, the friend 2, [name] 2" with names read from `profiles`, never hardcoded.
   - Charts carry a visually hidden data table.
 - **Colour independence:** every user mark carries an initial chip plus a line, marker or hatch pattern per slot (D4). A test renders a ring in greyscale and asserts that the pattern attributes are present.
 - **Text scaling:** layouts survive 200% (M-10). Display sizes use `clamp()`, and set rows wrap instead of truncating.
@@ -3191,7 +3191,7 @@ These need Docker. Without it, run the same assertions as a Deno script against 
 
 ## 8. Human checklist for [FRIEND]
 
-About 25–35 minutes in total, split across checkpoints. The agent tells you when each step is due. **Never paste a secret into chat with anyone, including Eytan.** Paste secrets only into the dashboards or the terminal prompt the agent opens.
+About 25–35 minutes in total, split across checkpoints. The agent tells you when each step is due. **Never paste a secret into chat with anyone, including the friend.** Paste secrets only into the dashboards or the terminal prompt the agent opens.
 
 ### Step 1: GitHub (2 min, Phase 0)
 1. github.com → New repository → name `ironpact` → **Private** → create.
@@ -3247,11 +3247,11 @@ The agent's `keepalive.yml` pings `/functions/v1/health` every 2 days, because t
 
 ### Step 7: Data hygiene rules (read once)
 - Display names are first names or nicknames only. No surnames, no medical info.
-- Each person's export token is **personal**. You never see Eytan's, and he never sees yours. Nobody sends a token over chat; each person generates their own in their own app.
+- Each person's export token is **personal**. You never see the friend's, and he never sees yours. Nobody sends a token over chat; each person generates their own in their own app.
 
-### Step 8: Invite Eytan (3 min, after Phase 6 `mvp-rc`; Phase 1 for early testing)
+### Step 8: Invite the friend (3 min, after Phase 6 `mvp-rc`; Phase 1 for early testing)
 1. Crew → **Invite** → it shows a link `https://<app>/join/<CODE>` and the 10-character code in large type (valid 7 days, single use; "Invite" again makes a new one and kills the old one).
-2. Send Eytan a private message (WhatsApp is fine; the code is not a secret like a token, but don't post it in a group). Paste this, filling the brackets:
+2. Send the friend a private message (WhatsApp is fine; the code is not a secret like a token, but don't post it in a group). Paste this, filling the brackets:
 
 ```
 SPOTTER is live. Do this on your iPhone, in Safari (not Chrome):
@@ -3268,7 +3268,7 @@ Tap "Copy for my AI" and paste that into your laptop agent. Never send the token
 
 3. After he joins, check that your Crew tab shows his card and his empty ring next to yours.
 
-### Step 9: Wire YOUR vault (5 min, after Phase 1; same steps Eytan follows on his side)
+### Step 9: Wire YOUR vault (5 min, after Phase 1; same steps the friend follows on his side)
 1. SPOTTER → Settings → Vault export → **Format**. Pick what your vault takes: **Lines** (default, Markdown bullets), **JSON** or **CSV**. A per-request `?format=lines|json|csv` overrides it.
 2. **Generate**, label it e.g. `laptop-vault`. The token (`ipx_…`) is shown **once**, so copy it straight into your agent's secret store: an environment variable `SPOTTER_TOKEN`, or the OS keychain. Never put it in a note, the repo or a URL. Tokens are sent in a header only.
 3. Tap **Copy for my AI** and paste the result into your vault agent. It copies text like the block below; the canonical wording is in §5, and §5 wins if they differ.
@@ -3299,8 +3299,8 @@ To sync: pull with since = (last pulled date − 2 days), then REPLACE each retu
 ### Step 10: What to send whom, summarised
 | To | What | Channel |
 |---|---|---|
-| Eytan | app URL, join link, 10-char code, install steps, export base URL (Step 8 message) | private chat |
-| Eytan | **nothing else**: no tokens, no keys | — |
+| the friend | app URL, join link, 10-char code, install steps, export base URL (Step 8 message) | private chat |
+| the friend | **nothing else**: no tokens, no keys | — |
 | Your agent | Supabase keys (terminal/`.env`), DB password (terminal prompt only) | local only |
 | Your vault agent | the "Copy for my AI" text + `SPOTTER_TOKEN` as a secret | local only |
 
@@ -3509,8 +3509,8 @@ Each item needs evidence, written next to it in `docs/ACCEPTANCE.md`: a test nam
 ### 10.3 Platform and accounts (buildability)
 
 **E3.1 · Overrides: §8 step 2.6, §4.7 Auth**
-- **Defect:** Supabase's built-in email sender only delivers to members of the project's organization and is heavily rate-limited ⚠️. Eytan would never get his code.
-- **Rule:** custom SMTP is **mandatory before Eytan is invited**. It becomes §8 step 2.6, no longer optional. Pick one:
+- **Defect:** Supabase's built-in email sender only delivers to members of the project's organization and is heavily rate-limited ⚠️. the friend would never get his code.
+- **Rule:** custom SMTP is **mandatory before the friend is invited**. It becomes §8 step 2.6, no longer optional. Pick one:
   1. **Brevo free** (about 300 emails a day) with a single verified sender address ⚠️ (check whether a Gmail sender passes DMARC).
   2. **Resend free**, which needs a verified domain. A domain is not free, so ask [FRIEND] first.
 

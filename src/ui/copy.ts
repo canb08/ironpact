@@ -408,6 +408,21 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   ringThird: 'third',
 
   // ── P3E: add this ticket's strings directly below ──
+  presenceBanner: '{partner} is on the floor · {work} · {minutes} min',
+  presenceQuiet: '{partner} is on the floor · {minutes} min',
+  trainingNow: 'Training now',
+  lastTrained: 'Last trained {days} d ago',
+  lastTrainedToday: 'Last trained today',
+  notTrainedYet: 'No sessions yet',
+  archived: 'Archived',
+  together: 'Together',
+  togetherSessions: '{count} sessions',
+  togetherTonnes: '{tonnes} t',
+  fairPercent: '{percent}',
+  showRawKg: 'Show kg',
+  rawKg: '{kg} kg',
+  weeksOn: '{count} weeks on',
+  spotSent: 'Covered {partner}.',
 
   // ── P3F: add this ticket's strings directly below ──
   progressTitle: 'Progress',
@@ -441,6 +456,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   devSaved: 'Saved',
 
   // ── P4B: add this ticket's strings directly below ──
+  // Set logged toast is `setLogged` ("Locked in.") in the string bank. No new sentence.
 
   // ── P4C: add this ticket's strings directly below ──
 
@@ -457,6 +473,9 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   devSoundPlate: 'Plate',
 
   // ── P4E: add this ticket's strings directly below ──
+  ringClosedCentre: 'CLOSED',
+  shockwaveStamp: 'NEW PR',
+  shockwaveLine: '{name} · {exercise} · {detail}',
 
   // ── P4F: add this ticket's strings directly below ──
   installKeepData: 'Installed apps keep your data. Browser tabs can lose it after 7 days.',
@@ -509,6 +528,60 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   chartTableKg: 'e1RM kg',
 
   // ── P5C: add this ticket's strings directly below ──
+  settingsProfile: 'Profile',
+  settingsUnits: 'Units',
+  unitsKg: 'kg',
+  unitsFixed: 'Kilograms only.',
+  settingsMinLabel: 'Default MIN label',
+  minLabelLength: 'Use 1 to 40 characters.',
+  settingsTraining: 'Training',
+  plateInventory: 'Plates on the bar',
+  plateKg: '{kg} kg plate',
+  barKg: 'Bar kg',
+  restDefaults: 'Rest defaults',
+  restCompoundLine: 'Compound rest: {seconds} s',
+  restIsolationLine: 'Isolation rest: {seconds} s',
+  restRemembered: 'A change on a lift is remembered for that lift.',
+  settingsFeel: 'Feel',
+  soundOn: 'Sound',
+  hapticsOn: 'Haptics',
+  reduceMotionOn: 'Reduce motion',
+  batterySaverOn: 'Battery saver',
+  batterySaverHint: 'Turns off grain and 3D.',
+  themeChoice: 'Theme',
+  themeDark: 'Dark',
+  themeLight: 'Light',
+  themeSystem: 'System',
+  settingsNotifications: 'Notifications',
+  notificationsSaved: 'Saved here. Alerts are not sent yet.',
+  notifyPartnerStart: 'Partner starts a session',
+  notifyPartnerPr: 'Partner PR',
+  notifyNudge: 'Nudge',
+  notifyRecap: 'Weekly recap',
+  notifySpot: 'Spot available',
+  quietHours: 'Quiet hours',
+  quietStart: 'Quiet from',
+  quietEnd: 'Quiet until',
+  quietInvalid: 'Use a time like 22:00.',
+  settingsPrivacy: 'Privacy',
+  shareBodyweight: 'Share bodyweight',
+  shareDots: 'Share DOTS',
+  settingsSync: 'Sync',
+  syncWaiting: '{count} waiting to sync',
+  deadOne: "1 entry couldn't sync",
+  deadMany: "{count} entries couldn't sync",
+  retryEntry: 'Retry',
+  discardEntry: 'Discard',
+  settingsCrew: 'Crew',
+  inviteCodeLabel: 'Invite code',
+  settingsAccount: 'Account',
+  signOut: 'Sign out',
+  deleteAccount: 'Delete my account',
+  holdDeleteAccount: 'Hold to delete my account',
+  deleteTypeLabel: 'Type DELETE to confirm',
+  deleteTypeHint: 'Capitals only. Nothing is removed until both steps are done.',
+  deleteNeedsSignal: 'Deleting an account needs signal.',
+  settingsCouldNotSave: 'Could not save. Try again.',
 
   // ── P5D: add this ticket's strings directly below ──
 

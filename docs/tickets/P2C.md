@@ -1,5 +1,5 @@
 # P2C · Rest timer engine + Wake Lock + haptics
-**Lane:** C (Can's Claude · Can's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2C-rest` · **Starts after:** nothing (fire first)
+**Lane:** C (the owner's Claude · the owner's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P2C-rest` · **Starts after:** nothing (fire first)
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2 F6, §2.4 S8, §3.9.5 (plain version only), §4.7 (device APIs), §1.6 D16 (Android vibrate), §10 E7.1. `docs/research/R1-platform.md` item 6 (Wake Lock works on iOS ≥18.4).

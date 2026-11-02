@@ -1,5 +1,5 @@
 # P4F · S1 install gate (full) + Floor install chip
-**Lane:** E (Eytan's Claude · Eytan's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P4F-s1` · **Starts after:** P4A merged
+**Lane:** E (the friend's Claude · the friend's Codex + Grok) · **Model:** Grok · Build · **Branch:** `P4F-s1` · **Starts after:** P4A merged
 
 ## Read first
 `AGENTS.md`, `docs/LANES.md`. `docs/SPEC.md` §2.4 S1, §6 Phase 4 S1 bullet, §10 E3.7, E3.8, `docs/research/R1-platform.md` items 5 + 7. B7's `src/platform/install.ts` + `InstallGate.tsx`.
