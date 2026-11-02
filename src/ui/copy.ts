@@ -326,6 +326,27 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P3E: add this ticket's strings directly below ──
 
   // ── P3F: add this ticket's strings directly below ──
+  // ── P4A: add this ticket's strings directly below ──
+
+  // ── P4B: add this ticket's strings directly below ──
+
+  // ── P4C: add this ticket's strings directly below ──
+
+  // ── P4D: add this ticket's strings directly below ──
+
+  // ── P4E: add this ticket's strings directly below ──
+
+  // ── P4F: add this ticket's strings directly below ──
+
+  // ── P5A: add this ticket's strings directly below ──
+
+  // ── P5B: add this ticket's strings directly below ──
+
+  // ── P5C: add this ticket's strings directly below ──
+
+  // ── P5D: add this ticket's strings directly below ──
+
+  // ── P5E: add this ticket's strings directly below ──
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`

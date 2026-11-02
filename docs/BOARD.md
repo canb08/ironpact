@@ -54,6 +54,22 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | P3F | Progress S13: trend chart | Grok | E | todo — after P3C |
 | P3G | Playwright Phase 3 | Grok | E | todo — after P3E, P3F |
 
+## Phase 4–5 queue (fire order in `docs/LANES.md`)
+| ID | What | Engine | Lane | Status |
+|---|---|---|---|---|
+| P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | todo — no deps |
+| P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | todo — no deps |
+| P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | todo — after P2C |
+| P4B | Motion foundation + Tier-3 micro + moment queue | Codex Sol | C | todo — after P4A, P2D |
+| P4C | PR takeover + partner shockwave hook | Codex Sol | C | todo — after P4B, P2D |
+| P5B | S14 completed | Grok | C | todo — after P2E |
+| P5C | S16 Settings full | Codex Sol | C | todo — after P2A, P5D |
+| P4G | Playwright Phase 4 | Grok | C | todo — after P4C, P4E |
+| P5D | Delete account function + 30-day purge (L11) | Codex Astra | E | todo — no deps |
+| P4F | S1 install gate full + Floor install chip | Grok | E | todo — after P4A |
+| P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Codex Sol | E | todo — after P4B, P3E |
+| P5A | S13 Progress full | Grok | E | todo — after P3F |
+
 ## Parked / follow-ups
 - C4 (Phase 2): exercise-muscle contract + picker grouping (L7).
 - Light-theme contrast fixes (DECISIONS L1) → Phase 4 visual ticket.

@@ -38,5 +38,14 @@ Two tasks at once per engine are fine **only** when their file lists don't overl
 
 Never force-push (auto mode blocks it): update an old branch by **merging `main` into it**; resolve `copy.ts` by keeping both blocks, A6/data files by taking `main`'s side, then run the full suite before pushing.
 
+## Queue after Phase 2–3 (Phase 4 visuals, Phase 5 polish) — fire as soon as "Starts after" is met
+| Lane | Codex | Grok |
+|---|---|---|
+| **C** | P4B motion + moment queue (after P4A, P2D) → P4C PR takeover (after P4B, P2D) → P5C Settings full (after P2A, P5D) | **P4A design foundation (no deps — fire the moment a Grok is free)** · P5E banners/update chip (no deps) · P4D sound (after P2C) · P5B S14 complete (after P2E) · P4G Playwright p4 (after P4C, P4E) |
+| **E** | **P5D delete account + purge (no deps — fire the moment a Codex is free)** → P4E duo moments (after P4B, P3E) | P4F install gate full (after P4A) · P5A Progress full (after P3F) |
+
+Lane E: P4F and P4E both touch `src/features/floor/` — run them one after the other, not in parallel.
+Never idle: when an engine finishes, fire the first ticket in its row whose "Starts after" is met.
+
 ## Not in this round
-G1 deploy (needs Can: Supabase project + Cloudflare Pages, `docs/DEPLOY.md`), Phase 4 visuals (motion, sound, textures), C4 exercise muscles (L7). Don't start them without the humans.
+G1 deploy (needs Can: Supabase project + Cloudflare Pages, `docs/DEPLOY.md`), Phase 6 hardening + device test, Phase 7 v1 features, C4 exercise muscles (L7). Don't start them without the humans.
