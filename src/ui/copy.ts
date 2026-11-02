@@ -459,6 +459,13 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // Set logged toast is `setLogged` ("Locked in.") in the string bank. No new sentence.
 
   // ── P4C: add this ticket's strings directly below ──
+  prDeltaKg: '+{kg} KG',
+  prDeltaRep: '+1 REP',
+  prE1rmLine: 'e1RM {kg} KG',
+  prNewStamp: 'NEW PR',
+  sharePr: 'Share',
+  partnerPrSet: '{name} · {exercise} · {kg} kg × {reps}',
+  partnerPrKg: '{name} · {exercise} · {kg} kg',
 
   // ── P4D: add this ticket's strings directly below ──
   devSound: 'Sound',

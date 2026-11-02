@@ -1,0 +1,96 @@
+.pr-takeover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: end;
+  gap: 16px;
+  padding: 24px 16px max(24px, env(safe-area-inset-bottom));
+  background: rgba(10, 10, 11, 0.92);
+  color: var(--text);
+}
+
+.pr-takeover__stage {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  margin-bottom: auto;
+  text-align: center;
+}
+
+.pr-takeover__eyebrow,
+.pr-takeover__stamp,
+.pr-takeover__e1rm {
+  margin: 0;
+}
+
+.pr-takeover__eyebrow {
+  letter-spacing: 0.04em;
+}
+
+.pr-takeover__stamp {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.pr-takeover__e1rm {
+  color: var(--text-muted);
+  font-family: var(--font-data);
+}
+
+.pr-takeover__hero {
+  transform-origin: center;
+}
+
+.pr-takeover__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pr-takeover__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One 2px camera cycle on impact (§3.9.4). Not a strobe. */
+.pr-takeover__stage--shake {
+  animation: pr-takeover-shake 160ms 150ms 1 both;
+}
+
+@keyframes pr-takeover-shake {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(-2px); }
+  70% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+
+/* Single impact flash. One pulse, then gone. The P4B guard allows at most 3 per second. */
+.pr-takeover__flash {
+  position: absolute;
+  inset: 0;
+  background: var(--molten);
+  opacity: 0;
+  animation: pr-takeover-flash 160ms 150ms 1 both;
+  pointer-events: none;
+}
+
+@keyframes pr-takeover-flash {
+  0% { opacity: 0; }
+  40% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pr-takeover__stage--shake,
+  .pr-takeover__flash {
+    animation: none;
+  }
+}
