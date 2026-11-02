@@ -71,7 +71,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 | H6 | Floor stops blanking on live updates + MIN double-toast guard (flaky Pixel 7 e2e) | Codex Sol | E (lane C engines out) | merged #60 (CI green; local Pixel 7 repeat: 1/10 vs main 3/10 — remaining flake is the AuthGate race in Parked) |
 | H7 | Accessibility fixes: H1's 13 `test.fixme` | Grok | E (lane C screens; Can's Claude welcome to review) | merged #61 (13 fixmes cleared + PR takeover e1RM contrast; settleMotion before axe) |
 | H8 | Perf: lhci measures real screens, /settings CLS, LCP, Lighthouse blocking (L14) | Grok | E | merged #62 (lhci seed measures real screens; /settings CLS 0.799→0 with an inert form, no fake profile; LCP ~4 s stays report-only per L14) |
-| H9 | AuthGate holds first paint until the first route is decided (last Pixel 7 p1 flake, first-launch Floor→install flash) | Codex Sol | C | running — owner's Codex |
+| H9 | AuthGate holds first paint until the first route is decided (last Pixel 7 p1 flake, first-launch Floor→install flash) | Codex Sol | C | merged #63 (e2e green 3/3 runs incl. Pixel 7 p1-demo/p1-flight) |
 | P5D | Delete account function + 30-day purge (L11) | Codex Astra | **C** (the owner's Codex took it: lane C idle, P5C needs it; the owner's Claude reviews + merges) | merged #32 |
 | P4F | S1 install gate full + Floor install chip | Grok | **C** (the owner's Grok took it while idle; the owner's Claude reviews + merges) | merged #35 (Lead: kept "Continue in browser") |
 | P4E | Duo moments: ring close, Bar tier-up, flame, shockwave | Grok (friend's Codex out of usage) | E | merged #46 |
