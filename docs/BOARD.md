@@ -99,7 +99,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 
 | ID | What | Engine | Lane | Status |
 |---|---|---|---|---|
-| X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | queued — **first, blocks all** |
+| X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | running — owner's Codex (Sol High) |
 | X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | queued (after X1) |
 | X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | queued (after X1+X2) |
 | X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | queued (after X1+X2) |
