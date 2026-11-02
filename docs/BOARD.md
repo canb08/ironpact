@@ -59,7 +59,7 @@ Grok runs tickets per `docs/GROK.md` (grok.com → model **Build** → GitHub co
 |---|---|---|---|---|
 | P4A | Design foundation: tokens, fonts, contrast (L1), textures | Grok | C | merged #23 |
 | P5E | App shell: offline/server-asleep banners, SW update chip | Grok | C | merged #22 (Lead: banner overlay fix) |
-| P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | pr #24 (Lead merged main; CI) |
+| P4D | Sound (Web Audio) + iOS haptics flag | Grok | C | merged #24 |
 | P4B | Motion foundation + Tier-3 micro + moment queue | Codex Sol | C | todo — after P4A, P2D |
 | P4C | PR takeover + partner shockwave hook | Codex Sol | C | todo — after P4B, P2D |
 | P5B | S14 completed | Grok | C | todo — after P2E |
