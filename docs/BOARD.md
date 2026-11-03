@@ -109,7 +109,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X8 | Settings grouped sub-pages | Codex Sol High | C | merged #73 (Lead review round 2: section headers, switches; also fixed the midnight date bug in the ExerciseDetail test; theme radio → segmented in X11) |
 | X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
 | X10 | Copy + date sweep | Grok | either | merged #77 (Lead review; carried to X11: date ranges use plain dates at both ends via src/core/formatDate.ts, delete label per activity type, legacy 'Athlete' name fallback, quick-log Save → per-action labels) |
-| X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
+| X11 | Visual regression + audit close-out | Codex Sol High | C | running — owner's Codex (Sol High), incl. X10 carry-overs a–e |
 
 ## R3 · Feel layer (friend request 2026-11-02, L20) — `docs/FEEL.md`
 Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3) → **Y5 (after X3-X7, before X11)**. Same review rule as R2, plus a GIF of the interaction.
