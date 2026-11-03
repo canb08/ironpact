@@ -52,7 +52,9 @@ async function makeRepo() {
   return created;
 }
 
+let saveLabel: string;
 function renderLog(path: string) {
+  saveLabel = path.endsWith('/run') ? copy.x11SaveRun : path.endsWith('/min') ? copy.x11SaveMin : copy.x11SaveWeighIn;
   const router = createMemoryRouter([
     { path: '/log/:kind', element: <QuickLogScreen /> },
     { path: '/', element: <main>Floor</main> },
@@ -96,10 +98,10 @@ it('shows the copy for each quick-log range error and does not save', async () =
         expect((screen.getByRole('textbox', { name: copy.minLabel }) as HTMLInputElement).value).toBe(copy.walk);
       });
     } else {
-      expect(await screen.findByRole('button', { name: copy.save })).toBeTruthy();
+      expect(await screen.findByRole('button', { name: saveLabel })).toBeTruthy();
     }
     item.fill();
-    fireEvent.click(screen.getByRole('button', { name: copy.save }));
+    fireEvent.click(screen.getByRole('button', { name: saveLabel }));
     expect((await screen.findByTestId(item.id)).textContent).toBe(item.text);
   }
 
@@ -132,7 +134,7 @@ it('same as last run is two taps and lands with a plate feel', async () => {
   expect(screen.getByRole('slider', { name: copy.distance }).getAttribute('aria-valuenow')).toBe('5.2');
   expect(screen.getByRole('slider', { name: copy.duration }).getAttribute('aria-valuenow')).toBe('1660');
   expect(screen.getByTestId('pace').textContent).toBe(fill(copy.paceLine, { time: '5:19' }));
-  fireEvent.click(screen.getByRole('button', { name: copy.save }));
+  fireEvent.click(screen.getByRole('button', { name: saveLabel }));
   await waitFor(async () => {
     const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
     expect(entries.cardio).toHaveLength(2);
@@ -141,6 +143,7 @@ it('same as last run is two taps and lands with a plate feel', async () => {
   const saved = entries.cardio.find((row) => row.id !== first.value.id);
   expect(saved).toMatchObject({ distance_m: 5200, duration_s: 1660, rpe: 7, note: 'easy' });
   expect(feelSpy).toHaveBeenCalledWith('plate');
+  expect(await screen.findByText(copy.x11RunSaved)).toBeTruthy();
   feelSpy.mockRestore();
 });
 
@@ -173,10 +176,11 @@ it('weight twice on the same day keeps one uuidv5 row', async () => {
   renderLog('/log/weight');
   const input = await screen.findByRole('textbox', { name: copy.weight });
   fireEvent.change(input, { target: { value: '80.2' } });
-  fireEvent.click(screen.getByRole('button', { name: copy.save }));
+  fireEvent.click(screen.getByRole('button', { name: saveLabel }));
   expect(await screen.findByText("Replaces today’s weigh-in of 80.2 kg.")).toBeTruthy();
+  expect(await screen.findByText(copy.x11WeighInSaved)).toBeTruthy();
   fireEvent.change(input, { target: { value: '79.8' } });
-  fireEvent.click(screen.getByRole('button', { name: copy.save }));
+  fireEvent.click(screen.getByRole('button', { name: saveLabel }));
   const date = localDateOf(new Date().toISOString(), 'Europe/Amsterdam');
   await waitFor(async () => {
     const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, date, date);

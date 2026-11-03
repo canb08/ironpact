@@ -1,4 +1,17 @@
 export const copy = {
+  // ── X11: final R2 carry-overs
+  x11Range: '{from} - {to}',
+  x11DeleteRun: 'Delete run (hold)',
+  x11DeleteMin: 'Delete MIN (hold)',
+  x11DeleteFight: 'Delete fight (hold)',
+  x11DeleteWeighIn: 'Delete weigh-in',
+  x11SaveWeighIn: 'Save weigh-in',
+  x11SaveRun: 'Save run',
+  x11SaveMin: 'Save MIN',
+  x11WeighInSaved: 'Weigh-in saved',
+  x11RunSaved: 'Run saved',
+  x11MinSaved: 'MIN saved',
+
   // ── X10: shared shell labels; wording sweep applies to all anchors below.
   x10Today: 'Today',
   x10Train: 'Train',

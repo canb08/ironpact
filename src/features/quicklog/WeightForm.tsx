@@ -3,11 +3,13 @@ import { localDateOf } from '../../core/weeks.ts';
 import { uiSchemas } from '../../core/validate.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, copy, fill } from '../../ui';
+import { useToast } from '../../ui/useToast.ts';
 import { useRepoQuery } from '../floor/useRepoQuery.ts';
 import { parseDecimal } from './time.ts';
 
 export function WeightForm() {
   const repo = useRepo();
+  const { showToast } = useToast();
   const [kgText, setKgText] = useState('');
   const [attempted, setAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,6 +38,7 @@ export function WeightForm() {
         setServerError(result.error === 'storage_full' ? copy.storageFull : copy.outOfRange);
         return;
       }
+      showToast({ message: copy.x11WeighInSaved });
       setTick((value) => value + 1);
     } finally {
       setSaving(false);
@@ -52,7 +55,7 @@ export function WeightForm() {
         {attempted && weightError ? <p className="ql-error" role="alert" data-testid="error-weight">{weightError}</p> : null}
       </div>
       {serverError ? <p className="ql-error" role="alert">{serverError}</p> : null}
-      <Button type="submit" size="xl" className="ql-save" disabled={saving}>{copy.save}</Button>
+      <Button type="submit" size="xl" className="ql-save" disabled={saving}>{copy.x11SaveWeighIn}</Button>
     </form>
   );
 }

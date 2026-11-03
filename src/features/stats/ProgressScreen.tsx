@@ -68,7 +68,7 @@ async function loadProgress(repo: Repo): Promise<ProgressData | null> {
   const partnerIds = (crew?.members ?? [])
     .filter((member) => member.left_at === null && member.user_id !== me.id)
     .map((member) => member.user_id);
-  const partners = (await repo.q.profiles(partnerIds)).sort((a, b) => a.display_name.localeCompare(b.display_name));
+  const partners = (await repo.q.profiles(partnerIds)).map((partner) => ({ ...partner, display_name: partner.display_name.trim() && partner.display_name.trim() !== copy.x3LegacyName ? partner.display_name.trim() : copy.x3Partner })).sort((a, b) => a.display_name.localeCompare(b.display_name));
   const bundles = new Map<string, EntryBundle>();
   await Promise.all(partners.map(async (partner) => {
     const entries = await repo.q.entriesBetween(partner.id, '0000-01-01', window.to);

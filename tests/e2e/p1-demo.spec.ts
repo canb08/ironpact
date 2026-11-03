@@ -20,7 +20,7 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await expect(page.getByTestId('shared-bar')).toBeVisible();
   await page.getByRole('link', { name: copy.x3Min, exact: true }).click();
   const min = page.getByRole('dialog', { name: copy.x3Min });
-  await min.getByRole('button', { name: copy.save, exact: true }).click();
+  await min.getByRole('button', { name: copy.x11SaveMin, exact: true }).click();
   await expect.poll(async () => page.evaluate(async () => {
     const path = '/src/data/index.ts';
     const { createRepo } = await import(path) as typeof import('../../src/data/index.ts');
@@ -32,7 +32,7 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await page.getByRole('link', { name: copy.x3WeighIn, exact: true }).click();
   const weight = page.getByRole('dialog', { name: copy.x3WeighIn });
   await weight.getByLabel(copy.weight).fill('78.4');
-  await weight.getByRole('button', { name: copy.save }).click();
+  await weight.getByRole('button', { name: copy.x11SaveWeighIn }).click();
   await expect(weight.getByText('78.4')).toBeVisible();
   await weight.getByRole('button', { name: copy.close }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();

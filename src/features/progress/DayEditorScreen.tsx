@@ -151,7 +151,7 @@ export default function DayEditorScreen() {
         }}>
         <div className="day-week-heading">
           <Button variant="quiet" aria-label={copy.x6PreviousWeek} onClick={() => moved(shiftDate(date, -7))}>‹</Button>
-          <span>{fill(copy.x5Range, { from: formatDate(from, today, copy), to: formatDate(to, today, copy) })}</span>
+          <span>{fill(copy.x11Range, { from: formatDate(from, today, copy, false), to: formatDate(to, today, copy, false) })}</span>
           <Button variant="quiet" aria-label={copy.x6NextWeek} onClick={() => moved(shiftDate(date, 7))}>›</Button>
         </div>
         <div className="day-week-chips">
@@ -222,6 +222,9 @@ function Workout({ session, day, exercises, ...actions }: EditActions & {
   const martial = day.martial.filter((row) => row.session_id === session.id);
   const min = day.min.filter((row) => row.session_id === session.id);
   const type = sessionType(session);
+  const deleteLabel = session.kind === 'run' ? copy.x11DeleteRun
+    : session.kind === 'min' ? copy.x11DeleteMin
+      : session.kind === 'martial' ? copy.x11DeleteFight : copy.x6DeleteWorkout;
   const title = fill(copy.x6EditWorkout, { type: session.kind === 'min' ? type : type.toLowerCase() });
   const sheetActions = {
     ...actions,
@@ -273,7 +276,7 @@ function Workout({ session, day, exercises, ...actions }: EditActions & {
           </section>
         );
       })}
-      <HoldButton className="day-delete-workout" aria-label={copy.x6DeleteWorkout} holdMs={600} onHoldComplete={() => actions.onTrash(items)}>{copy.x6DeleteWorkout}</HoldButton>
+      <HoldButton className="day-delete-workout" aria-label={deleteLabel} holdMs={600} onHoldComplete={() => actions.onTrash(items)}>{deleteLabel}</HoldButton>
       <Sheet open={editing} title={title} onClose={() => setEditing(false)}>
         <div className="progress day-sheet day-session-sheet">
           {session.kind === 'run' && cardio.length > 0 ? (

@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { uiSchemas } from '../../core/validate.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, copy } from '../../ui';
+import { useToast } from '../../ui/useToast.ts';
 import { useRepoQuery } from '../floor/useRepoQuery.ts';
 
 export function MinForm() {
   const repo = useRepo();
+  const { showToast } = useToast();
   const profile = useRepoQuery(() => repo.q.me(), [repo]);
   const [draft, setDraft] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
@@ -23,6 +25,7 @@ export function MinForm() {
     try {
       const result = await repo.w.logMin(value);
       if (!result.ok) setServerError(result.error === 'storage_full' ? copy.storageFull : copy.outOfRange);
+      else showToast({ message: copy.x11MinSaved });
     } finally {
       setSaving(false);
     }
@@ -36,7 +39,7 @@ export function MinForm() {
         {attempted && labelError ? <p className="ql-error" role="alert" data-testid="error-min">{labelError}</p> : null}
       </div>
       {serverError ? <p className="ql-error" role="alert">{serverError}</p> : null}
-      <Button type="submit" size="xl" className="ql-save" disabled={saving || profile === undefined}>{copy.save}</Button>
+      <Button type="submit" size="xl" className="ql-save" disabled={saving || profile === undefined}>{copy.x11SaveMin}</Button>
     </form>
   );
 }
