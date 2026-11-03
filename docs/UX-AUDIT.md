@@ -73,8 +73,8 @@ The short version: the parts work (offline sync, PR checks, export, ~720 tests),
 | V3 | P1 | Identical rounded cards stacked everywhere, so nothing reads as primary. | One hero per screen; quiet lists below → screen tickets  Fixed: #68, #67, #69, #71, #76, #73 |
 | V4 | P2 | Dates are raw ISO (`2026-11-02`) everywhere. | "Today", "Mon 2 Nov" via one formatter → **X10**  Fixed: #77; plain range endpoints → **X11 (this PR)** |
 
-## Not covered by this pass (check on device in the phone test)
-Sign-in, onboarding and join screens (only seen by the owner); light theme; offline banners; the PR takeover and partner shockwave (they need 3+ sessions and two accounts); Wake Lock; haptics; sound.
+## Areas deferred by the original audit
+The original audit deferred sign-in, onboarding, join, light theme, offline banners, PR takeover, partner shockwave, Wake Lock, haptics and sound. X11 now covers sign-in, onboarding, join and light theme in WebKit, alongside the existing H7 browser checks. Installed-device checks are listed in X13 below.
 
 ## X11 close-out · 3 November 2026
 
