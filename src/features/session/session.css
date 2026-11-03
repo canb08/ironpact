@@ -1,95 +1,102 @@
-.session-entry, .session-active {
-  box-sizing: border-box;
-  max-width: 40rem;
-  margin-inline: auto;
-  padding: 16px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
-}
-.session-entry { display: grid; gap: 16px; min-height: 60dvh; align-content: end; }
-.session-active { height: 100dvh; min-height: 560px; display: flex; flex-direction: column; gap: 8px; }
-.session-active h1 { font-size: 1rem; margin: 0; }
-.session-header { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-.session-header time, .session-set-value { font-variant-numeric: tabular-nums; }
-.session-exercise { flex-shrink: 0; }
-.session-sets, .session-empty { flex: 1; min-height: 0; overflow-y: auto; }
-.session-sets ol, .session-picker ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-.session-set-row { display: flex; align-items: center; min-height: 64px; gap: 8px; touch-action: pan-y; border-bottom: 1px solid var(--line); }
-.session-set-value { flex: 1; overflow-wrap: anywhere; }
-.session-set-value .ui-chip { margin-inline-start: 8px; }
-.session-tick { color: var(--text); }
+.session-entry, .session-active { box-sizing: border-box; max-width: 40rem; margin-inline: auto; padding: 16px; }
+.session-entry { display: grid; gap: 24px; padding-bottom: 32px; }
+/* The document owns workout scrolling; the shell's old session scrollport is removed. */
+.app-shell__content main.session-active, main.session-active { height: auto; min-height: calc(100dvh - 152px); overflow: visible; padding-bottom: var(--session-dock-height, 360px); }
+.session-header { position: sticky; top: var(--shell-header-height, 0px); z-index: 19; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--bg); padding-block: 0; }
+.session-header h1 { font-size: 1.375rem; }
+.session-header time { font: 600 1.75rem/1 var(--font-number); font-variant-numeric: tabular-nums; }
+.session-header > span { color: var(--text-muted); font-size: .9375rem; }
+.session-header > .ui-button { margin-left: auto; flex-direction: column; gap: 0; min-height: 64px; font-size: .9375rem; padding: 8px; }
+.session-hold-hint { display: block; font-size: .8125rem; font-weight: 400; }
+.session-exercise { width: 100%; justify-content: space-between; margin-block: 8px 16px; font-size: 1.375rem; text-align: left; }
+.session-baseline { margin-block: 0 16px; color: var(--text-muted); font-size: .9375rem; }
+.session-sets { overflow: visible; min-width: 0; }
+.session-set-group { margin-bottom: 24px; }
+.session-set-group h2 { margin: 0 0 8px; font-size: 1.0625rem; font-weight: 600; }
+.session-sets ol, .session-picker ul, .session-summary ul { list-style: none; padding: 0; margin: 0; }
+.session-set-row { display: flex; flex-wrap: wrap; align-items: center; min-height: 48px; gap: 4px; touch-action: pan-y; border-bottom: 1px solid var(--line); }
+.session-set-value { flex: 1 1 8rem; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.session-set-index { display: inline-block; width: 20px; color: var(--text-muted); font-size: .8125rem; }
+.session-set-value small { display: block; padding-left: 24px; color: var(--text-muted); font-size: .8125rem; }
+.session-set-value .ui-chip, .session-pr { margin-inline-start: 4px; font-size: .8125rem; }
+.session-pr { color: var(--rubber); background: var(--plate-yellow); border-radius: 4px; padding: 2px 4px; }
+.session-tick { color: var(--text); font-size: .8125rem; }
 .session-tick--pending { color: var(--text-muted); }
-.session-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; flex-shrink: 0; min-width: 0; margin-top: auto; container-type: inline-size; }
-.session-steppers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; max-width: 100%; }
+.session-set-row .ui-button { min-width: 44px; min-height: 44px; padding: 4px; }
+.session-set-row .session-undo { min-width: 64px; min-height: 64px; font-size: .8125rem; }
+.session-delete { font-size: 1.375rem; }
+.session-controls { grid-template-columns: minmax(0, 1fr); position: fixed; z-index: 21; bottom: var(--shell-tabs-height, 0px); inset-inline: 0; box-sizing: border-box; max-width: 40rem; margin-inline: auto; margin-top: auto; padding: 8px 16px 12px; display: grid; gap: 8px; min-width: 0; background: var(--surface-2); border-top: 1px solid var(--line); }
+.session-controls > [role='status'] { margin: 0; font-size: .8125rem; }
+.session-steppers { display: flex; flex-wrap: wrap; gap: 12px; }
 .session-steppers [data-set-logged-weight] { display: contents; }
-.session-steppers .ui-stepper { position: relative; grid-template-columns: minmax(0, 1fr); min-width: 0; }
-.session-steppers .ui-stepper > label { position: absolute; inset-inline: 80px; top: 3px; font-size: .75rem; overflow-wrap: anywhere; pointer-events: none; }
-.session-steppers .ui-stepper input { box-sizing: border-box; padding-top: 12px; font-size: clamp(1.5rem, 6vw, 2rem); min-width: 0; max-width: 100%; }
-.session-steppers .ui-stepper__controls { min-width: 0; max-width: 100%; }
-.session-steppers .ui-stepper__controls > .ui-button { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; padding-inline: 0; }
-.session-options, .session-actions { display: flex; gap: 8px; }
-.session-actions > *, .session-options > .ui-button { flex: 1; min-width: 64px; }
-.session-rpe-inline { flex: 1; min-width: 0; }
-.session-rpe-pills { display: flex; gap: 8px; overflow-x: auto; padding: 4px; }
-.session-rpe-pills > * { flex-shrink: 0; }
-.session-rpe-trigger { display: none; }
-.session-feedback:empty { display: none; }
-.session-controls [aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: -3px; }
+.session-steppers .ui-stepper { flex: 1 1 10rem; min-width: 0; max-width: 100%; gap: 4px; }
+.session-steppers .ui-stepper__heading { display: flex; flex-wrap: wrap; gap: 0 4px; align-items: baseline; }
+.session-steppers .ui-stepper__heading label { font-size: .9375rem; }
+.session-steppers .ui-stepper__step { font-size: .8125rem; color: var(--text-muted); }
+.session-steppers .ui-stepper__controls { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 0; }
+.session-steppers .ui-stepper__controls > .ui-button { min-width: 44px; min-height: 64px; padding: 0; border: 0; background: transparent; }
+.session-steppers .ui-stepper input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 64px; padding: 0; font: 600 2.5rem/1 var(--font-number); appearance: textfield; }
+.session-steppers input::-webkit-inner-spin-button { appearance: none; }
+.session-options { display: flex; flex-wrap: wrap; gap: 4px; }
+.session-options .ui-button { flex: 1 1 5rem; min-width: 44px; min-height: 44px; padding: 4px; font-size: .8125rem; }
+.session-rpe-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.session-rpe-pills .ui-button { flex: 1 0 calc(20% - 8px); min-width: 44px; min-height: 44px; padding: 4px; font-size: .9375rem; }
+.session-controls [aria-pressed='true'], .session-edit [aria-pressed='true'] { outline: 2px solid var(--text); outline-offset: -3px; }
 .session-log { min-height: 72px; width: 100%; }
-.session-error { color: var(--text); margin: 0; }
-.session-picker, .session-picker form { display: grid; gap: 8px; }
-.session-picker input:not([type="checkbox"]) { box-sizing: border-box; width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px; color: var(--text); background: var(--surface-1); }
-.session-picker li .ui-button { width: 100%; text-align: start; justify-content: start; }
+.session-feedback:empty { display: none; }
+.session-error { color: var(--text); }
+.session-nudge { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.session-nudge p { margin: 0; font-size: .8125rem; color: var(--text-muted); }
+.session-picker, .session-picker form, .session-edit, .session-summary { display: grid; gap: 16px; }
+.session-picker h3 { margin: 8px 0; font-size: .9375rem; color: var(--text-muted); }
+.session-picker input:not([type='checkbox']), .session-note, .session-readiness select, .session-edit select { box-sizing: border-box; width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; color: var(--text); background: var(--surface-1); font: inherit; }
+.session-picker li .ui-button { width: 100%; min-height: 48px; text-align: start; justify-content: start; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
 .session-toggle { display: flex; align-items: center; gap: 8px; min-height: 48px; }
-.session-toggle input { width: 48px; height: 48px; margin: 0; }
-.session-storage { max-width: min(32rem, calc(100% - 32px)); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; color: var(--text); background: var(--surface-2); }
+.session-toggle input { width: 24px; height: 24px; margin: 12px; }
+.session-storage { max-width: min(32rem, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 14px; padding: 16px; color: var(--text); background: var(--surface-2); }
 .session-storage::backdrop { background: rgb(0 0 0 / 60%); }
-.session-nudge, .session-readiness, .session-summary { display: grid; gap: 8px; }
-.session-readiness { max-height: 42dvh; overflow: auto; flex-shrink: 0; }
-.session-readiness h2, .session-summary h2, .session-nudge p, .session-readiness p { margin: 0; }
-.session-readiness-kicker { margin: 0; letter-spacing: 0.04em; }
-.session-readiness-row, .session-readiness-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.session-readiness .ui-button, .session-undo, .session-actions .ui-button, .session-summary .ui-button {
-  min-height: 64px;
-  min-width: 64px;
-}
-.session-hold-hint { display: block; font-size: 0.75rem; }
-.session-summary dl { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; margin: 0; }
+.session-summary h2 { font-size: 1.75rem; margin: 0; }
+.session-summary h3 { font-size: 1.0625rem; margin: 0 0 4px; }
+.session-summary dl { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 0; }
 .session-summary dt { color: var(--text-muted); }
 .session-summary dd { margin: 0; font-variant-numeric: tabular-nums; }
-.session-summary ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-.session-note {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 64px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  padding: 8px;
-  color: var(--text);
-  background: var(--surface-1);
+.session-summary-exercises li { padding-block: 12px; border-bottom: 1px solid var(--line); }
+.session-summary-exercises p { margin: 4px 0; font-size: .9375rem; }
+.session-note { min-height: 64px; }
+.session-readiness summary { min-height: 44px; cursor: pointer; }
+.session-readiness summary span { color: var(--text-muted); font-size: .8125rem; }
+.session-readiness label { display: grid; gap: 8px; margin-block: 12px; }
+@media (max-width: 339px), (max-height: 600px) {
+  .session-controls { position: static; bottom: var(--shell-tabs-height, 0px); margin-inline: -16px; }
+  .app-shell__content main.session-active, main.session-active { padding-bottom: 16px; }
+  .session-header { position: static; flex-wrap: wrap; }
 }
-@media (max-height: 699px) {
-  .session-rpe-inline { display: none; }
-  .session-rpe-trigger { display: inline-flex; }
+.session-summary { gap: 12px; }
+
+/* Large text keeps every dock control reachable in the document. */
+.session-controls--flow { position: static; width: calc(100% + 32px); margin-inline: -16px; }
+.app-shell__content main.session-active:has(.session-controls--flow), main.session-active:has(.session-controls--flow) { padding-bottom: 16px; }
+/* X4 Lead review: keep the current lift immediately above the measured dock. */
+.app-shell__content:has(.session-active) { padding-bottom: 0; }
+.app-shell__content main.session-active, main.session-active { padding-bottom: calc(var(--session-dock-height, 360px) + var(--shell-tabs-height, 0px)); }
+.session-exercise { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-block: 8px 16px; }
+.session-exercise h2 { margin: 0; min-width: 0; font: 600 1.375rem/1.25 var(--font-body); }
+.session-change { flex-shrink: 0; min-height: 44px; min-width: 44px; border-radius: 8px; padding: 8px 12px; font-size: .9375rem; }
+.session-earlier { margin-bottom: 12px; }
+.session-earlier > summary { box-sizing: border-box; min-height: 44px; padding-block: 8px; cursor: pointer; font-size: .9375rem; color: var(--text-muted); border-bottom: 1px solid var(--line); }
+.session-set-group { margin-bottom: 0; }
+.session-set-value .session-set-rpe { display: inline; margin-left: 8px; font-size: .8125rem; color: var(--text-muted); }
+.session-sync-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.session-fresh { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.session-fresh p { margin: 0; font-size: .8125rem; }
+.session-set-menu { display: grid; gap: 12px; }
+.app-shell:has(.session-entry--summary) > .app-shell__header { display: none; }
+.session-summary h1 { font-size: 1.75rem; margin: 0; }
+.app-shell__content main.session-active:has(.session-controls--flow), main.session-active:has(.session-controls--flow) { padding-bottom: var(--shell-tabs-height, 16px); }
+@media (max-width: 339px), (max-height: 600px) {
+  .app-shell__content main.session-active, main.session-active { padding-bottom: var(--shell-tabs-height, 16px); }
 }
-@media (max-width: 339px) {
-  .session-active { height: auto; min-height: 100dvh; }
-  .session-actions { flex-wrap: wrap; }
-  .session-actions > * { flex-basis: 100%; }
-}
-/* Zoom shrinks the container's px size; keep the stepper stack for that and for real <340px. */
-@container (max-width: 339px) {
-  .session-steppers .ui-stepper > label { position: static; }
-  .session-steppers .ui-stepper__controls { grid-template-columns: repeat(2, minmax(64px, 1fr)); }
-  .session-steppers .ui-stepper__controls > .ui-button { min-width: 64px; min-height: 64px; }
-  .session-steppers .ui-stepper input { grid-column: 1 / -1; grid-row: 1; padding-top: 0; }
-  .session-options, .session-actions, .session-controls .rest-timer__controls { flex-wrap: wrap; }
-  .session-rpe-inline { display: none; }
-  .session-rpe-trigger { display: inline-flex; }
-  .session-actions > * { flex-basis: 100%; }
-}
-/* 21.1875em is 339px at 16px text and ~678px at 200% text, so 375px wraps without reordering the steppers. */
-@container (max-width: 21.1875em) {
-  .session-options, .session-actions, .session-controls .rest-timer__controls { flex-wrap: wrap; }
-  .session-rpe-inline { flex-basis: 100%; }
-  .session-actions > * { flex-basis: 100%; }
-}
+
+/* Allow intrinsic grid/flex content to shrink and wrap at 200% text. */
+.session-controls > * { min-width: 0; max-width: 100%; }
+.session-steppers .ui-stepper__controls { min-width: 0; max-width: 100%; }

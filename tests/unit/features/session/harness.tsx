@@ -1,4 +1,5 @@
 import '../../data/harness.ts';
+import { MemoryRouter } from 'react-router';
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
@@ -23,7 +24,7 @@ export async function sessionHarness() {
     exercise: async (name = 'Bench press', kind: 'lift' | 'bw_lift' = 'lift') => unwrap(await repo.w.createExercise({
       name, export_label: name, kind, category: 'compound', lower_body: false,
     })),
-    render: (children: ReactNode) => render(<RepoProvider repo={repo}>{children}</RepoProvider>),
+    render: (children: ReactNode) => render(<MemoryRouter><RepoProvider repo={repo}>{children}</RepoProvider></MemoryRouter>),
     close: async () => { repo.close(); await db.delete(); },
   };
 }

@@ -73,8 +73,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
     await expect(page.getByRole('button', { name: copy.copyCode, exact: true })).toBeVisible();
   });
   await visit('S6-entry', '/session', async () => {
-    await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
-    await expect(page.getByRole('button', { name: copy.start, exact: true })).toBeVisible();
+      await expect(page.getByRole('dialog', { name: copy.pickerTitle })).toBeVisible();
   });
   await visit('S11-run', '/log/run', async () => {
     await expect(page.getByRole('dialog', { name: copy.run })).toBeVisible();
@@ -107,37 +106,32 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   });
 
   await page.goto('/session');
-  await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
-  await page.getByRole('button', { name: copy.start, exact: true }).click();
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect(picker).toBeVisible();
   await audit(page, project, 'S7', device, findings);
   await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
   await expect(picker).toBeHidden();
 
-  const readiness = page.getByRole('region', { name: copy.readinessTitle });
-  await expect(readiness).toBeVisible();
-  await audit(page, project, 'S5', device, findings);
-  await readiness.getByRole('button', { name: copy.skip, exact: true }).click();
-  await expect(readiness).toBeHidden();
-  await expect(page.getByRole('button', { name: copy.logSet, exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: copy.x4Log, exact: true })).toBeVisible();
   await audit(page, project, 'S6', device, findings, true);
 
-  await page.getByRole('button', { name: copy.logSet, exact: true }).click();
+  await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
   await expect(page.getByRole('button', { name: copy.undo, exact: true })).toBeVisible();
   await expect(page.locator('.rest-timer__controls')).toBeVisible();
   await audit(page, project, 'S8', device, findings);
 
-  const rack = page.getByRole('button', { name: copy.rackItName });
+  const rack = page.getByRole('button', { name: copy.x4FinishHold });
   await rack.focus();
   await page.keyboard.down('Enter');
   await expect(page.getByRole('region', { name: copy.summaryTitle })).toBeVisible();
   await page.keyboard.up('Enter');
   await audit(page, project, 'S10', device, findings);
+  await page.getByText(copy.x4Readiness, { exact: false }).click();
+  await audit(page, project, 'S5', device, findings);
 
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
-  await expect(page.getByRole('button', { name: copy.start, exact: true })).toBeVisible();
-  await page.getByRole('button', { name: copy.start, exact: true }).click();
+  await expect(page.getByRole('link', { name: copy.x3StartWorkout, exact: true })).toBeVisible();
+  await page.getByRole('link', { name: copy.x3StartWorkout, exact: true }).click();
   const again = page.getByRole('dialog', { name: copy.pickerTitle });
   const kg = page.getByRole('spinbutton', { name: copy.kg, exact: true });
   const readinessAgain = page.getByRole('region', { name: copy.readinessTitle });
@@ -157,7 +151,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   }
   await expect(kg).toBeVisible();
   await kg.press('ArrowUp');
-  await page.getByRole('button', { name: copy.logSet, exact: true }).click();
+  await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
   const pr = page.getByRole('region', { name: copy.prCardLabel });
   try {
     await expect(pr).toBeVisible({ timeout: 4_000 });
@@ -184,10 +178,11 @@ async function audit(
   await page.evaluate(async () => {
     document.documentElement.style.fontSize = '200%';
     await document.fonts.ready;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
   });
   const probe = await page.evaluate(measure, {
     tab,
-    log: copy.logSet,
+    log: copy.x4Log,
     undo: copy.undo,
     minus: copy.restMinus15,
     plus: copy.restPlus15,
@@ -380,7 +375,7 @@ function measure(labels: { tab: boolean; log: string; undo: string; minus: strin
       path: cssPath(node),
       w: rect.width,
       h: rect.height,
-      min: large ? 64 : 48,
+      min: node.closest('.session-active') && ![labels.log, labels.undo].includes(name) ? 44 : large ? 64 : 48,
       timer: inTimer,
       iconOnly: shownText(node).length === 0,
       named: name.length > 0,

@@ -46,10 +46,10 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await expect(page.locator(`[aria-label="${copy.sessionSynced}"]`)).toHaveCount(3);
 
   // A pointer hold is cancelled by pointerleave/capture on mobile. Keyboard hold matches the button.
-  const rack = page.getByRole('button', { name: copy.finish });
+  const rack = page.getByRole('button', { name: copy.x4FinishHold });
   await rack.focus();
   await page.keyboard.down('Enter');
-  await expect(page.getByText(copy.sessionFinished)).toBeVisible();
+  await expect(page.getByText(copy.x4Summary)).toBeVisible();
   await page.keyboard.up('Enter');
 
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();

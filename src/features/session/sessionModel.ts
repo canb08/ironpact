@@ -1,5 +1,6 @@
 import type { PrEventDraft } from '../../core/prs.ts';
 import type { Exercise, SetRow } from '../../core/types.ts';
+import { copy, fill } from '../../ui/copy.ts';
 import { volume } from '../../core/volume.ts';
 import type { PrEventDraftRow } from '../../data/adapter.ts';
 
@@ -58,7 +59,7 @@ export function toPrRow(event: PrEventDraft): PrEventDraftRow {
 }
 
 /** Working-set tonnes to 0.1 t. Bodyweight lifts use added load unless a weigh-in is known. */
-export function workingTonnes(sets: readonly SetRow[], exercises: readonly Exercise[], bodyweightKg: number | null): number {
+export function workingKg(sets: readonly SetRow[], exercises: readonly Exercise[], bodyweightKg: number | null): number {
   const groups = new Map<string, SetRow[]>();
   for (const set of sets) {
     if (set.is_warmup || set.deleted_at !== null) continue;
@@ -71,5 +72,15 @@ export function workingTonnes(sets: readonly SetRow[], exercises: readonly Exerc
     const kind = exercises.find((exercise) => exercise.id === id)?.kind === 'bw_lift' ? 'bw_lift' : 'lift';
     kg += volume(rows, kind, bodyweightKg);
   }
-  return Math.round((kg / 1000) * 10) / 10;
+  return Math.round(kg * 1000) / 1000;
+}
+
+export function workingTonnes(sets: readonly SetRow[], exercises: readonly Exercise[], bodyweightKg: number | null): number {
+  return Math.round(workingKg(sets, exercises, bodyweightKg) / 100) / 10;
+}
+
+export function formatSessionDuration(totalSeconds: number): string {
+  const minutes = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds / 60)) : 0;
+  if (minutes < 60) return fill(copy.x4DurationMinutes, { minutes });
+  return fill(copy.x4DurationHours, { hours: Math.floor(minutes / 60), minutes: String(minutes % 60).padStart(2, '0') });
 }

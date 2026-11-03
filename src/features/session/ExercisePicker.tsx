@@ -10,6 +10,7 @@ import './session.css';
 
 interface ExercisePickerProps {
   open: boolean;
+  closeOnSelect?: boolean;
   onClose: () => void;
   onSelect: (exercise: Exercise) => void;
 }
@@ -17,7 +18,7 @@ interface ExercisePickerProps {
 const formSchema = exerciseSchema.pick({ name: true, export_label: true, kind: true, category: true, lower_body: true });
 const isLift = (exercise: Exercise) => exercise.kind === 'lift' || exercise.kind === 'bw_lift';
 
-export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps) {
+export function ExercisePicker({ open, onClose, onSelect, closeOnSelect = true }: ExercisePickerProps) {
   const repo = useRepo();
   const id = useId();
   const [search, setSearch] = useState('');
@@ -39,7 +40,7 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
     .some((value) => value.toLocaleLowerCase('en').includes(query));
   const all = catalogue?.all.filter(matches) ?? [];
   const recent = catalogue?.recent.filter(matches) ?? [];
-  const choose = (exercise: Exercise) => { onSelect(exercise); onClose(); };
+  const choose = (exercise: Exercise) => { onSelect(exercise); if (closeOnSelect) onClose(); };
 
   return <>
     <Sheet open={open && write.error !== 'storage_full'} onClose={onClose} title={copy.pickerTitle}>
@@ -48,17 +49,20 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
         <input id={`${id}-search`} type="search" value={search} onChange={(event) => setSearch(event.target.value)} />
         {!catalogue && <p role="status">{copy.sessionLoading}</p>}
         {recent.length > 0 && <section aria-labelledby={`${id}-recent`}>
-          <h3 id={`${id}-recent`}>{copy.pickerRecent}</h3>
+          <h3 id={`${id}-recent`}>{copy.x4Recent}</h3>
           <ul>{recent.map((exercise) => <li key={exercise.id}>
             <Button variant="secondary" onClick={() => choose(exercise)}>{exercise.name}</Button>
           </li>)}</ul>
         </section>}
-        <section aria-labelledby={`${id}-all`}>
-          <h3 id={`${id}-all`}>{copy.pickerAll}</h3>
-          <ul>{all.map((exercise) => <li key={exercise.id}>
-            <Button variant="secondary" onClick={() => choose(exercise)}>{exercise.name}</Button>
-          </li>)}</ul>
-        </section>
+        {(['lift', 'bw_lift'] as const).map((kind) => {
+          const rows = all.filter((exercise) => exercise.kind === kind && !recent.some((row) => row.id === exercise.id));
+          return rows.length > 0 && <section key={kind} aria-labelledby={`${id}-${kind}`}>
+            <h3 id={`${id}-${kind}`}>{kind === 'lift' ? copy.x4Weighted : copy.x4Bodyweight}</h3>
+            <ul>{rows.map((exercise) => <li key={exercise.id}>
+              <Button variant="ghost" onClick={() => choose(exercise)}>{exercise.name}</Button>
+            </li>)}</ul>
+          </section>;
+        })}
         {catalogue && all.length === 0 && <p role="status">{fill(copy.pickerNoMatch, { query: search.trim() })}</p>}
         {!creating ? <Button variant="secondary" onClick={() => {
           setName(search.trim());

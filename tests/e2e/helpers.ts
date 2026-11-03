@@ -93,21 +93,16 @@ export async function warmLazyRoutes(page: Page): Promise<void> {
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
-  await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
-  await expect(page.getByRole('button', { name: copy.start, exact: true })).toBeVisible();
-  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: copy.pickerTitle })).toBeVisible();
+  await page.getByRole('dialog', { name: copy.pickerTitle }).getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 }
 
 export async function logBench(page: Page, sets: number): Promise<void> {
-  // Enter through the tab bar; the session screen starts the workout.
+  // Choosing an exercise starts the workout directly.
   if (!page.url().includes('/session')) {
     await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
   }
-  await expect(page.getByRole('heading', { name: copy.sessionTitle })).toBeVisible();
-  const begin = page.getByRole('button', { name: copy.start, exact: true });
-  await expect(begin).toBeVisible();
-  await begin.click();
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect(picker).toBeVisible();
   await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
@@ -117,7 +112,7 @@ export async function logBench(page: Page, sets: number): Promise<void> {
   await expect(weight).toHaveValue('80');
   await expect(page.getByRole('spinbutton', { name: copy.reps })).toHaveValue('5');
   for (let index = 1; index <= sets; index += 1) {
-    await page.getByRole('button', { name: copy.logSet }).click();
-    await expect(page.getByText(fill(copy.sessionSetCount, { count: index }), { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: copy.x4Log }).click();
+    await expect(page.getByText((index === 1 ? copy.x4SetOne : fill(copy.x4SetCount, { count: index })), { exact: true })).toBeVisible();
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatSessionClock, idleEndedAt, sessionSeconds, workingTonnes } from '../../../../src/features/session/sessionModel.ts';
+import { formatSessionClock, formatSessionDuration, idleEndedAt, sessionSeconds, workingTonnes } from '../../../../src/features/session/sessionModel.ts';
 import type { Exercise, SetRow } from '../../../../src/core/types.ts';
 
 describe('session clock and idle close', () => {
@@ -8,6 +8,13 @@ describe('session clock and idle close', () => {
     expect(formatSessionClock(65)).toBe('01:05');
     expect(formatSessionClock(3600)).toBe('1:00:00');
     expect(formatSessionClock(3661)).toBe('1:01:01');
+  });
+
+  it('formats summary duration as minutes or hours and padded minutes', () => {
+    expect(formatSessionDuration(21 * 60 + 59)).toBe('21 min');
+    expect(formatSessionDuration(65 * 60)).toBe('1 h 05 min');
+    expect(formatSessionDuration(60 * 60)).toBe('1 h 00 min');
+    expect(formatSessionDuration(0)).toBe('0 min');
   });
 
   it('measures duration from the stored instants', () => {

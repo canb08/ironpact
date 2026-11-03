@@ -48,13 +48,12 @@ for (const screen of ['Floor', 'Session'] as const) {
       await expect(page.getByTestId('shared-bar').getByRole('img')).toBeVisible();
     } else {
       await waitForBench(page);
-      await page.getByRole('button', { name: copy.start, exact: true }).click();
       const picker = page.getByRole('dialog', { name: copy.pickerTitle });
       await expect(picker).toBeVisible();
       await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
       const readiness = page.getByRole('region', { name: copy.readinessTitle });
       if (await readiness.isVisible()) await readiness.getByRole('button', { name: copy.skip, exact: true }).click();
-      await expect(page.getByRole('button', { name: copy.logSet, exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: copy.x4Log, exact: true })).toBeVisible();
     }
     await settle(page);
     const report = await page.evaluate(() => {

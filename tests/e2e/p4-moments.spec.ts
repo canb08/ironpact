@@ -9,20 +9,19 @@ const card = (page: Page) => page.getByRole('region', { name: copy.prCardLabel }
 
 async function openBench(page: Page): Promise<void> {
   if (!page.url().includes('/session')) await page.goto('/session');
-  await page.getByRole('button', { name: copy.start, exact: true }).click();
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect.poll(async () => await picker.isVisible()
-    || await page.getByRole('button', { name: 'Bench press', exact: true }).isVisible()).toBe(true);
+    || await page.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true }).isVisible()).toBe(true);
   if (await picker.isVisible()) await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
   const readiness = page.getByRole('region', { name: copy.readinessTitle });
   if (await readiness.isVisible()) await readiness.getByRole('button', { name: copy.skip, exact: true }).click();
-  await expect(page.getByRole('button', { name: copy.logSet, exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: copy.x4Log, exact: true })).toBeVisible();
 }
 
 async function log(page: Page, kg: string): Promise<void> {
   await page.getByRole('spinbutton', { name: copy.kg, exact: true }).fill(kg);
-  await page.getByRole('button', { name: copy.logSet, exact: true }).click();
-  await expect(page.getByText(fill(copy.sessionSetCount, { count: 1 }), { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
+  await expect(page.getByText(copy.x4SetOne, { exact: true })).toBeVisible();
 }
 
 /** Make the baseline and the heavier set through the real workout/outbox path. */
@@ -31,8 +30,8 @@ async function preparePr(page: Page): Promise<void> {
   await waitForBench(page);
   await openBench(page);
   await log(page, '80');
-  await expect(page.getByText(copy.firstSession, { exact: true })).toBeVisible();
-  const rack = page.getByRole('button', { name: copy.finish });
+  await expect(page.getByText(copy.x4Baseline, { exact: true })).toBeVisible();
+  const rack = page.getByRole('button', { name: copy.x4FinishHold });
   await rack.focus();
   await page.keyboard.down('Enter');
   try {
@@ -43,6 +42,8 @@ async function preparePr(page: Page): Promise<void> {
     await page.keyboard.up('Enter');
   }
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId('shared-bar')).toBeVisible();
   await page.clock.setFixedTime(CLOCK + 120_000);
   await openBench(page);
 }

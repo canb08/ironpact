@@ -5,19 +5,16 @@ import { guessNextExercise, guessOpeningExercise, prefillForExercise } from '../
 import { progressionForExercise } from '../../core/progression.ts';
 import { detectSessionVolumePrs, detectSetPr, type PrEventDraft, type PrHistory } from '../../core/prs.ts';
 import { doMinPlan } from '../../core/readiness.ts';
-import type { Exercise, Readiness, Session, SetRow } from '../../core/types.ts';
+import type { Exercise, Session, SetRow } from '../../core/types.ts';
 import { haptic, setHapticsOn } from '../../platform/haptics.ts';
 import { keepAwake, releaseKeepAwake } from '../../platform/wakeLock.ts';
-import { Button, HoldButton, copy, fill, useToast } from '../../ui';
+import { HoldButton, copy, fill, useToast } from '../../ui';
 import { PrCard } from '../prs/PrCard.tsx';
 import { prEyebrow } from '../prs/label.ts';
 import { defaultRestSeconds } from '../timer/restTimer.ts';
-import { RestTimerOverlay } from '../timer/RestTimerOverlay.tsx';
 import { ExercisePicker } from './ExercisePicker.tsx';
 import { LoggingCard } from './LoggingCard.tsx';
-import { ReadinessPanel } from './ReadinessPanel.tsx';
 import { SessionClock } from './SessionClock.tsx';
-import { clearReadinessSkips, readinessSuppressed, recordReadinessSkip } from './readinessGate.ts';
 import { idleEndedAt, toPrRow } from './sessionModel.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
@@ -34,19 +31,19 @@ function historyOf(session: Session, sessions: readonly Session[], sets: readonl
   };
 }
 
-export function ActiveSession({ session, onFinish, onReplace }: {
+export function ActiveSession({ session, onFinish, initialExercise }: {
   session: Session;
   onFinish: (session: Session) => void;
-  onReplace: (session: Session) => void;
+  initialExercise?: Exercise | undefined;
 }) {
   const repo = useRepo();
   const write = useSessionWrite();
   const { showToast } = useToast();
-  const [selection, setSelection] = useState<Exercise>();
+  const [selection, setSelection] = useState<Exercise | undefined>(initialExercise);
   const [pickerOpen, setPickerOpen] = useState<boolean | null>(null);
   const [card, setCard] = useState<PrEventDraft | null>(null);
   const [baseline, setBaseline] = useState(false);
-  const [readinessDone, setReadinessDone] = useState(session.readiness != null);
+  const [loggingBusy, setLoggingBusy] = useState(false);
   const closing = useRef(false);
   const seen = useRef(new Set<string>());
   const taken = useRef(new Set<string>());
@@ -81,7 +78,7 @@ export function ActiveSession({ session, onFinish, onReplace }: {
   useEffect(() => { void keepAwake(); return () => releaseKeepAwake(); }, []);
   useEffect(() => {
     if (!baseline) return;
-    const timer = window.setTimeout(() => setBaseline(false), 4000);
+    const timer = window.setTimeout(() => setBaseline(false), 10000);
     return () => window.clearTimeout(timer);
   }, [baseline]);
   useEffect(() => {
@@ -115,7 +112,6 @@ export function ActiveSession({ session, onFinish, onReplace }: {
   }));
   const restSeconds = pref?.rest_s ?? defaultRestSeconds(focus?.category === 'isolation' ? 'isolation' : 'compound');
   const shown = card && snapshot.sets.some((set) => set.id === card.source_id) ? card : null;
-  const showReadiness = !readinessDone && !readinessSuppressed() && session.readiness == null && snapshot.sets.length === 0;
 
   const noteSet = (row: SetRow) => {
     if (seen.current.has(row.id)) return;
@@ -126,7 +122,10 @@ export function ActiveSession({ session, onFinish, onReplace }: {
     };
     const detected = detectSetPr(withRow, row.id);
     if (detected.kind === 'baseline') {
-      setBaseline(true);
+      const key = `ironpact.baseline-note.${session.user_id}.${row.exercise_id}`;
+      try {
+        if (!localStorage.getItem(key)) { setBaseline(true); localStorage.setItem(key, '1'); }
+      } catch { setBaseline(true); }
       return;
     }
     if (detected.kind !== 'pr' || detected.event.pr_type === 'volume') return;
@@ -157,49 +156,35 @@ export function ActiveSession({ session, onFinish, onReplace }: {
     else setPickerOpen(true);
   };
 
-  const saveReadiness = (value: Readiness) => {
-    clearReadinessSkips();
-    void write.run(() => repo.w.updateSession(session.id, { readiness: value }), () => setReadinessDone(true));
+  const finish = () => {
+    const badges = detectSessionVolumePrs(history, session.id).map(toPrRow);
+    void write.run(async () => {
+      if (badges.length > 0) {
+        const result = await repo.w.recordPrEvents(badges);
+        if (!result.ok) return result;
+      }
+      return repo.w.finishSession(session.id);
+    }, onFinish);
   };
 
   return <main className="session-active">
     <header className="session-header">
       <h1>{copy.sessionTitle}</h1>
       <SessionClock startedAt={session.started_at} />
-      <span>{fill(copy.sessionSetCount, { count: snapshot.sets.length })}</span>
-      {baseline && <p role="status">{copy.firstSession}</p>}
-      <RestTimerOverlay part="readout" reduceMotion={snapshot.profile?.reduce_motion} />
+      <span>{snapshot.sets.length === 1 ? copy.x4SetOne : fill(copy.x4SetCount, { count: snapshot.sets.length })}</span>
+      <HoldButton size="xl" variant="secondary" holdMs={600} aria-label={copy.x4FinishHold} disabled={write.busy || loggingBusy} onHoldComplete={finish}>
+        {copy.x4Finish}{' '}<span className="session-hold-hint">{copy.x4Hold}</span>
+      </HoldButton>
+
     </header>
-    <Button className="session-exercise" size="xl" variant="secondary" onClick={() => setPickerOpen(true)}>
-      {focus?.name ?? copy.sessionPickExercise}
-    </Button>
-    {showReadiness && <ReadinessPanel busy={write.busy} onSkip={() => { recordReadinessSkip(); setReadinessDone(true); }}
-      onGo={saveReadiness} onFullSend={saveReadiness}
-      onDoMin={(value) => {
-        clearReadinessSkips();
-        void write.run(async () => {
-          const discarded = await repo.w.discardSession(session.id);
-          if (!discarded.ok) return { ok: false, error: discarded.error };
-          return repo.w.startSession({ kind: 'gym', mode: 'min', readiness: value });
-        }, onReplace);
-      }} />}
+    {baseline && <p className="session-baseline" role="status">{copy.x4Baseline}</p>}
+    <WriteFeedback error={write.error} retry={write.retry} />
     {shown && <PrCard event={shown} onClose={() => setCard(null)} />}
     {focus ? <LoggingCard key={focus.id} session={session} exercise={focus} sets={snapshot.sets.filter((row) => row.exercise_id === focus.id)}
+      reduceMotion={snapshot.profile?.reduce_motion} allSets={snapshot.sets} exercises={snapshot.exercises} bigJumps={snapshot.profile?.big_jumps ?? false}
       prefillSets={prefillSets} pending={snapshot.pending} restSeconds={restSeconds} nudge={nudge}
-      onNext={goNext} onFinish={onFinish} onLogged={noteSet}
-      onRack={() => {
-        const badges = detectSessionVolumePrs(history, session.id).map(toPrRow);
-        if (badges.length > 0) void repo.w.recordPrEvents(badges);
-        return repo.w.finishSession(session.id);
-      }} />
-      : <>
-        <div className="session-empty"><p>{copy.emptyFloor}</p></div>
-        <HoldButton className="ui-knurl" size="xl" variant="secondary" holdMs={600} aria-label={copy.rackItName} disabled={write.busy}
-          onHoldComplete={() => { void write.run(() => repo.w.finishSession(session.id), onFinish); }}>
-          {copy.rackIt}
-        </HoldButton>
-        <WriteFeedback error={write.error} retry={write.retry} />
-      </>}
+      onNext={goNext} onChangeExercise={() => setPickerOpen(true)} onLogged={noteSet} finishing={write.busy} onBusyChange={setLoggingBusy} />
+      : <div className="session-empty"><p>{copy.sessionNoSets}</p></div>}
     <ExercisePicker open={pickerOpen ?? !focus} onClose={() => setPickerOpen(false)}
       onSelect={(row) => { setSelection(row); setPickerOpen(false); }} />
   </main>;
