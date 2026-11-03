@@ -84,8 +84,8 @@ it('runs the phase 3 demo on the mock backend', async () => {
     const rows = screen.getAllByTestId('presence-banner');
     expect(rows.length).toBeGreaterThan(0);
     for (const banner of rows) {
-      expect(banner.textContent).toContain('Crewmate is on the floor · Bench 3/5 ·');
-      expect(banner.textContent).toMatch(/· \d+ min$/);
+      expect(banner.textContent).toContain("Crewmate is training: Bench 3/5,");
+      expect(banner.textContent).toMatch(/, \d+ min$/);
     }
   });
   expect(banners.length).toBeGreaterThan(0);

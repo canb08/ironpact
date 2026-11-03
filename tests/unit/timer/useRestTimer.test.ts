@@ -86,7 +86,7 @@ describe('useRestTimer store', () => {
     expect(getRestView().live).toBe('10 seconds');
     vi.setSystemTime(t0 + 30_000);
     vi.advanceTimersByTime(250);
-    expect(getRestView().live).toBe("Rest over. Bar's loaded.");
+    expect(getRestView().live).toBe("Rest complete. Ready for your next set.");
     expect(vibrate).toHaveBeenCalledTimes(1);
     expect(vibrate).toHaveBeenCalledWith([80, 60, 80, 60, 200]);
     vi.advanceTimersByTime(1000);
@@ -101,7 +101,7 @@ describe('useRestTimer store', () => {
     startRest('bench', 10);
     vi.setSystemTime(t0 + 10_000);
     vi.advanceTimersByTime(250);
-    expect(getRestView().live).toBe("Rest over. Bar's loaded.");
+    expect(getRestView().live).toBe("Rest complete. Ready for your next set.");
     expect(vibrate).not.toHaveBeenCalled();
   });
 });

@@ -61,7 +61,7 @@ it('links each lift with two sessions to its exercise page and draws a sparkline
   const link = screen.getByRole('link', { name: new RegExp(exercise.name) });
   expect(link.getAttribute('href')).toBe(`/exercise/${exercise.id}`);
   expect(document.querySelector('.progress-line--you')).toBeTruthy();
-  expect(screen.getByRole('table', { name: `${exercise.name}. Best e1RM over 12 weeks.` })).toBeTruthy();
+  expect(screen.getByRole('table', { name: `${exercise.name}. Best estimated 1-rep max over 12 weeks.` })).toBeTruthy();
 });
 
 it('shows the first weigh-in immediately and draws the 7-day average', () => {
@@ -178,4 +178,35 @@ it('keeps a stored Boxing row and lists Muay Thai combos newest first', () => {
   const items = [...book.querySelectorAll('li')].map((item) => item.textContent);
   expect(items).toEqual(['1-2, drilled 2', 'Teep, drilled 1']);
   expect(book.textContent).not.toContain('drilled guard');
+});
+
+it('formats chart table dates without changing the chart coordinates', () => {
+  renderProgress(data({ mine: {
+    ...emptyBundle(),
+    sessions: [
+      { ...session, id: id(80), user_id: profile.id, local_date: '2026-10-01' },
+      { ...session, id: id(81), user_id: profile.id, local_date: '2026-10-08' },
+    ],
+    sets: [
+      { ...set, id: id(82), user_id: profile.id, session_id: id(80), exercise_id: exercise.id, local_date: '2026-10-01' },
+      { ...set, id: id(83), user_id: profile.id, session_id: id(81), exercise_id: exercise.id, local_date: '2026-10-08' },
+    ],
+    cardio: [
+      { ...cardio, id: id(84), session_id: id(80), user_id: profile.id, local_date: '2026-10-01' },
+      { ...cardio, id: id(85), session_id: id(81), user_id: profile.id, local_date: '2026-10-08' },
+    ],
+    bodyweight: [
+      { ...bodyweight, id: id(86), user_id: profile.id, local_date: '2026-10-01' },
+      { ...bodyweight, id: id(87), user_id: profile.id, local_date: '2026-10-08' },
+    ],
+  } }));
+  for (const name of [copy.progressLifts, copy.x5Cardio, copy.progressBody]) {
+    fireEvent.click(screen.getByRole('radio', { name }));
+    const cells = document.querySelectorAll('table td');
+    expect(cells.length).toBeGreaterThan(0);
+    for (const cell of cells) expect(cell.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    const lines = document.querySelectorAll('polyline');
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) expect(line.getAttribute('points')).not.toMatch(/NaN|Infinity/);
+  }
 });

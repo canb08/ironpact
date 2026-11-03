@@ -59,6 +59,9 @@ it('shows a generated token once, copies it, masks on close/remount, and lists r
   await user.keyboard('{Escape}');
   expect(document.body.textContent).not.toContain(plaintext);
   expect(await screen.findByText(copy.tokenMask)).toBeTruthy();
+  const created = document.querySelector('.vault-token time');
+  expect(created?.textContent).toBe(copy.x5Today);
+  expect(created?.getAttribute('datetime')).toMatch(/^2026-10-25T/);
   view.unmount(); mount();
   expect(await screen.findByText(copy.tokenMask)).toBeTruthy();
   expect(screen.queryByRole('dialog')).toBeNull();

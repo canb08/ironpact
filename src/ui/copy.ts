@@ -1,4 +1,7 @@
 export const copy = {
+  // ── X10: shared shell labels; wording sweep applies to all anchors below.
+  x10Today: 'Today',
+  x10Train: 'Train',
   // ── X8
   x8Appearance: 'Appearance',
   x8Privacy: 'Privacy & export',
@@ -120,27 +123,27 @@ export const copy = {
   x5HistorySet: '{reps} reps at {kg} kg',
   x5ManageSets: 'Edit sets',
 
-  setLogged: 'Locked in.',
-  restComplete: "Bar's loaded.",
-  progressionNudge: 'All reps at RPE 8. Add 2.5.',
+  setLogged: "Saved",
+  restComplete: "Rest complete",
+  progressionNudge: "All reps at RPE 8. Add 2.5 kg.",
   nudgeChip: '+2.5 → 82.5',
-  ghostBeaten: "Ghost's behind you.",
-  prStamp: 'NEW 5-REP PR.',
-  prDetail: "That's the strongest you've ever been on this.",
-  firstSession: 'Baseline set.',
-  minLogged: "MIN day. Still counts. Chain's alive.",
-  minQuick: 'MIN counts.',
-  readinessMin: 'Running on fumes? MIN today. It counts the same.',
-  doMin: 'Do MIN',
-  fullSend: 'Full send',
+  ghostBeaten: "Better than your last workout.",
+  prStamp: "New 5-rep PR",
+  prDetail: "Your best on this lift.",
+  firstSession: "First sessions set your baseline. PRs start after 2.",
+  minLogged: "MIN saved",
+  minQuick: "MIN saved",
+  readinessMin: "Short on energy? Log a 10-minute MIN. It counts as half a session.",
+  doMin: "Log MIN",
+  fullSend: "Start workout",
   skip: 'Skip',
   comeback: 'Welcome back. You owe nothing.',
   shortSession: '20-min session',
   justMin: 'Just log MIN',
-  ringClosed: "CLOSED. Both of you. That's the job.",
-  weekTargetHit: 'Week locked.',
+  ringClosed: "Weekly target reached by both of you.",
+  weekTargetHit: "Weekly target reached.",
   plateAdded: 'New week. Clean bar.',
-  barHeld: 'Bar held.',
+  barHeld: "Weekly target reached.",
   restWeek: 'Rest week. The bar will wait.',
   tierUp: '{Tier} now. Heavier than last month.',
   tierDown: 'Down a tier. One week gets it back.',
@@ -148,26 +151,26 @@ export const copy = {
   // E2.6 is authoritative over string bank #23.
   spotOffer: "{partner}'s week is light. You can cover it.",
   spotButton: 'I got you',
-  partnerLive: '{partner} is on the floor · Bench 3/5 · 14 min',
+  partnerLive: "{partner} is training: Bench 3 of 5, 14 min",
   nudge: "Gym's open. MIN counts.",
-  lightWeight: 'LIGHT WEIGHT',
-  clean: 'CLEAN',
-  again: 'AGAIN',
+  lightWeight: "Light weight",
+  clean: "Clean",
+  again: "Again",
   chalkHandprint: 'Chalk handprint',
-  duelWon: 'TAKEN.',
+  duelWon: "New best",
   duelLost: "Next one's yours. +2.1% is still up.",
-  duelTie: 'EVEN.',
+  duelTie: "Equal best",
   emptyFloor: 'Log your first set. Everything starts here.',
   emptyProgress: 'Two sessions and the lines start drawing.',
   emptyCrew: 'Crew of one. Send the code:',
   offline: "Saved on your phone. Syncs when you're back up.",
   serverPaused: 'Server asleep — data safe on phone.',
-  finish: 'Hold to rack it.',
+  finish: "Finish workout (hold)",
   resume: 'Resume session (14 min)?',
   openSession: 'Finish or discard the open one.',
-  outOfRange: "That's a world record. Check it.",
+  outOfRange: "Check this value and try again.",
   storageFull: "Phone storage full — can't save. Free space and retry.",
-  deadInvite: "Code's dead. Ask for a new one.",
+  deadInvite: "Invite expired. Ask for a new code.",
   otpRateLimited: 'Code delayed — try again in 60 s.',
   otpCountdown: 'Code delayed — try again in {seconds} s.',
   sendCode: 'Send code',
@@ -216,16 +219,16 @@ export const copy = {
   pushPartnerPr: '{partner} hit a PR. Go see.',
   pushPartnerStarted: '{partner} is under the bar.',
   pushRecap: "Week's in. See the card.",
-  baselineBuilding: 'Baseline building.',
-  readinessEyebrow: 'QUICK CHECK',
-  lockIn: 'Lock in',
+  baselineBuilding: "First sessions set your baseline. PRs start after 2.",
+  readinessEyebrow: "Quick check",
+  lockIn: "Save",
   spotNotEligible: 'Log one past your target to cover {partner}.',
-  start: 'START',
+  start: "Start workout",
   min: 'MIN',
   walk: '20m walk',
-  logSet: 'LOG SET',
+  logSet: "Log set",
   nextExercise: 'Next exercise',
-  rackIt: 'RACK IT',
+  rackIt: "Finish workout",
   undo: 'Undo',
   restore: 'Restore',
   close: 'Close',
@@ -258,11 +261,11 @@ export const copy = {
   devMember: '{me} · {partner}',
   gym: 'Gym',
   run: 'Run',
-  martialArts: 'Martial arts',
+  martialArts: "Fight",
   crew: 'Crew',
   settings: 'Settings',
   save: 'Save',
-  floor: 'Floor',
+  floor: "Today",
   myWeek: 'My week',
   partnerWeek: 'Partner',
   lastTime: 'Last time',
@@ -276,9 +279,9 @@ export const copy = {
   note: 'Note',
   discipline: 'Discipline',
   other: 'Other',
-  keepTo16: 'Keep it to 16.',
-  keepTo40: 'Keep it to 40.',
-  replacesToday: "Replaces today's {kg}.",
+  keepTo16: "Use up to 16 characters.",
+  keepTo40: "Use up to 40 characters.",
+  replacesToday: "Replaces today’s weigh-in of {kg} kg.",
   paceLine: '{time} /km',
   lastSession: '{date} · {kind}',
   topSet: '{reps} × {kg} kg',
@@ -286,7 +289,7 @@ export const copy = {
   minLabel: 'MIN label',
   km: 'km',
   muayThai: 'Muay Thai',
-  unknownKind: 'Pick Run, martial arts, weight or MIN.',
+  unknownKind: "Pick Run, Fight, Weigh-in or MIN.",
   installTitle: 'Add SPOTTER to your home screen',
   installIntro: 'Install for quick access and better protection for data on this phone.',
   installIosShare: 'Tap Share in Safari.',
@@ -301,7 +304,7 @@ export const copy = {
   installSafari: 'Safari installation steps',
   installAndroid: 'Android installation steps',
   installPromptUnavailable: 'Use the browser menu to install SPOTTER, or continue in browser.',
-  shortcutStartSession: 'Start session',
+  shortcutStartSession: "Start workout",
   shortcutLogMin: 'Log MIN',
   crewTitle: 'Crew',
   settingsTitle: 'Settings',
@@ -321,7 +324,7 @@ export const copy = {
   networkRetry: 'Could not connect. Try again.',
   clipboardUnavailable: 'Copy unavailable. Select the text and copy it yourself.',
   copied: 'Copied.',
-  crewSession: '{partner} · Session · {date}',
+  crewSession: "{partner}: workout on {date}",
   crewEntry: '{partner} · {date}',
   crewSet: '{exercise} · {reps} × {load}',
   crewLoad: '{kg}kg',
@@ -330,10 +333,10 @@ export const copy = {
   crewRun: 'Run · {km}km · {duration}',
   crewMartial: '{discipline} · {minutes}m',
   crewMin: 'MIN · {description}',
-  crewWeight: 'Weight · {kg}kg',
+  crewWeight: "Weigh-in: {kg} kg",
   partner: 'Partner',
   vaultTitle: 'Vault export',
-  vaultEyebrow: 'VAULT EXPORT · YOUR DATA ONLY',
+  vaultEyebrow: "Export your own data",
   tokenPrivacy: 'This token reads only your data. Never send it to anyone — not even your crew.',
   tokenLabel: 'Token label',
   tokenDefaultLabel: 'My vault',
@@ -355,8 +358,8 @@ export const copy = {
   tokenListError: 'Token list did not load. Try again.',
   exportFormat: 'Export format',
   exportLines: 'Lines',
-  exportJson: 'JSON',
-  exportCsv: 'CSV',
+  exportJson: "JSON format",
+  exportCsv: "CSV format",
   exportPreview: 'Preview (last 7 days)',
   exportPreviewError: "Export didn't load. Your data's safe. Try again.",
   exportEmpty: 'No entries in the last 7 days.',
@@ -380,10 +383,10 @@ Lines format: newest date first, one line per exercise per day, LF endings, sepa
 Sync: at most hourly. Pull the full export with If-None-Match: <last ETag>. 304 = no change.
 On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). Never append.
 200 with empty body = no entries. 401 = bad or revoked token. 429 = over 60 calls/hour (respect Retry-After).`,
-  sessionTitle: 'Gym session',
+  sessionTitle: "Workout",
   sessionLoading: 'Loading your session…',
   sessionReady: 'Ready for a set?',
-  sessionFinished: 'Session racked.',
+  sessionFinished: "Workout saved",
   sessionResume: 'Resume session ({minutes} min)?',
   sessionResumeAction: 'Resume',
   sessionDiscard: 'Hold to discard',
@@ -391,7 +394,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   sessionSetCount: '{count} sets',
   sessionDeleted: 'Set removed.',
   sessionDelete: 'Delete set {index}',
-  sessionSaved: 'On phone',
+  sessionSaved: "Saved on your phone",
   sessionSynced: 'Synced',
   sessionSaveError: "Couldn't save. Try again.",
   sessionPickExercise: 'Choose exercise',
@@ -420,28 +423,28 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P2A: add this ticket's strings directly below ──
 
   // ── P2B: add this ticket's strings directly below ──
-  progressionNoRpe: 'All reps hit. Add 2.5.',
-  progressionBig: 'All reps at RPE 8. Add 5.',
-  progressionBigNoRpe: 'All reps hit. Add 5.',
-  progressionAdd: 'All reps at RPE 8. Add {increment}.',
-  progressionAddNoRpe: 'All reps hit. Add {increment}.',
+  progressionNoRpe: "All reps complete. Add 2.5 kg.",
+  progressionBig: "All reps at RPE 8. Add 5 kg.",
+  progressionBigNoRpe: "All reps complete. Add 5 kg.",
+  progressionAdd: "All reps at RPE 8. Add {increment} kg.",
+  progressionAddNoRpe: "All reps complete. Add {increment} kg.",
   nudgeChipValue: '+{increment} → {next}',
-  prE1rm: 'e1RM PR',
-  prRepMax: '{reps}-REP PR',
-  prVolume: 'VOLUME PR',
-  prLongestRun: 'LONGEST RUN',
-  prFastest: 'FASTEST {bucket}',
+  prE1rm: "Estimated 1-rep max PR",
+  prRepMax: "{reps}-rep PR",
+  prVolume: "Volume PR",
+  prLongestRun: "Longest run",
+  prFastest: "Fastest {bucket}",
 
   // ── P2C: add this ticket's strings directly below ──
   restTimerLabel: 'Rest timer',
   restMinus15: '−15s',
   restPlus15: '+15s',
   restTenSeconds: '10 seconds',
-  restOverAnnounce: "Rest over. Bar's loaded.",
+  restOverAnnounce: "Rest complete. Ready for your next set.",
   restOverChip: '+{time} over',
 
   // ── P2D: add this ticket's strings directly below ──
-  readinessTitle: "How's the tank?",
+  readinessTitle: "How do you feel?",
   readinessGo: 'Go',
   readinessSleep: 'Sleep',
   readinessSoreness: 'Soreness',
@@ -453,19 +456,19 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   minDayStill: 'MIN day — still counts',
   backToWork: 'Back to work',
   prCardLabel: 'Personal record',
-  summaryTitle: 'Session summary',
+  summaryTitle: "Workout summary",
   summaryDuration: 'Duration',
-  summaryTonnes: 'Tonnes',
+  summaryTonnes: "Volume",
   summarySets: 'Working sets',
   summaryPrs: 'PRs',
   summaryDone: 'Done',
   summaryMore: '+{count} more',
-  summaryDropped: 'Nothing logged — session dropped.',
+  summaryDropped: "No entries logged. Workout discarded.",
   summarySaved: 'Saved on your phone.',
 
   // ── P2E: add this ticket's strings directly below ──
-  bestE1rm: 'Best e1RM',
-  sessionE1rm: 'Session e1RM',
+  bestE1rm: "Best estimated 1-rep max",
+  sessionE1rm: "Workout estimated 1-rep max",
   e1rmNone: '—',
   noSetsYet: 'No sets on this lift yet.',
   missingExercise: 'That exercise is not on this phone.',
@@ -479,10 +482,10 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   emptyDay: 'Nothing logged. Rest counts too.',
   badDate: 'That date is not valid.',
   dateLabel: 'Date',
-  holdDeleteSession: 'Hold to delete session',
+  holdDeleteSession: "Delete workout (hold)",
   editDay: 'Edit this day',
   recentDays: 'Recent days',
-  sessionNoteLabel: 'Session note',
+  sessionNoteLabel: "Workout note",
   sessionNoteCount: '{count}/200',
   moveDateHint: 'Changing the date moves this entry.',
   deleteEntry: 'Delete {name}',
@@ -504,11 +507,11 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P3B: add this ticket's strings directly below ──
 
   // ── P3C: add this ticket's strings directly below ──
-  ringClosedAll: "CLOSED. All of you. That's the job.",
-  platesLabel: 'PLATES',
+  ringClosedAll: "Weekly target reached by everyone.",
+  platesLabel: "Plates",
 
   // ── P3D: add this ticket's strings directly below ──
-  ringThisWeek: 'THIS WEEK',
+  ringThisWeek: "This week",
   ringResets: 'Resets Mon',
   ringCount: '{done}/{capacity}',
   ringOf: '{credits} of {target}',
@@ -522,10 +525,10 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   ringThird: 'third',
 
   // ── P3E: add this ticket's strings directly below ──
-  presenceBanner: '{partner} is on the floor · {work} · {minutes} min',
-  presenceQuiet: '{partner} is on the floor · {minutes} min',
+  presenceBanner: "{partner} is training: {work}, {minutes} min",
+  presenceQuiet: "{partner} is training: {minutes} min",
   trainingNow: 'Training now',
-  lastTrained: 'Last trained {days} d ago',
+  lastTrained: "Last trained {days} days ago",
   lastTrainedToday: 'Last trained today',
   notTrainedYet: 'No sessions yet',
   archived: 'Archived',
@@ -535,7 +538,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   fairPercent: '{percent}',
   showRawKg: 'Show kg',
   rawKg: '{kg} kg',
-  weeksOn: '{count} weeks on',
+  weeksOn: "{count}-week streak",
   spotSent: 'Covered {partner}.',
 
   // ── P3F: add this ticket's strings directly below ──
@@ -543,12 +546,12 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   progressExercise: 'Exercise',
   progressShowPartner: 'Show {partner}',
   progressYou: 'You',
-  progressChartKg: 'Best e1RM over 12 weeks, kilograms.',
-  progressChartPercent: 'Best e1RM over 12 weeks. Both lines are a percent of each person\'s own first value. {partner} is dashed.',
+  progressChartKg: 'Best estimated 1-rep max over 12 weeks, kilograms.',
+  progressChartPercent: 'Best estimated 1-rep max over 12 weeks. Both lines are a percent of each person\'s own first value. {partner} is dashed.',
   progressPointKg: '{date} · {kg} kg',
   progressPointOwn: '{date} · {percent}% · {kg} kg',
   progressPointPartner: '{date} · {percent}%',
-  progressPartnerQuiet: 'No comparable e1RM for {partner} in these 12 weeks.',
+  progressPartnerQuiet: 'No comparable estimated 1-rep max for {partner} in these 12 weeks.',
 
   // ── P4A: add this ticket's strings directly below ──
   devFoundation: 'Self-hosted type, grain and steel.',
@@ -570,13 +573,13 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   devSaved: 'Saved',
 
   // ── P4B: add this ticket's strings directly below ──
-  // Set logged toast is `setLogged` ("Locked in.") in the string bank. No new sentence.
+  // Set logged toast uses the shared `setLogged` string.
 
   // ── P4C: add this ticket's strings directly below ──
-  prDeltaKg: '+{kg} KG',
-  prDeltaRep: '+1 REP',
-  prE1rmLine: 'e1RM {kg} KG',
-  prNewStamp: 'NEW PR',
+  prDeltaKg: "+{kg} kg",
+  prDeltaRep: "+1 rep",
+  prE1rmLine: "Estimated 1-rep max: {kg} kg",
+  prNewStamp: "New PR",
   sharePr: 'Share',
   partnerPrSet: '{name} · {exercise} · {kg} kg × {reps}',
   partnerPrKg: '{name} · {exercise} · {kg} kg',
@@ -594,8 +597,8 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   devSoundPlate: 'Plate',
 
   // ── P4E: add this ticket's strings directly below ──
-  ringClosedCentre: 'CLOSED',
-  shockwaveStamp: 'NEW PR',
+  ringClosedCentre: "Week complete",
+  shockwaveStamp: "New PR",
   shockwaveLine: '{name} · {exercise} · {detail}',
 
   // ── P4F: add this ticket's strings directly below ──
@@ -611,7 +614,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   // ── P5A: add this ticket's strings directly below ──
   progressLifts: 'Lifts',
   progressRun: 'Run',
-  progressMartial: 'Martial arts',
+  progressMartial: "Fight",
   progressBody: 'Body',
   progressDistanceCaption: 'Distance per week over 12 weeks, kilometres.',
   progressPaceCaption: 'Pace over 12 weeks. Lower is faster.',
@@ -619,7 +622,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   progressBodyCaption: 'Body weight and a 7-day moving average, kilograms.',
   progressBodyPercent: '7-day moving average. Both lines are a percent of each person\'s own first value. {partner} is dashed.',
   progressCompareCaption: 'Both lines are a percent of each person\'s own first value. {partner} is dashed.',
-  progressSparkCaption: '{exercise}. Best e1RM over 12 weeks.',
+  progressSparkCaption: "{exercise}. Best estimated 1-rep max over 12 weeks.",
   progressWeekKm: '{week} · {km} km',
   progressPacePoint: '{date} · {pace} per km',
   progressPaceOwn: '{date} · {pace} per km · {percent}%',
@@ -639,14 +642,14 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
 
   // ── P5B: add this ticket's strings directly below ──
   repMaxHeading: 'Rep-max table',
-  repMaxCaption: 'Best working weight at each rep count. The derived column is that best e1RM turned back into a weight.',
+  repMaxCaption: "Best working weight at each rep count. The estimated column uses your best estimated 1-rep max to calculate a weight.",
   repMaxActual: 'Best kg',
-  repMaxDerived: 'From best e1RM',
+  repMaxDerived: "Estimated kg",
   prListHeading: 'PR list',
   prListEmpty: 'No PRs on this lift yet.',
   editSet: 'Edit set {index}',
-  chartTableCaption: 'Best e1RM by session',
-  chartTableKg: 'e1RM kg',
+  chartTableCaption: "Best estimated 1-rep max by workout",
+  chartTableKg: "Estimated 1-rep max, kg",
 
   // ── P5C: add this ticket's strings directly below ──
   settingsProfile: 'Profile',
@@ -719,7 +722,7 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   prsRecalculated: 'PRs recalculated.',
 
   // ── H7: add this ticket's strings directly below ──
-  rackItName: 'RACK IT, hold to rack it.',
+  rackItName: "Finish workout (hold)",
   // ── X1: R2 foundation ──
   x1You: 'You',
   x1Partner: 'Partner',
@@ -917,16 +920,28 @@ type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer 
   ? Key | Placeholders<Rest>
   : never;
 
+/** English count labels share the same zero/one/many rule. */
+export function plural(count: number, singular: string, multiple = `${singular}s`): string {
+  return count === 1 ? singular : multiple;
+}
+
 /** Values are inserted literally, including dollar signs and braces. */
 export function fill<T extends string>(
   template: T,
   vars: Record<Placeholders<T>, string | number>,
 ): string {
   const values: Readonly<Record<string, string | number>> = vars;
-  return template.replace(/\{([^{}]+)\}/g, (_, key: string) => {
+  const result = template.replace(/\{([^{}]+)\}/g, (_, key: string) => {
     if (!Object.prototype.hasOwnProperty.call(values, key) || values[key] === undefined) {
       throw new Error(`Missing template variable: ${key}`);
     }
     return String(values[key]);
   });
+  // Preserve the existing template keys and callers, including singular counts.
+  if (Number(values.count) === 1) {
+    if (template === copy.sessionSetCount || template === copy.x4SetCount) return result.replace(/sets$/, plural(1, 'set'));
+    if (template === copy.togetherSessions) return result.replace(/sessions$/, plural(1, 'session'));
+  }
+  if (Number(values.days) === 1 && template === copy.lastTrained) return result.replace('days', plural(1, 'day'));
+  return result;
 }

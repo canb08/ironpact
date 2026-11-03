@@ -7,6 +7,8 @@ import { Button } from '../../ui/Button.tsx';
 import { HoldButton } from '../../ui/HoldButton.tsx';
 import { Sheet } from '../../ui/Sheet.tsx';
 import { copy } from '../../ui/copy.ts';
+import { formatDate } from '../../core/formatDate.ts';
+import { localDateOf } from '../../core/weeks.ts';
 import { aiInstructions, copyText, exportUrl, loadPreview } from './export.ts';
 import { useOnline } from './useOnline.ts';
 
@@ -89,6 +91,8 @@ export function VaultExport({ repo }: { repo: Repo }) {
   }
 
   const profile = data?.profile;
+  const today = localDateOf(new Date().toISOString(), profile?.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const tokenDate = (instant: string) => formatDate(localDateOf(instant, profile?.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone), today, copy);
   const url = exportUrl();
   const format = profile?.export_format ?? 'lines';
   return (
@@ -119,9 +123,9 @@ export function VaultExport({ repo }: { repo: Repo }) {
                 <code>{copy.tokenMask}</code>
                 <p>{meta.revoked_at ? copy.tokenRevoked : copy.tokenActive}</p>
                 <dl>
-                  <dt>{copy.tokenCreated}</dt><dd><time dateTime={meta.created_at}>{meta.created_at}</time></dd>
-                  <dt>{copy.tokenLastUsed}</dt><dd>{meta.last_used_at ? <time dateTime={meta.last_used_at}>{meta.last_used_at}</time> : copy.tokenNeverUsed}</dd>
-                  {meta.revoked_at && <><dt>{copy.tokenRevokedAt}</dt><dd><time dateTime={meta.revoked_at}>{meta.revoked_at}</time></dd></>}
+                  <dt>{copy.tokenCreated}</dt><dd><time dateTime={meta.created_at}>{tokenDate(meta.created_at)}</time></dd>
+                  <dt>{copy.tokenLastUsed}</dt><dd>{meta.last_used_at ? <time dateTime={meta.last_used_at}>{tokenDate(meta.last_used_at)}</time> : copy.tokenNeverUsed}</dd>
+                  {meta.revoked_at && <><dt>{copy.tokenRevokedAt}</dt><dd><time dateTime={meta.revoked_at}>{tokenDate(meta.revoked_at)}</time></dd></>}
                 </dl>
                 {!meta.revoked_at && <>
                   <HoldButton aria-label={copy.revokeToken} variant="secondary" className="vault-danger" holdMs={1200} disabled={!online || busy}

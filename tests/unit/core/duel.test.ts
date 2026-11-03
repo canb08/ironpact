@@ -32,7 +32,7 @@ it("U-D2: <2 sessions in baseline → 'Baseline building'", () => {
     state: 'building', baseline: null, current: null, percent: null,
   });
   expect(fairComparison({ previousWeeks: weeks([null, null, null, null], [3, 0, 0, 0]), currentE1rm: 100 }).state).toBe('building');
-  expect(copy.baselineBuilding).toBe('Baseline building.');
+  expect(copy.baselineBuilding).toBe("First sessions set your baseline. PRs start after 2.");
   expect(() => fairComparison({ previousWeeks: weeks([100], [2]), currentE1rm: 100 })).toThrow(RangeError);
 });
 
@@ -41,8 +41,8 @@ it('U-D3: tie → half-segment both', () => {
   expect(compareDuelScores(4.2, 4.2)).toEqual({ result: 'tie', halfSegmentBoth: true });
   expect(compareDuelScores(10, 10.6)).toEqual({ result: 'b', halfSegmentBoth: false });
   expect(compareDuelScores(10.6, 10)).toEqual({ result: 'a', halfSegmentBoth: false });
-  expect(copy.duelTie).toBe('EVEN.');
-  expect(copy.duelWon).toBe('TAKEN.');
+  expect(copy.duelTie).toBe("Equal best");
+  expect(copy.duelWon).toBe("New best");
   expect(copy.duelLost).not.toMatch(/LOST/);
   expect(() => compareDuelScores(Number.NaN, 1)).toThrow(RangeError);
 });

@@ -1,5 +1,4 @@
 import { expect, type Page } from '@playwright/test';
-import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy, fill } from '../../src/ui/copy.ts';
 
 export interface MirrorCounts {
@@ -41,7 +40,7 @@ export async function mirrorCounts(page: Page): Promise<MirrorCounts> {
 }
 
 export async function reachFloor(page: Page): Promise<void> {
-  const today = page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true });
+  const today = page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Today, exact: true });
   if (await today.isVisible()) await today.click();
   else await page.goto('/');
   await expect.poll(async () => {
@@ -51,7 +50,7 @@ export async function reachFloor(page: Page): Promise<void> {
     if (path === '/crew/new' || path === '/sign-in') await page.goto('/');
     return page.getByTestId('shared-bar').isVisible();
   }, { timeout: 20_000 }).toBe(true);
-  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Today, exact: true }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 }
 
@@ -92,7 +91,7 @@ export async function warmLazyRoutes(page: Page): Promise<void> {
   await page.getByRole('button', { name: copy.x1Back, exact: true }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 
-  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Train, exact: true }).click();
   await expect(page.getByRole('dialog', { name: copy.pickerTitle })).toBeVisible();
   await page.getByRole('dialog', { name: copy.pickerTitle }).getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();
@@ -101,7 +100,7 @@ export async function warmLazyRoutes(page: Page): Promise<void> {
 export async function logBench(page: Page, sets: number): Promise<void> {
   // Choosing an exercise starts the workout directly.
   if (!page.url().includes('/session')) {
-    await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.train, exact: true }).click();
+    await page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Train, exact: true }).click();
   }
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await expect(picker).toBeVisible();
