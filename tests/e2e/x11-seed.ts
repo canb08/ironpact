@@ -12,7 +12,7 @@ export async function navigate(page: Page, to: string) {
   }, to);
 }
 
-/** Real mock-backed Repo and outbox. Only partner fixture rows use the local mirror. */
+/** Real mock-backed Repo and outbox, with canonical local fixture timestamps. */
 export async function seedVisuals(page: Page, theme: 'dark' | 'light') {
   await page.clock.setFixedTime(new Date('2026-11-03T12:00:00.000Z'));
   await page.addInitScript(() => localStorage.setItem('ironpact.install-dismissed', '1'));
@@ -46,9 +46,16 @@ export async function seedVisuals(page: Page, theme: 'dark' | 'light') {
     const prs = await repo.q.prEvents({});
     value(await repo.w.markPrEventsSeen(prs.map((pr) => pr.id)));
     await repo.sync.flushNow();
+    await repo.sync.pullNow();
     const dbPath = '/src/data/db.ts';
     const { IronpactDB } = await import(/* @vite-ignore */ dbPath) as typeof import('../../src/data/db.ts');
     const db = new IronpactDB();
+    // Historic edits move local_date but retain logged_at. Canonicalise fixture
+    // times after the completed pull so feed ordering never depends on random IDs.
+    await db.sets.toCollection().modify((row) => { row.logged_at = `${row.local_date}T17:${String(row.set_index).padStart(2, '0')}:00.000Z`; });
+    await db.cardio_entries.toCollection().modify((row) => { row.logged_at = `${row.local_date}T08:00:00.000Z`; });
+    await db.martial_entries.toCollection().modify((row) => { row.logged_at = `${row.local_date}T10:00:00.000Z`; });
+    await db.min_entries.toCollection().modify((row) => { row.logged_at = `${row.local_date}T18:00:00.000Z`; });
     const me = await repo.q.me();
     const crew = await repo.q.myCrew();
     const partnerId = crew?.members.find((member) => member.user_id !== me?.id)?.user_id;

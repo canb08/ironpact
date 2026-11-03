@@ -90,6 +90,7 @@ for (const theme of ['dark', 'light'] as const) {
     }
     await navigate(page, '/session');
     await expect(page.getByRole('dialog', { name: copy.pickerTitle })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: copy.pickerTitle }).getByRole('button', { name: 'Bench press', exact: true })).toBeVisible();
     await capture(page, `${theme}/train-picker`);
     await logBench(page, 6);
     await expect(page.locator('[data-session-dock]')).toBeVisible();
@@ -104,6 +105,8 @@ for (const theme of ['dark', 'light'] as const) {
     await page.clock.setFixedTime(new Date('2026-11-03T12:00:01.000Z'));
     try { await expect(page.getByRole('region', { name: copy.summaryTitle })).toBeVisible(); }
     finally { await page.keyboard.up('Enter'); }
+    await expect(page.getByRole('heading', { name: copy.x4Summary, exact: true })).toBeVisible();
+    await expect(page.locator('.session-summary-exercises')).toContainText('6 sets');
     await capture(page, `${theme}/train-summary`);
   });
 
