@@ -102,7 +102,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   });
   await visit('S16', '/settings', async () => {
     await expect(page.getByRole('heading', { name: copy.settingsTitle })).toBeVisible();
-    await expect(page.getByRole('heading', { name: copy.settingsProfile })).toBeVisible();
+    await expect(page.getByRole('button', { name: new RegExp(`^${copy.settingsProfile}`) })).toBeVisible();
   });
 
   await page.goto('/session');

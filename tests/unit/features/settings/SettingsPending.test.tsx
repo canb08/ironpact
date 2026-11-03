@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
@@ -29,7 +30,8 @@ afterEach(async () => {
 
 it('before the profile resolves, no save is called and applyDocumentFeel is not called', async () => {
   const save = vi.spyOn(context.repo.w, 'upsertMyProfile');
-  render(<RepoProvider repo={context.repo}><SettingsScreen /></RepoProvider>);
+  const router = createMemoryRouter([{ path: '/settings/:section', element: <SettingsScreen /> }], { initialEntries: ['/settings/profile'] });
+  render(<RepoProvider repo={context.repo}><RouterProvider router={router} /></RepoProvider>);
 
   const name = document.getElementById('settings-name');
   expect(name).toBeInstanceOf(HTMLInputElement);
@@ -38,7 +40,7 @@ it('before the profile resolves, no save is called and applyDocumentFeel is not 
   expect(document.documentElement.dataset.theme).toBeUndefined();
   expect(applyDocumentFeel).not.toHaveBeenCalled();
 
-  const sound = screen.getByRole('checkbox', { name: copy.soundOn, hidden: true });
+  const sound = screen.getByRole('button', { name: copy.colourIce, hidden: true });
   fireEvent.click(sound);
   fireEvent.change(sound, { target: { checked: true } });
   await act(async () => { await Promise.resolve(); });

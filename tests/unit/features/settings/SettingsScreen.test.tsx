@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -19,8 +20,14 @@ beforeEach(async () => {
 });
 afterEach(async () => { await context.close(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
-function mount() {
-  return render(<RepoProvider repo={context.repo}><SettingsScreen /></RepoProvider>);
+let router: ReturnType<typeof createMemoryRouter>;
+function mount(section = 'privacy') {
+  router = createMemoryRouter([{ path: '/settings/:section?', element: <SettingsScreen /> }], { initialEntries: [`/settings/${section}`] });
+  const view = render(<RepoProvider repo={context.repo}><RouterProvider router={router} /></RepoProvider>);
+  fireEvent.click(screen.getByText(copy.x8Tokens, { selector: 'summary' }));
+  fireEvent.click(screen.getByText(copy.exportPreview, { selector: 'summary' }));
+  fireEvent.click(screen.getByText(copy.x8ExportAccess, { selector: 'summary' }));
+  return view;
 }
 
 function previewBody(): HTMLPreElement {

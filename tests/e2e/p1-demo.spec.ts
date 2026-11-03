@@ -54,6 +54,8 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
 
   await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
+  await page.getByRole('button', { name: new RegExp(`^${copy.x8Privacy}`) }).click();
+  await page.locator('summary').filter({ hasText: copy.exportPreview }).click();
   const preview = page.getByRole('region', { name: copy.exportPreview }).locator('pre');
   await expect(preview).toContainText(BENCH);
   await expect(preview).toContainText(WEIGHT);
