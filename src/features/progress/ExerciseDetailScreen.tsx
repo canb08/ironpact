@@ -92,7 +92,7 @@ export default function ExerciseDetailScreen() {
       prs,
       partners: await repo.q.profiles((crew?.members ?? [])
         .filter((member) => member.left_at === null && member.user_id !== userId)
-        .map((member) => member.user_id)),
+        .map((member) => member.user_id)).then((partners) => partners.map((partner) => ({ ...partner, display_name: partner.display_name.trim() && partner.display_name.trim() !== copy.x3LegacyName ? partner.display_name.trim() : copy.x3Partner }))),
     };
   }, [repo, id, revision]);
 
@@ -266,7 +266,7 @@ function E1rmChart({ points, window, partner, partnerPoints, today }: {
     {points.length > 0 && <TrendChart model={model} window={window}
       youLabel={copy.progressYou} partnerLabel={partner?.display_name ?? null} partnerHue={200}
       caption={partner ? fill(copy.progressChartPercent, { partner: partner.display_name }) : copy.progressChartKg} />}
-    <p className="progress-muted">{fill(copy.x5Range, { from: formatDate(window.from, today, copy), to: formatDate(window.to, today, copy) })}</p>
+    <p className="progress-muted">{fill(copy.x11Range, { from: formatDate(window.from, today, copy, false), to: formatDate(window.to, today, copy, false) })}</p>
     {partner && <p className="progress-muted">{copy.x5Comparison}</p>}
     {partner && partnerPoints.length < 2 && <p className="progress-muted">{fill(copy.progressPartnerQuiet, { partner: partner.display_name })}</p>}
     {points.length > 0 && <table className="progress-sr">

@@ -512,7 +512,7 @@ export function WeightCard({
         <SaveRow saving={status.saving} />
       </form>
       <Button variant="secondary" className="progress-danger" onClick={() => onTrash([{ table: 'bodyweight_entries', id: row.id }])}>
-        {fill(copy.deleteEntry, { name: copy.weight })}
+        {copy.x11DeleteWeighIn}
       </Button>
     </section>
   );

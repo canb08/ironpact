@@ -8,6 +8,7 @@ import { useRepo } from '../../app/useRepo.ts';
 import { Button } from '../../ui/Button.tsx';
 import { HoldButton } from '../../ui/HoldButton.tsx';
 import { Sheet } from '../../ui/Sheet.tsx';
+import { SegmentedControl } from '../../ui/SegmentedControl.tsx';
 import { Stepper } from '../../ui/Stepper.tsx';
 import { copy, fill } from '../../ui/copy.ts';
 import { VaultExport } from '../export/VaultExport.tsx';
@@ -264,15 +265,9 @@ function ProfileSettings({ repo, section }: { repo: Repo; section: Section }) {
           <Toggle label={copy.reduceMotionOn} checked={profile?.reduce_motion ?? false} disabled={pending} onChange={(reduce_motion) => saveIfReady({ reduce_motion })} />
           <Toggle label={copy.batterySaverOn} checked={profile?.battery_saver ?? false} disabled={pending} onChange={(battery_saver) => saveIfReady({ battery_saver })} />
           <p className="settings-muted">{copy.x8BatterySaverHint}</p>
-          <fieldset>
-            <legend>{copy.themeChoice}</legend>
-            {(['dark', 'light', 'system'] as const).map((theme) => (
-              <label key={theme} className="settings-radio">
-                <input type="radio" name="settings-theme" checked={profile?.theme === theme} disabled={pending} onChange={() => saveIfReady({ theme })} />
-                <span>{themeLabel(theme)}</span>
-              </label>
-            ))}
-          </fieldset>
+          <SegmentedControl label={copy.themeChoice} value={profile?.theme ?? 'system'} disabled={pending}
+            options={(['dark', 'light', 'system'] as const).map((theme) => ({ value: theme, label: themeLabel(theme) }))}
+            onChange={(theme) => { if (theme === 'dark' || theme === 'light' || theme === 'system') saveIfReady({ theme }); }} />
         </section>
       )}
 

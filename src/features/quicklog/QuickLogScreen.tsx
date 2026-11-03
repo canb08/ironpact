@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router';
-import { Sheet, copy } from '../../ui';
+import { Sheet, ToastProvider, copy } from '../../ui';
 import { MartialForm } from './MartialForm.tsx';
 import { MinForm } from './MinForm.tsx';
 import { RunForm } from './RunForm.tsx';
@@ -31,11 +31,11 @@ export default function QuickLogScreen() {
     );
   }
   return (
-    <Sheet open title={TITLES[kind]} onClose={() => navigate('/')}>
+    <Sheet open title={TITLES[kind]} onClose={() => navigate('/')}><ToastProvider>
       {kind === 'run' ? <RunForm /> : null}
       {kind === 'martial' ? <MartialForm /> : null}
       {kind === 'weight' ? <WeightForm /> : null}
       {kind === 'min' ? <MinForm /> : null}
-    </Sheet>
+    </ToastProvider></Sheet>
   );
 }

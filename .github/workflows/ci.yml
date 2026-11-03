@@ -157,6 +157,16 @@ jobs:
         run: npx playwright install --with-deps
       - name: Playwright (iPhone 15 WebKit and Pixel 7 Chromium)
         run: npx playwright test
+      - name: Upload visual snapshot differences
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: x11-visual-diffs
+          path: |
+            test-results/**/*-actual.png
+            test-results/**/*-expected.png
+            test-results/**/*-diff.png
+          if-no-files-found: ignore
 
   lighthouse:
     runs-on: ubuntu-latest

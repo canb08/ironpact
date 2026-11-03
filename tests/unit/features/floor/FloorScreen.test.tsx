@@ -123,8 +123,8 @@ it('opens MIN once as a sheet, saves through the repo, and shows a thin plate on
   expect(screen.getByText(copy.x3MinHint)).toBeTruthy();
   fireEvent.click(screen.getByRole('link', { name: copy.x3Min }));
   await screen.findByRole('dialog', { name: copy.x3Min });
-  await waitFor(() => expect((screen.getByRole('button', { name: copy.save }) as HTMLButtonElement).disabled).toBe(false));
-  fireEvent.click(screen.getByRole('button', { name: copy.save }));
+  await waitFor(() => expect((screen.getByRole('button', { name: copy.x11SaveMin }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: copy.x11SaveMin }));
   await waitFor(async () => {
     const entries = await handle.repo.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
     expect(entries.min).toHaveLength(1);

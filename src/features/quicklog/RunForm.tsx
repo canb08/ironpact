@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'rea
 import { cardioEntrySchema, uiSchemas } from '../../core/validate.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, copy, fill, ScrubDial } from '../../ui';
+import { useToast } from '../../ui/useToast.ts';
 import { StopwatchGlyph } from '../../ui/icons';
 import { feel } from '../../ui/feel/feel.ts';
 import { useRepoQuery } from '../floor/useRepoQuery.ts';
@@ -29,6 +30,7 @@ const RPE = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10] as const;
 
 export function RunForm() {
   const repo = useRepo();
+  const { showToast } = useToast();
   const distanceDial = useRef<HTMLDivElement>(null);
   const focusDistance = useRef(false);
   const [km, setKm] = useState(DEFAULT_KM);
@@ -101,6 +103,7 @@ export function RunForm() {
         setServerError(result.error === 'storage_full' ? copy.storageFull : copy.outOfRange);
         return;
       }
+      showToast({ message: copy.x11RunSaved });
       feel('plate');
     } finally {
       setSaving(false);
@@ -220,7 +223,7 @@ export function RunForm() {
         {attempted && !distanceOk ? <p className="ql-error" role="alert" data-testid="error-distance">{copy.outOfRange}</p> : null}
         {attempted && !durationOk ? <p className="ql-error" role="alert" data-testid="error-duration">{copy.outOfRange}</p> : null}
         {serverError ? <p className="ql-error" role="alert">{serverError}</p> : null}
-        <Button type="submit" size="xl" className="ql-save" disabled={saving}>{copy.save}</Button>
+        <Button type="submit" size="xl" className="ql-save" disabled={saving}>{copy.x11SaveRun}</Button>
       </div>
     </form>
   );
