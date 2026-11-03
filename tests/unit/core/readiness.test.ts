@@ -14,9 +14,9 @@ it('U-R1 sum 5 suggests MIN; sum 6 does not; skip = no suggestion', () => {
   expect(readinessCheck(null)).toEqual({ sum: null, suggestMin: false });
   const stored: Readiness = { sleep: 1, soreness: 1, energy: 3 };
   expect(readinessCheck(stored).suggestMin).toBe(true);
-  expect(copy.readinessMin).toBe('Running on fumes? MIN today. It counts the same.');
-  expect(copy.doMin).toBe('Do MIN');
-  expect(copy.fullSend).toBe('Full send');
+  expect(copy.readinessMin).toBe("Short on energy? Log a 10-minute MIN. It counts as half a session.");
+  expect(copy.doMin).toBe("Log MIN");
+  expect(copy.fullSend).toBe("Start workout");
 });
 
 it('rounds 90% down to a loadable barbell or to the exercise increment', () => {

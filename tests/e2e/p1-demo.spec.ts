@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy } from '../../src/ui/copy.ts';
 import { logBench, mirrorCounts, reachFloor, waitForBench, warmLazyRoutes } from './helpers.ts';
 
@@ -17,7 +16,7 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await expect(page.locator(`[aria-label="${copy.sessionSaved}"]`)).toHaveCount(3);
 
   // The Today tab works without a reload in airplane mode.
-  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Today, exact: true }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();
   await page.getByRole('link', { name: copy.x3Min, exact: true }).click();
   const min = page.getByRole('dialog', { name: copy.x3Min });
@@ -52,7 +51,7 @@ test('offline bench, MIN and weight sync, and the vault preview shows the three 
   await expect(page.getByText(copy.x4Summary)).toBeVisible();
   await page.keyboard.up('Enter');
 
-  await page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Today, exact: true }).click();
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
   await page.getByRole('button', { name: new RegExp(`^${copy.x8Privacy}`) }).click();
   await page.locator('summary').filter({ hasText: copy.exportPreview }).click();

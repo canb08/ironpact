@@ -5,8 +5,9 @@ import { CalendarDays, ChartNoAxesCombined, Dumbbell, Settings, Users } from 'lu
 import { useRepo } from '../useRepo.ts';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { copy } from '../../ui/copy.ts';
+import { formatDate } from '../../core/formatDate.ts';
+import { localDateOf } from '../../core/weeks.ts';
 import { canGoBack, isDetail, parentTab } from './routes.ts';
-import { shellCopy } from './copy.ts';
 import { settingsSections } from '../../features/settings/sections.ts';
 import { useOpenSession } from './useOpenSession.ts';
 import './shell.css';
@@ -14,8 +15,8 @@ import './shell.css';
 const TodayScreen = lazy(() => import('../../features/floor/FloorScreen.tsx'));
 
 const tabs = [
-  { to: '/', label: shellCopy.today, Icon: CalendarDays },
-  { to: '/session', label: shellCopy.train, Icon: Dumbbell },
+  { to: '/', label: copy.x10Today, Icon: CalendarDays },
+  { to: '/session', label: copy.x10Train, Icon: Dumbbell },
   { to: '/progress', label: copy.progressTitle, Icon: ChartNoAxesCombined },
   { to: '/crew', label: copy.crewTitle, Icon: Users },
 ];
@@ -41,11 +42,13 @@ export default function AppLayout() {
   const open = useOpenSession();
   const exercise = useLiveQuery(async () => id
     ? (await repo.q.exercises()).find((row) => row.id === id) : undefined, [repo, id]);
+  const me = useLiveQuery(() => repo.q.me(), [repo]);
+  const today = localDateOf(new Date().toISOString(), me?.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
   const title = pathname === '/session' ? copy.sessionTitle
     : pathname.startsWith('/exercise/') ? exercise?.name ?? copy.progressExercise
-    : pathname.startsWith('/day/') ? date ?? copy.recentDays
+    : pathname.startsWith('/day/') ? date ? formatDate(date, today, copy) : copy.recentDays
       : pathname.startsWith('/settings') ? settingsSections.find((item) => item.id === section)?.title ?? copy.settingsTitle
-        : tabs.find((tab) => tab.to === currentTab)?.label ?? shellCopy.today;
+        : tabs.find((tab) => tab.to === currentTab)?.label ?? copy.x10Today;
   const back = () => {
     if (canGoBack(window.history.state)) void navigate(-1);
     else void navigate(pathname.startsWith('/settings/') ? '/settings' : currentTab, { replace: true });

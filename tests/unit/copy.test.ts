@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { copy, fill } from '../../src/ui/copy';
+import { copy, fill, plural } from '../../src/ui/copy';
 
 const banned = [
   'beast',
@@ -26,26 +26,31 @@ describe('copy guardrails', () => {
     for (const value of Object.values(copy)) expect(value).not.toMatch(/\b(him|his|he|she|her)\b/i);
   });
 
-  it('contains the entire verbatim string bank, with the E2.6 override for #23', () => {
-    const spec = readFileSync('docs/SPEC.md', 'utf8');
-    const bank = spec
-      .split('#### 3.10.1 String bank (use exactly)')[1]
-      ?.split('**Notes on specific strings:**')[0];
-    expect(bank).toBeDefined();
-    const values: readonly string[] = Object.values(copy);
-    const strings = Array.from((bank ?? '').matchAll(/"([^"]+)"/g), (match) => match[1]);
-    expect(strings.length).toBe(65);
-    for (const value of strings) {
-      if (value === "{partner}'s week is light. You can spot him.") {
-        expect(values).toContain("{partner}'s week is light. You can cover it.");
-      } else {
-        expect(values).toContain(value);
-      }
+  it('uses the redesign wording while preserving template keys', () => {
+    expect(copy.setLogged).toBe('Saved');
+    expect(copy.firstSession).toBe('First sessions set your baseline. PRs start after 2.');
+    expect(copy.finish).toBe('Finish workout (hold)');
+    expect(copy.floor).toBe('Today');
+    expect(copy.martialArts).toBe('Fight');
+    expect(copy.x5Estimate).toBe('Estimated 1-rep max (e1RM)');
+    expect(copy.x10Today).toBe('Today');
+    expect(copy.x10Train).toBe('Train');
+  });
+
+  it('has no all-caps words except the brand, units and established acronyms', () => {
+    // MIN and PR badges are required by REDESIGN; export instructions are a machine format.
+    const allowed = new Set(['SPOTTER', 'MIN', 'PR', 'PRs', 'RPE', 'UI', 'JSON', 'CSV', 'URL', 'AI', 'BW', 'DOTS', 'DELETE']);
+    for (const [key, value] of Object.entries(copy)) {
+      if (key === 'copyForAiTemplate') continue;
+      const words = value.replace(/\{[^}]+\}/g, '').match(/\b[A-Z][A-Z0-9]+s?\b/g) ?? [];
+      for (const word of words) expect(allowed.has(word), `${key}: ${word}`).toBe(true);
     }
-    expect(values).toContain('Code delayed — try again in 60 s.');
-    expect(values).not.toContain('Link delayed — try again in 60 s');
-    expect(values).toContain("Saved on your phone. Syncs when you're back up.");
-    expect(values).toContain("Code's dead. Ask for a new one.");
+  });
+
+  it('keeps machine-readable export syntax intact', () => {
+    expect(copy.copyForAiTemplate).toContain('?since=YYYY-MM-DD');
+    expect(copy.copyForAiTemplate).toContain('If-None-Match: <last ETag>');
+    expect(copy.copyForAiTemplate).toContain('Never append.');
   });
 });
 
@@ -67,5 +72,20 @@ describe('fill', () => {
     expect(() => fill('{toString}', {} as Record<'toString', string>)).toThrow(
       'Missing template variable: toString',
     );
+  });
+});
+
+
+describe('count labels', () => {
+  it.each([0, 1, 2, 12])('pluralises sets, sessions and days for %i', (count) => {
+    expect(fill(copy.sessionSetCount, { count })).toBe(`${count} ${count === 1 ? 'set' : 'sets'}`);
+    expect(fill(copy.x4SetCount, { count })).toBe(`${count} ${count === 1 ? 'set' : 'sets'}`);
+    expect(fill(copy.togetherSessions, { count })).toBe(`${count} ${count === 1 ? 'session' : 'sessions'}`);
+    expect(fill(copy.lastTrained, { days: count })).toBe(`Last trained ${count} ${count === 1 ? 'day' : 'days'} ago`);
+  });
+  it('handles irregular nouns without changing unrelated template values', () => {
+    expect(plural(1, 'entry', 'entries')).toBe('entry');
+    expect(plural(0, 'entry', 'entries')).toBe('entries');
+    expect(fill('{count} {note}', { count: 1, note: 'sets' })).toBe('1 sets');
   });
 });

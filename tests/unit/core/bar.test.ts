@@ -17,13 +17,13 @@ const sunday = at(2026, 10, 18, 12);
 it('U-B1: both FULL → +1 plate', () => {
   const step = barStep([member(a, 'FULL'), member(b, 'FULL')], 4);
   expect(step).toMatchObject({ delta: 1, platesAfter: 5, outcome: 'closed', copyKey: 'ringClosed' });
-  expect(copy[step.copyKey]).toBe("CLOSED. Both of you. That's the job.");
+  expect(copy[step.copyKey]).toBe("Weekly target reached by both of you.");
 });
 
 it('U-B2: both ≥HELD → 0', () => {
   expect(barStep([member(a, 'HELD'), member(b, 'FULL')], 4)).toMatchObject({ delta: 0, platesAfter: 4, outcome: 'held', copyKey: 'barHeld' });
   expect(barStep([member(a, 'HELD'), member(b, 'HELD')], 4).delta).toBe(0);
-  expect(copy.barHeld).toBe('Bar held.');
+  expect(copy.barHeld).toBe("Weekly target reached.");
 });
 
 it('U-B3: one REST → −1, floor 0', () => {
@@ -88,7 +88,7 @@ it('U-B6: tier names Iron 0–3, Steel 4–7, Titanium 8–15, Obsidian 16+', ()
   expect([8, 15].map(tierName)).toEqual(['Titanium', 'Titanium']);
   expect(tierName(16)).toBe('Obsidian');
   expect(tierName(40)).toBe('Obsidian');
-  expect(copy.platesLabel).toBe('PLATES');
+  expect(copy.platesLabel).toBe("Plates");
   for (const plates of [-1, 1.5, Number.NaN]) expect(() => tierName(plates)).toThrow(RangeError);
 });
 
@@ -120,7 +120,7 @@ it('local week-close preview loses to the server row', () => {
     server: { plateDelta: 0, platesAfter: 2, adjustedAfterEdit: true },
   })).toMatchObject({ source: 'server', outcome: 'spotted', adjustedAfterEdit: true, noticeKey: 'barAdjusted' });
   expect(copy.barAdjusted).toBe('Bar adjusted after edit.');
-  expect(copy.ringClosedAll).toBe("CLOSED. All of you. That's the job.");
+  expect(copy.ringClosedAll).toBe('Weekly target reached by everyone.');
   expect(barStep([member(a, 'FULL'), member(b, 'FULL'), member(c, 'FULL')], 8).copyKey).toBe('ringClosedAll');
   expect(() => previewWeekClose({ members: [], platesBefore: 0, server: null })).toThrow(RangeError);
   expect(() => barStep([], 0)).toThrow(RangeError);

@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy } from '../../src/ui/copy.ts';
 import { logBench, reachFloor, waitForBench } from './helpers.ts';
 
@@ -32,7 +31,7 @@ test('tabs reach every main screen; Progress reaches an exercise and its day, wi
   await expect(page.getByRole('heading', { name: copy.settingsTitle, exact: true })).toBeVisible();
   await page.getByRole('button', { name: copy.x1Back, exact: true }).click();
   await expect(page).toHaveURL(/\/crew$/);
-  await tabs(page).getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await tabs(page).getByRole('link', { name: copy.x10Today, exact: true }).click();
   await expect(page.getByTestId('shared-bar')).toBeVisible();
   const bounds = await tabs(page).boundingBox();
   expect(bounds?.y).toBeGreaterThan(700);
@@ -90,7 +89,7 @@ test('only set-input focus hides the tabs; they return after blur and workout co
   await expect(tabs(page)).toBeVisible();
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
-  await tabs(page).getByRole('link', { name: shellCopy.today, exact: true }).click();
+  await tabs(page).getByRole('link', { name: copy.x10Today, exact: true }).click();
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();
   await page.getByRole('button', { name: new RegExp(`^${copy.settingsProfile}`) }).click();
   await page.getByRole('textbox', { name: copy.displayName }).focus();

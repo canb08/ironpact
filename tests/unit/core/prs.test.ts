@@ -38,7 +38,7 @@ it('U-P1 first session sets baseline, no PR', () => {
   expect(detectSetPr(rows, sets[0]!.id)).toEqual({ kind: 'baseline' });
   expect(detectSetPr(rows, sets[1]!.id)).toEqual({ kind: 'none' });
   expect(recomputePrs(rows)).toEqual([]);
-  expect(copy.firstSession).toBe('Baseline set.');
+  expect(copy.firstSession).toBe('First sessions set your baseline. PRs start after 2.');
 });
 
 it('U-P2 rep-max PR', () => {
@@ -59,7 +59,7 @@ it('U-P2 rep-max PR', () => {
   expect(detected.event.previous_value).toBe(80);
   expect(detected.event.pct_over_previous).toBe(6.25);
   expect(detected.event.display).toBe('takeover');
-  expect(fill(copy.prRepMax, { reps: detected.event.reps ?? 0 })).toBe('3-REP PR');
+  expect(fill(copy.prRepMax, { reps: detected.event.reps ?? 0 })).toBe("3-rep PR");
 });
 
 it('U-P3 e1RM PR outranks rep-max on same set', () => {
@@ -76,7 +76,7 @@ it('U-P3 e1RM PR outranks rep-max on same set', () => {
   expect(detected.event.pct_over_previous).toBe(25);
   expect(detected.event.display).toBe('takeover');
   expect(recomputePrs(rows).filter((event) => event.source_id === sets[1]!.id && event.pr_type !== 'volume').map((event) => event.pr_type)).toEqual(['e1rm']);
-  expect(copy.prE1rm).toBe('e1RM PR');
+  expect(copy.prE1rm).toBe("Estimated 1-rep max PR");
 
   const third = lift(12, second, { weight_kg: 110, set_index: 2, logged_at: '2026-10-08T08:10:00.000Z' });
   const again = detectSetPr(history({ sessions: [first, second], sets: [...sets, third] }), third.id);
@@ -100,7 +100,7 @@ it('U-P4 volume PR', () => {
   expect(badges[0]).toMatchObject({
     pr_type: 'volume', source_id: sets[2]!.id, value: 1000, previous_value: 500, display: 'badge', pct_over_previous: 100,
   });
-  expect(copy.prVolume).toBe('VOLUME PR');
+  expect(copy.prVolume).toBe("Volume PR");
   expect(detectSessionVolumePrs(rows, first.id)).toEqual([]);
 });
 
@@ -163,8 +163,8 @@ it('U-P7 run longest distance; fastest pace within ±5% bucket', () => {
     expect(pace.event.display).toBe('takeover');
     expect(pace.event.previous_value).toBeCloseTo(300, 5);
   }
-  expect(copy.prLongestRun).toBe('LONGEST RUN');
-  expect(fill(copy.prFastest, { bucket: '5K' })).toBe('FASTEST 5K');
+  expect(copy.prLongestRun).toBe("Longest run");
+  expect(fill(copy.prFastest, { bucket: '5K' })).toBe("Fastest 5K");
   expect(paceBucketLabel(10200)).toBe('10K');
   expect(paceBucketLabel(7000)).toBe('7K');
   expect(paceBucketLabel(21000)).toBe('HALF');

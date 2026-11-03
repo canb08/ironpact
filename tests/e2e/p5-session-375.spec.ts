@@ -161,7 +161,7 @@ test('current lift stays above the dock, earlier lifts collapse, and summary has
   const summary = page.getByRole('region', { name: copy.summaryTitle });
   await expect(summary.getByRole('heading', { name: copy.x4Summary })).toBeVisible();
   await page.keyboard.up('Enter');
-  await expect(page.getByRole('heading', { name: copy.sessionTitle })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: copy.sessionTitle, exact: true })).toHaveCount(0);
   await expect(summary.getByText('21 min', { exact: true })).toBeVisible();
   await expectNoHorizontalScroll(page);
 });

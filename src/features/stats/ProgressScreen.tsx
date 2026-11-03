@@ -141,24 +141,24 @@ function LiftsPanel({
                     rows={comparing
                       ? [
                         ...model.mine.map((point) => [
-                          point.localDate,
+                          formatDate(point.localDate, data.window.to, copy),
                           fill(copy.progressPointOwn, {
-                            date: point.localDate,
+                            date: formatDate(point.localDate, data.window.to, copy),
                             percent: formatTrendNumber(point.value),
                             kg: formatTrendNumber(point.raw),
                           }),
                           '',
                         ]),
                         ...model.partner.map((point) => [
-                          point.localDate,
+                          formatDate(point.localDate, data.window.to, copy),
                           '',
                           fill(copy.progressPointPartner, {
-                            date: point.localDate,
+                            date: formatDate(point.localDate, data.window.to, copy),
                             percent: formatTrendNumber(point.value),
                           }),
                         ]),
                       ]
-                      : model.mine.map((point) => [point.localDate, formatTrendNumber(point.raw)])}
+                      : model.mine.map((point) => [formatDate(point.localDate, data.window.to, copy), formatTrendNumber(point.raw)])}
                   />
                 </>
               )}
@@ -229,17 +229,17 @@ function RunPanel({
             rows={weeks.map((week, index) => {
               const km = formatTrendNumber(week.distanceM / 1000);
               if (!comparing || partner == null) {
-                return [week.weekStart, fill(copy.progressWeekKm, { week: week.weekStart, km })];
+                return [formatDate(week.weekStart, data.window.to, copy), fill(copy.progressWeekKm, { week: formatDate(week.weekStart, data.window.to, copy), km })];
               }
               const minePoint = distanceMine[index];
               const other = distancePartner[index];
               return [
-                week.weekStart,
+                formatDate(week.weekStart, data.window.to, copy),
                 minePoint == null
-                  ? fill(copy.progressWeekKm, { week: week.weekStart, km })
+                  ? fill(copy.progressWeekKm, { week: formatDate(week.weekStart, data.window.to, copy), km })
                   : fill(copy.progressRunOwn, { percent: formatTrendNumber(minePoint.value), km }),
                 other == null ? '' : fill(copy.progressPointPartner, {
-                  date: week.weekStart,
+                  date: formatDate(week.weekStart, data.window.to, copy),
                   percent: formatTrendNumber(other.value),
                 }),
               ];
@@ -265,12 +265,12 @@ function RunPanel({
               const scaled = paceMine[index];
               const cell = comparing && scaled != null
                 ? fill(copy.progressPaceOwn, {
-                  date: run.localDate,
+                  date: formatDate(run.localDate, data.window.to, copy),
                   pace: clock,
                   percent: formatTrendNumber(scaled.value),
                 })
-                : fill(copy.progressPacePoint, { date: run.localDate, pace: clock });
-              return [run.localDate, cell];
+                : fill(copy.progressPacePoint, { date: formatDate(run.localDate, data.window.to, copy), pace: clock });
+              return [formatDate(run.localDate, data.window.to, copy), cell];
             })}
           />
           {comparing && partner != null && pacePartner.length >= 2 && (
@@ -278,8 +278,8 @@ function RunPanel({
               caption={copy.progressPaceCaption}
               headers={[copy.progressColDate, partner.display_name]}
               rows={pacePartner.map((point) => [
-                point.date,
-                fill(copy.progressPointPartner, { date: point.date, percent: formatTrendNumber(point.value) }),
+                formatDate(point.date, data.window.to, copy),
+                fill(copy.progressPointPartner, { date: formatDate(point.date, data.window.to, copy), percent: formatTrendNumber(point.value) }),
               ])}
             />
           )}
@@ -381,17 +381,17 @@ function MartialPanel({
               rows={weeks.map((week, index) => {
                 const minutes = String(week.minutes);
                 if (!comparing || partner == null) {
-                  return [week.weekStart, fill(copy.progressMartialWeek, { week: week.weekStart, minutes })];
+                  return [formatDate(week.weekStart, data.window.to, copy), fill(copy.progressMartialWeek, { week: formatDate(week.weekStart, data.window.to, copy), minutes })];
                 }
                 const own = mineLine[index];
                 const other = partnerLine[index];
                 return [
-                  week.weekStart,
+                  formatDate(week.weekStart, data.window.to, copy),
                   own == null
-                    ? fill(copy.progressMartialWeek, { week: week.weekStart, minutes })
+                    ? fill(copy.progressMartialWeek, { week: formatDate(week.weekStart, data.window.to, copy), minutes })
                     : fill(copy.progressMartialOwn, { percent: formatTrendNumber(own.value), minutes }),
                   other == null ? '' : fill(copy.progressPointPartner, {
-                    date: week.weekStart,
+                    date: formatDate(week.weekStart, data.window.to, copy),
                     percent: formatTrendNumber(other.value),
                   }),
                 ];
@@ -465,20 +465,20 @@ function BodyPanel({
               ...history.map((point, index) => {
                 const kg = formatTrendNumber(point.weightKg);
                 const averageKg = formatTrendNumber(point.averageKg);
-                if (!comparing || partner == null) return [point.localDate, kg, averageKg];
+                if (!comparing || partner == null) return [formatDate(point.localDate, data.window.to, copy), kg, averageKg];
                 const own = averageLine[index];
                 const other = partnerLine.find((item) => item.date === point.localDate);
                 return [
-                  point.localDate,
+                  formatDate(point.localDate, data.window.to, copy),
                   own == null
-                    ? fill(copy.progressPointKg, { date: point.localDate, kg })
+                    ? fill(copy.progressPointKg, { date: formatDate(point.localDate, data.window.to, copy), kg })
                     : fill(copy.progressPointOwn, {
-                      date: point.localDate,
+                      date: formatDate(point.localDate, data.window.to, copy),
                       percent: formatTrendNumber(own.value),
                       kg,
                     }),
                   other == null ? '' : fill(copy.progressPointPartner, {
-                    date: other.date,
+                    date: formatDate(other.date, data.window.to, copy),
                     percent: formatTrendNumber(other.value),
                   }),
                 ];
@@ -487,10 +487,10 @@ function BodyPanel({
                 ? partnerLine
                   .filter((point) => !history.some((row) => row.localDate === point.date))
                   .map((point) => [
-                    point.date,
+                    formatDate(point.date, data.window.to, copy),
                     '',
                     fill(copy.progressPointPartner, {
-                      date: point.date,
+                      date: formatDate(point.date, data.window.to, copy),
                       percent: formatTrendNumber(point.value),
                     }),
                   ])

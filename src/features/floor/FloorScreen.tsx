@@ -3,6 +3,7 @@ import { Dumbbell, Footprints, Scale, Swords, Timer } from 'lucide-react';
 import type { Session, SetRow } from '../../core/types.ts';
 import type { Repo, SessionWithSets } from '../../data/adapter.ts';
 import { useRepo } from '../../app/useRepo.ts';
+import { formatDate } from '../../core/formatDate.ts';
 import { ListRow, copy, fill } from '../../ui';
 import { usePartnerPrShockwave } from '../prs/usePartnerPrShockwave.ts';
 import { DuoMoments } from '../duo/DuoMoments.tsx';
@@ -42,11 +43,7 @@ function memberName(name: string, fallback: string): string {
 }
 
 function friendlyDate(date: string, today?: string): string {
-  if (date === today) return copy.x3Today;
-  if (today && date === shiftDays(today, -1)) return copy.x3Yesterday;
-  return new Intl.DateTimeFormat('en-GB', {
-    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
-  }).format(new Date(`${date}T12:00:00Z`));
+  return formatDate(date, today ?? date, copy);
 }
 
 function sessionKindLabel(kind: Session['kind']): string {

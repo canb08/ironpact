@@ -1,6 +1,5 @@
 import { devices, expect, test, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { MOCK_USER_IDS } from '../../src/data/adapter.mock.ts';
-import { shellCopy } from '../../src/app/shell/copy.ts';
 import { copy } from '../../src/ui/copy.ts';
 import { reachFloor } from './helpers.ts';
 
@@ -11,8 +10,8 @@ import { reachFloor } from './helpers.ts';
  * pulls and expires presence.
  */
 const PARTNER = 'Partner';
-const QUIET = new RegExp(String.raw`^${PARTNER} is on the floor · \d+ min$`);
-const BENCH = new RegExp(String.raw`^${PARTNER} is on the floor · Bench 1/1 · \d+ min$`);
+const QUIET = new RegExp(String.raw`^${PARTNER} is training: \d+ min$`);
+const BENCH = new RegExp(String.raw`^${PARTNER} is training: Bench 1/1, \d+ min$`);
 
 interface HubMsg {
   kind: 'upsert' | 'presence';
@@ -152,7 +151,7 @@ async function shareMock(context: BrowserContext, hub: MockHub, pages: Set<Page>
 }
 
 async function today(page: Page): Promise<void> {
-  const tab = page.locator('.app-shell__tabs').getByRole('link', { name: shellCopy.today, exact: true });
+  const tab = page.locator('.app-shell__tabs').getByRole('link', { name: copy.x10Today, exact: true });
   if (await tab.isVisible()) await tab.click();
   else await page.goto('/');
 }

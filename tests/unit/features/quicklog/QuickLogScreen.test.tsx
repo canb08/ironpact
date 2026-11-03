@@ -174,7 +174,7 @@ it('weight twice on the same day keeps one uuidv5 row', async () => {
   const input = await screen.findByRole('textbox', { name: copy.weight });
   fireEvent.change(input, { target: { value: '80.2' } });
   fireEvent.click(screen.getByRole('button', { name: copy.save }));
-  expect(await screen.findByText("Replaces today's 80.2.")).toBeTruthy();
+  expect(await screen.findByText("Replaces today’s weigh-in of 80.2 kg.")).toBeTruthy();
   fireEvent.change(input, { target: { value: '79.8' } });
   fireEvent.click(screen.getByRole('button', { name: copy.save }));
   const date = localDateOf(new Date().toISOString(), 'Europe/Amsterdam');
@@ -184,7 +184,7 @@ it('weight twice on the same day keeps one uuidv5 row', async () => {
     expect(entries.bodyweight[0]?.weight_kg).toBe(79.8);
     expect(entries.bodyweight[0]?.id).toBe(bodyweightId(MOCK_USER_IDS.alice, date));
   });
-  expect(await screen.findByText("Replaces today's 79.8.")).toBeTruthy();
+  expect(await screen.findByText("Replaces today’s weigh-in of 79.8 kg.")).toBeTruthy();
 });
 
 it('logs the usual Muay Thai class in one tap, with no discipline picker', async () => {

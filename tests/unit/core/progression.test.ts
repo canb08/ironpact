@@ -19,7 +19,7 @@ it('U-N1 all reps at RPE ≤8 → +2.5', () => {
   expect(nudge).toEqual({ incrementKg: 2.5, fromKg: 80, nextKg: 82.5, reason: 'rpe' });
   expect(nudge && formatNudgeChip(nudge)).toBe('+2.5 → 82.5');
   expect(nudge && nudgeCopyKey(nudge)).toBe('progressionNudge');
-  expect(copy.progressionNudge).toBe('All reps at RPE 8. Add 2.5.');
+  expect(copy.progressionNudge).toBe("All reps at RPE 8. Add 2.5 kg.");
   expect(fill(copy.nudgeChipValue, { increment: '2.5', next: '82.5' })).toBe(copy.nudgeChip);
   expect(progressionNudge({
     exercise, sets: [working({ rpe: 8.5 })], lastLocalDate: recent, today, bigJumps: false,
@@ -38,7 +38,7 @@ it('U-N2 RPE missing and all reps hit → +2.5', () => {
   expect(nudge?.reason).toBe('reps');
   expect(nudge?.incrementKg).toBe(2.5);
   expect(nudge && nudgeCopyKey(nudge)).toBe('progressionNoRpe');
-  expect(copy.progressionNoRpe).toBe('All reps hit. Add 2.5.');
+  expect(copy.progressionNoRpe).toBe("All reps complete. Add 2.5 kg.");
 });
 
 it('U-N3 one set short → no nudge', () => {
@@ -62,12 +62,12 @@ it('U-N4 lower_body + big_jumps → +5', () => {
   expect(on).toMatchObject({ incrementKg: 5, fromKg: 80, nextKg: 85, reason: 'rpe' });
   expect(on && formatNudgeChip(on)).toBe('+5 → 85');
   expect(on && nudgeCopyKey(on)).toBe('progressionBig');
-  expect(copy.progressionBig).toBe('All reps at RPE 8. Add 5.');
+  expect(copy.progressionBig).toBe("All reps at RPE 8. Add 5 kg.");
   const noRpe = progressionNudge({
     exercise: squat, sets: [working({ rpe: null })], lastLocalDate: recent, today, bigJumps: true,
   });
   expect(noRpe && nudgeCopyKey(noRpe)).toBe('progressionBigNoRpe');
-  expect(copy.progressionBigNoRpe).toBe('All reps hit. Add 5.');
+  expect(copy.progressionBigNoRpe).toBe("All reps complete. Add 5 kg.");
   expect(progressionNudge({
     exercise: squat, sets: [working()], lastLocalDate: recent, today, bigJumps: false,
   })?.incrementKg).toBe(2.5);
@@ -80,13 +80,13 @@ it('U-N4 lower_body + big_jumps → +5', () => {
   });
   expect(small).toMatchObject({ incrementKg: 1.25, nextKg: 81.25 });
   expect(small && nudgeCopyKey(small)).toBe('progressionAdd');
-  expect(fill(copy.progressionAdd, { increment: '1.25' })).toBe('All reps at RPE 8. Add 1.25.');
+  expect(fill(copy.progressionAdd, { increment: '1.25' })).toBe("All reps at RPE 8. Add 1.25 kg.");
   const noRpeSmall = progressionNudge({
     exercise: { ...isolation, increment_kg: 1.25 }, sets: [working({ rpe: null })],
     lastLocalDate: recent, today, bigJumps: false,
   });
   expect(noRpeSmall && nudgeCopyKey(noRpeSmall)).toBe('progressionAddNoRpe');
-  expect(fill(copy.progressionAddNoRpe, { increment: '1.25' })).toBe('All reps hit. Add 1.25.');
+  expect(fill(copy.progressionAddNoRpe, { increment: '1.25' })).toBe("All reps complete. Add 1.25 kg.");
   expect(progressionNudge({
     exercise: { ...squat, increment_kg: 0 }, sets: [working()], lastLocalDate: recent, today, bigJumps: true,
   })?.incrementKg).toBe(5);
