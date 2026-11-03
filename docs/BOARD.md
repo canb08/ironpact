@@ -102,7 +102,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X1 | Tokens, type, primitives (PlateBar, ListRow, SegmentedControl, ScreenHeader) | Codex Sol High | C | merged #65 (Lead review round 2: chunkier PlateBar, chalk primary) |
 | X2 | App shell: tab bar Today/Train/Progress/Crew, headers, back | Codex Sol High | C | merged #66 (shell copy in src/app/shell/copy.ts → fold into copy.ts in X10) |
 | X3 | Today (Floor rebuild, shared bar) | Codex or Grok | E | merged #68 (Lead screenshot review; e2e START helper fixed in round 2) |
-| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | PR #67 — review fixes look right; 3 e2e failures (p7-shell focus, p3-demo flow, 200% wrap) sent back |
+| X4 | Train flow: 2 taps to first set, set list, dock, summary | Codex Sol High | C | merged #67 (Lead review: 4 UX changes + 3 e2e rounds; p5-session-375 Pixel 7 flaked once, passed on rerun) |
 | X5 | Progress hub + exercise detail | Grok or Codex | E | merged #69 (Lead screenshot review: segments, e1RM hero, ⋯ sheet) |
 | X6 | Day editor: compact rows + edit sheet | Grok | E | merged #71 (Lead screenshot review; round 2 fixed the week-strip axe label mismatch at source) |
 | X7 | Crew centred on partner | Grok | E | merged #76 (Lead review on mock: round 2 hierarchy polish; Lead pushed feed-dot colour fix — Grok hit weekly limit) |
