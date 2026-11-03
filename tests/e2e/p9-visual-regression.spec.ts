@@ -36,6 +36,19 @@ async function capture(page: Page, name: string, scrollTop = true) {
   }
 }
 
+// The set list intentionally reveals its latest row after two animation frames.
+// Wait for that real layout effect; resetting scroll during capture races it.
+async function settleWorkout(page: Page) {
+  await expect.poll(() => page.evaluate(() => {
+    const row = document.querySelector('[data-current-exercise] .session-set-row:last-child');
+    const dock = document.querySelector('[data-session-dock]');
+    if (!row || !dock) return Infinity;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const target = Math.max(0, Math.min(max, scrollY + row.getBoundingClientRect().bottom - dock.getBoundingClientRect().top + 12));
+    return Math.abs(scrollY - target);
+  })).toBeLessThanOrEqual(1);
+}
+
 for (const theme of ['dark', 'light'] as const) {
   test(`R2 populated screens in ${theme}`, async ({ page }) => {
     test.setTimeout(240_000);
@@ -94,12 +107,14 @@ for (const theme of ['dark', 'light'] as const) {
     await capture(page, `${theme}/train-picker`);
     await logBench(page, 6);
     await expect(page.locator('[data-session-dock]')).toBeVisible();
-    await capture(page, `${theme}/train-rest`);
+    await settleWorkout(page);
+    await capture(page, `${theme}/train-rest`, false);
     const skip = page.getByRole('button', { name: copy.skip, exact: true });
     await expect(skip).toBeVisible();
     await skip.click();
     await expect(skip).toBeHidden();
-    await capture(page, `${theme}/train-six-sets`);
+    await settleWorkout(page);
+    await capture(page, `${theme}/train-six-sets`, false);
     await page.getByRole('button', { name: copy.x4FinishHold, exact: true }).focus();
     await page.keyboard.down('Enter');
     await page.clock.setFixedTime(new Date('2026-11-03T12:00:01.000Z'));
