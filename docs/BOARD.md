@@ -108,7 +108,7 @@ Order: **X1 → X2 → (X3 · X4 · X5 · X6 · X7 · X8 · X9 in parallel) → 
 | X7 | Crew centred on partner | Grok | E | merged #76 (Lead review on mock: round 2 hierarchy polish; Lead pushed feed-dot colour fix — Grok hit weekly limit) |
 | X8 | Settings grouped sub-pages | Codex Sol High | C | merged #73 (Lead review round 2: section headers, switches; also fixed the midnight date bug in the ExerciseDetail test; theme radio → segmented in X11) |
 | X9 | Onboarding: name/colour/target + explainer | Codex Sol High | C | merged #74 (Lead screenshot review, CI green first run) |
-| X10 | Copy + date sweep | Grok | either | running — owner's Codex (Sol High) |
+| X10 | Copy + date sweep | Grok | either | paused — owner's Codex hit its usage limit mid-ticket (copy + dates done locally, unpushed); resume in the same chat: chatgpt.com/local/01a19ec9-5e49-7296-a608-189ef9454052 |
 | X11 | Visual regression + audit close-out | Codex Sol High | C | queued (last) |
 
 ## R3 · Feel layer (friend request 2026-11-02, L20) — `docs/FEEL.md`
