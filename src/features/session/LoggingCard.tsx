@@ -62,7 +62,9 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
       const main = element.closest('main');
       main?.style.setProperty('--session-dock-height', `${element.offsetHeight}px`);
       const previous = element.dataset.height;
-      element.classList.toggle('session-controls--flow', element.getBoundingClientRect().height > window.innerHeight * .55);
+      // The Y4 rest bar has 56 px targets; retain the fixed dock while they fit.
+      const dockLimit = element.querySelector('.rest-timer__bar') ? .6 : .55;
+      element.classList.toggle('session-controls--flow', element.getBoundingClientRect().height > window.innerHeight * dockLimit);
       element.dataset.height = String(element.offsetHeight);
       if (main && (previous === undefined || element.offsetHeight > Number(previous))) revealLatestSet(main);
     });
@@ -144,7 +146,7 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
       if (!valid) return;
       saveSet({ exercise_id: exercise.id, weight_kg: kg, reps, rpe, is_warmup: warmup });
     }}>
-      <RestTimerOverlay reduceMotion={reduceMotion} />
+      <RestTimerOverlay reduceMotion={reduceMotion} nextSet={{ exercise: exercise.name, weightKg: kg, reps, bodyweight: exercise.kind === 'bw_lift' }} />
       {nudge && !applied && !resting && <div className="session-nudge">
         <Button variant="secondary" disabled={busy} onClick={() => {
           setApplied(true);

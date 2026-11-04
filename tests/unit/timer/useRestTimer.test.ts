@@ -71,7 +71,7 @@ describe('useRestTimer store', () => {
     expect(localStorage.getItem(REST_TIMER_STORAGE_KEY)).toBeNull();
   });
 
-  it('announces only at 10 s and at 0, and vibrates once at 0', () => {
+  it('announces and feels once at 10 s and once at 0', () => {
     const vibrate = vi.fn(() => true);
     Object.defineProperty(navigator, 'vibrate', { configurable: true, value: vibrate });
     const t0 = Date.now();
@@ -80,17 +80,18 @@ describe('useRestTimer store', () => {
     vi.setSystemTime(t0 + 20_000);
     vi.advanceTimersByTime(250);
     expect(getRestView().live).toBe('10 seconds');
-    expect(vibrate).not.toHaveBeenCalled();
+    expect(vibrate).toHaveBeenCalledTimes(1);
+    expect(vibrate).toHaveBeenNthCalledWith(1, [8]);
     vi.setSystemTime(t0 + 25_000);
     vi.advanceTimersByTime(250);
     expect(getRestView().live).toBe('10 seconds');
     vi.setSystemTime(t0 + 30_000);
     vi.advanceTimersByTime(250);
     expect(getRestView().live).toBe("Rest complete. Ready for your next set.");
-    expect(vibrate).toHaveBeenCalledTimes(1);
-    expect(vibrate).toHaveBeenCalledWith([80, 60, 80, 60, 200]);
+    expect(vibrate).toHaveBeenCalledTimes(2);
+    expect(vibrate).toHaveBeenNthCalledWith(2, [40, 40, 40, 40, 40]);
     vi.advanceTimersByTime(1000);
-    expect(vibrate).toHaveBeenCalledTimes(1);
+    expect(vibrate).toHaveBeenCalledTimes(2);
   });
 
   it('does not vibrate when haptics_on is false', () => {
