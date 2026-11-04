@@ -120,7 +120,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | Grok Build | E | merged #75 (Lead ran it on mock: 2 taps → bar 1 of 3, combo book; Lead merged main for the Y6 copy/test conflict; one p7-shell Pixel 7 flake, passed on re-run) |
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | pr #79 (round 2: e2e p3-demo/p5-session-375/p7-shell + Train baselines red; friend's Codex 5-h limit, resumes 19:02) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
-| Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | pr #80 (one red: iPhone WebKit sheet flick-dismiss; resumes 19:02. Follow-up asked: AnimatedNumber for totals in session/stats/crew-feed/progress, outside Y5 scope) |
+| Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | merged #80 (follow-up idea, not a ticket yet: AnimatedNumber for totals in session/stats/crew-feed/progress) |
 | Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
 | Y7 | Voice log (experimental) | Grok Build | E | queued (after Y3) |
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
