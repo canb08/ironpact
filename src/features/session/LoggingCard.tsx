@@ -17,6 +17,7 @@ import { DockDial } from './DockDial.tsx';
 import { PlateLoader } from './PlateLoader.tsx';
 import { useSetLoggedMicro } from './useSetLoggedMicro.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
+import { VoiceInput } from './voice/VoiceInput.tsx';
 
 interface LoggingCardProps {
   session: Session;
@@ -181,6 +182,10 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
       </div>
       {exercise.kind !== 'bw_lift' && <PlateLoader kg={kg} barKg={barKg} available={platesKg} disabled={busy}
         removing={removing} onChange={setKg} />}
+      <VoiceInput kg={kg} reps={reps} disabled={busy} reduced={reduced}
+        same={{ kg: fallback?.weight_kg ?? opening?.weight_kg ?? kg, reps: fallback?.reps ?? opening?.reps ?? reps }}
+        minKg={exercise.kind === 'bw_lift' ? -100 : 0} maxKg={exercise.kind === 'bw_lift' ? 200 : 500}
+        onDraft={(draft) => { setKg(draft.kg); setReps(draft.reps); }} />
       <Button className="session-log" type="submit" size="xl" disabled={busy} aria-describedby={`${id}-error`}>
         {copy.x4Log}
       </Button>
