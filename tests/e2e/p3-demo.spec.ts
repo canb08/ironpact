@@ -237,7 +237,12 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
 
     await page.goto('/?debug=week');
     await expect(page.getByTestId('shared-bar')).toBeVisible();
-    await expect(page.getByTestId('week-streak')).toHaveText('1-week streak');
+    const streak = page.getByTestId('week-streak');
+    // Assert the canonical spoken value, not the visual reel's clipped 0–9.
+    await settleMotion(page);
+    await expect(streak).toMatchAriaSnapshot(String.raw`
+      - paragraph: /^1\s*-week streak$/
+    `);
     await expect(page.getByTestId('debug-week')).toHaveText(copy.x3DebugWeek);
     await expect(page.getByTestId('presence-banner')).toHaveText(BENCH);
 
@@ -247,3 +252,12 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
     await bobContext.close();
   }
 });
+
+async function settleMotion(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const roots: Array<Document | ShadowRoot> = [document];
+    for (const node of document.querySelectorAll('number-flow-react')) if (node.shadowRoot) roots.push(node.shadowRoot);
+    const finite = roots.flatMap((root) => root.getAnimations()).filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity);
+    await Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)));
+  });
+}

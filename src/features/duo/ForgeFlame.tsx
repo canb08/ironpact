@@ -1,3 +1,4 @@
+import { AnimatedNumber } from '../../ui/motion/AnimatedNumber';
 import { useEffect, useRef, useState } from 'react';
 import type { TierName } from '../../core/streak.ts';
 import { copy } from '../../ui/copy.ts';
@@ -56,7 +57,7 @@ export function ForgeFlame({
         ) : null}
       </svg>
       <p className="forge-plate">
-        <span className="forge-plate__count">{plates}</span>
+        <span className="forge-plate__count"><AnimatedNumber value={plates} reduced={reduced} /></span>
         <span className="forge-plate__label">{copy.platesLabel}</span>
       </p>
     </div>

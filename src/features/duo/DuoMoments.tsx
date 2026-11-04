@@ -44,14 +44,14 @@ export function DuoMoments({
   return (
     <>
       <MomentHost screen={screen} />
-      <RingCloseController
+      {screen !== 'floor' && <RingCloseController
         crewId={crewId}
         weekStart={weekStart}
         members={members}
         weekFull={weekFull}
         archived={archived}
         reduced={reduced}
-      />
+      />}
       <BarTierController plates={plates} tier={tier} reduced={reduced} />
       <ShockwaveSlot reduced={reduced} inSession={inSession} />
     </>

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { PrEventDraft } from '../../core/prs.ts';
+import { feel } from '../../ui/feel/feel';
 import { BigNumber, Button, copy, fill } from '../../ui';
 import { useMotionReduced } from '../../ui/motion/reduced-context.ts';
 import { useReducedMotion } from '../../ui/motion/reduced.ts';
@@ -16,6 +17,10 @@ export function PrCard({ event, onClose }: { event: PrEventDraft; onClose: () =>
   const mediaStill = useReducedMotion(false);
   const still = profileStill || mediaStill;
   const closeRef = useRef(onClose);
+  const felt = useRef<string | null>(null);
+  useEffect(() => {
+    if (still && felt.current !== event.source_id) { felt.current = event.source_id; feel('pr', { weightKg: event.value, reducedMotion: true }); }
+  }, [event.source_id, event.value, still]);
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);

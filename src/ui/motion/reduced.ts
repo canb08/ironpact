@@ -22,5 +22,13 @@ export function useReducedMotion(profileReduce = false): boolean {
     query.addEventListener?.('change', sync);
     return () => query.removeEventListener?.('change', sync);
   }, []);
-  return profileReduce || media;
+  const [documentStill, setDocumentStill] = useState(() => typeof document !== 'undefined' && document.documentElement.dataset.reducedMotion === 'on');
+  useEffect(() => {
+    const sync = () => setDocumentStill(document.documentElement.dataset.reducedMotion === 'on');
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-reduced-motion'] });
+    sync();
+    return () => observer.disconnect();
+  }, []);
+  return profileReduce || media || documentStill;
 }

@@ -1,9 +1,2 @@
-/* Reduced motion keeps a single ≤200ms opacity fade (spec §3.7.3). No transform. */
-.moment-host--static {
-  animation: moment-host-fade 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes moment-host-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Reduced motion commits the earned state instantly. Feedback still uses feel(). */
+.moment-host--static { animation: none; }
