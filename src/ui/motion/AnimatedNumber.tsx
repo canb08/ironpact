@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import './number.css';
 import { SPRING_EASE, SPRING_MS } from './springs';
 import { useReducedMotion } from './reduced';
 
@@ -9,8 +10,11 @@ export function AnimatedNumber({ value, reduced = false }: { value: number; redu
   const still = useReducedMotion(reduced);
   if (still || typeof Element === 'undefined' || typeof Element.prototype.animate !== 'function') return <span data-motion="static">{value}</span>;
   return (
-    <Suspense fallback={<span data-motion="static">{value}</span>}>
+    <span>
+      <span className="animated-number__spoken">{value}</span>
+      <span aria-hidden="true"><Suspense fallback={<span data-motion="static">{value}</span>}>
       <NumberFlow value={value} format={{ useGrouping: false }} animated respectMotionPreference transformTiming={{ duration: SPRING_MS.ui, easing: SPRING_EASE.ui }} spinTiming={{ duration: SPRING_MS.ui, easing: SPRING_EASE.ui }} />
-    </Suspense>
+      </Suspense></span>
+    </span>
   );
 }
