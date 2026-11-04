@@ -111,6 +111,19 @@ export async function settleSessionDock(page: Page): Promise<void> {
   })).toBeLessThanOrEqual(1);
 }
 
+/** Zoom/focus can defer the dock's flow-layout switch beyond click's two stable frames. */
+async function settleDockLayout(page: Page): Promise<void> {
+  await expect.poll(() => page.locator('[data-session-dock]').evaluate(async (dock) => {
+    const boxes = [dock.getBoundingClientRect()];
+    for (let frame = 0; frame < 3; frame++) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      boxes.push(dock.getBoundingClientRect());
+    }
+    const first = boxes[0]!;
+    return Math.max(...boxes.flatMap((box) => [Math.abs(box.x - first.x), Math.abs(box.y - first.y), Math.abs(box.width - first.width), Math.abs(box.height - first.height)]));
+  })).toBe(0);
+}
+
 /** Set the load through plate chips and the dial; never open the number keyboard. */
 export async function loadBar(page: Page, kg: number): Promise<void> {
   const dial = page.getByRole('slider', { name: copy.kg, exact: true });
@@ -120,9 +133,15 @@ export async function loadBar(page: Page, kg: number): Promise<void> {
   const barKg = Number.parseFloat(await page.locator('.session-bar-label').innerText());
   expect(Number.isFinite(barKg)).toBe(true);
   let perSide = (kg - barKg) / 2;
+  let expectedKg = 0;
   for (const plate of [25, 20, 15, 10, 5, 2.5, 1.25]) {
     while (perSide >= plate) {
-      await page.getByRole('button', { name: fill(copy.y3AddPair, { kg: plate }), exact: true }).click();
+      const chip = page.getByRole('button', { name: fill(copy.y3AddPair, { kg: plate }), exact: true });
+      await chip.scrollIntoViewIfNeeded();
+      await settleDockLayout(page);
+      await chip.click();
+      expectedKg = Math.max(expectedKg, barKg) + plate * 2;
+      await expect(dial).toHaveAttribute('aria-valuenow', String(expectedKg));
       perSide -= plate;
     }
   }
