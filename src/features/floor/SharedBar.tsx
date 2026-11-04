@@ -3,13 +3,14 @@ import { PlateBar, useReducedMotion } from '../../ui';
 import { feel } from '../../ui/feel/feel';
 import { SPRING_EASE, SPRING_MS } from '../../ui/motion/springs';
 import { weightDuration } from '../../ui/motion/weight';
+import { rememberRingClose, ringCloseWasSeen } from '../duo/ringClose';
 import type { MemberWeek } from '../duo/load.ts';
 
 type BarMember = Pick<MemberWeek, 'id' | 'name' | 'credits' | 'target' | 'minCount' | 'weekStart'> & { weightKg?: number };
 
 /** Storage remembers delivered drops, so interrupted partner sequences resume on open. */
-export function SharedBar({ me, partner, reduced, current = true }: {
-  me: BarMember; partner?: BarMember; reduced: boolean; current?: boolean;
+export function SharedBar({ me, partner, reduced, current = true, crewId }: {
+  me: BarMember; partner?: BarMember; reduced: boolean; current?: boolean; crewId?: string | null;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const still = useReducedMotion(reduced);
@@ -63,9 +64,10 @@ export function SharedBar({ me, partner, reduced, current = true }: {
       }
       const complete = partner && me.credits >= me.target && partner.credits >= partner.target;
       const key = `ironpact.lockout.${me.id}.${partner?.id}.${me.weekStart}`;
-      if (!current || !complete || read(key) === 1) return;
+      if (!current || !complete || read(key) === 1 || crewId && ringCloseWasSeen(crewId, me.weekStart)) return;
       const lock = () => {
         save(key, 1);
+        try { if (crewId) rememberRingClose(crewId, me.weekStart); } catch { /* Private tabs retain the in-memory lockout guard. */ }
         feel('lockout', { reducedMotion: still });
         if (still) return;
         for (const shaft of root.current?.querySelectorAll<SVGElement>('[data-shaft]') ?? []) {
@@ -81,7 +83,7 @@ export function SharedBar({ me, partner, reduced, current = true }: {
     };
     timers.push(window.setTimeout(start, 0));
     return () => { timers.forEach(window.clearTimeout); animations.forEach((animation) => animation.cancel()); };
-  }, [me, partner, still, current]);
+  }, [me, partner, still, current, crewId]);
 
   return <div ref={root} data-week={me.weekStart} data-complete={!!partner && me.credits >= me.target && partner.credits >= partner.target}>
     <PlateBar members={[me, partner ?? { credits: 0, target: me.target }]} />

@@ -32,6 +32,6 @@ export function WeekBar({ duo, weightKg, partnerWeightKg }: { duo: DuoSnapshot; 
       <Button variant="ghost" aria-label={copy.x6NextWeek} disabled={offset === 0} onClick={() => setOffset((value) => Math.min(0, value + 1))}>›</Button>
     </div>
     {shown ? <SharedBar key={shown.me.weekStart} me={{ ...shown.me, weightKg }} partner={shown.partners[0] ? { ...shown.partners[0], weightKg: partnerWeightKg } : undefined}
-      reduced={duo.reduceMotion} current={offset === 0 && !duo.archived} /> : <div className="week-bar__loading" aria-busy="true" />}
+      reduced={duo.reduceMotion} crewId={duo.crewId} current={offset === 0 && !duo.archived} /> : <div className="week-bar__loading" aria-busy="true" />}
   </div>;
 }

@@ -88,3 +88,18 @@ it('delivers partner plates one at a time, then locks once; historical weeks sta
   act(() => vi.runAllTimers());
   expect(feel).not.toHaveBeenCalled();
 });
+
+it('shares the completion checkpoint with Crew so visiting either screen cannot celebrate twice', () => {
+  watchAnimation();
+  vi.mocked(feel).mockClear();
+  const first = render(<SharedBar crewId="crew" me={{ ...me, credits: 3 }} partner={{ ...partner, credits: 3 }} reduced />);
+  act(() => vi.runAllTimers());
+  expect(vi.mocked(feel).mock.calls.filter(([kind]) => kind === 'lockout')).toHaveLength(1);
+  expect(localStorage.getItem('ironpact.ring-close.seen')).toContain('crew:2026-11-02');
+  first.unmount();
+  vi.mocked(feel).mockClear();
+  localStorage.removeItem('ironpact.lockout.you.partner.2026-11-02');
+  render(<SharedBar crewId="crew" me={{ ...me, credits: 3 }} partner={{ ...partner, credits: 3 }} reduced />);
+  act(() => vi.runAllTimers());
+  expect(feel).not.toHaveBeenCalled();
+});
