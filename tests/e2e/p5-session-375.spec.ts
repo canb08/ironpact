@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copy } from '../../src/ui/copy.ts';
-import { loadBar, reachFloor, waitForBench } from './helpers.ts';
+import { loadBar, reachFloor, settleSessionDock, waitForBench } from './helpers.ts';
 
 async function expectNoHorizontalScroll(page: Page): Promise<void> {
   const layout = await page.evaluate(() => {
@@ -83,6 +83,7 @@ test('three taps to a set, ten sets scroll in the page, and Done returns to Toda
     await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
     await expect(page.getByRole('region', { name: copy.sessionSets }).getByRole('listitem')).toHaveCount(index);
   }
+  await settleSessionDock(page);
   const rows = page.locator('.session-set-row');
   for (const row of await rows.all()) {
     await row.evaluate((element) => element.scrollIntoView({ block: 'center' }));

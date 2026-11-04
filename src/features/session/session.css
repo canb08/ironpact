@@ -140,3 +140,8 @@
 @media (prefers-reduced-motion: reduce) {
   .session-mini-plate, .session-set-row--land, .session-controls::before { animation: none; }
 }
+
+/* Dials and the portalled keyboard fallback are set input too. Keep the
+   shell's reserved tab space stable while hiding its navigation controls. */
+.app-shell:has([data-session-dock] [role='slider']:focus) .app-shell__tabs,
+body:has(.session-keyboard input:focus) .app-shell__tabs { display: none; }

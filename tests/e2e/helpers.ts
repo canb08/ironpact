@@ -97,6 +97,20 @@ export async function warmLazyRoutes(page: Page): Promise<void> {
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 }
 
+/** Let the real resize observer and two-frame reveal finish before browsing history or capturing. */
+export async function settleSessionDock(page: Page): Promise<void> {
+  await expect.poll(() => page.evaluate(async () => {
+    await document.fonts.ready;
+    for (let frame = 0; frame < 3; frame++) await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const row = document.querySelector('[data-current-exercise] .session-ghost');
+    const dock = document.querySelector('[data-session-dock]');
+    if (!row || !dock) return Infinity;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const target = Math.max(0, Math.min(max, scrollY + row.getBoundingClientRect().bottom - dock.getBoundingClientRect().top + 12));
+    return Math.abs(scrollY - target);
+  })).toBeLessThanOrEqual(1);
+}
+
 /** Set the load through plate chips and the dial; never open the number keyboard. */
 export async function loadBar(page: Page, kg: number): Promise<void> {
   const dial = page.getByRole('slider', { name: copy.kg, exact: true });
