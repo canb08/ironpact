@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { doMinPlan } from '../../../../src/core/readiness.ts';
 import SessionScreen from '../../../../src/features/session/SessionScreen.tsx';
@@ -12,6 +11,14 @@ import { sessionHarness } from './harness.tsx';
 
 HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
 HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
+
+async function click(button: HTMLElement) {
+  // These integration tests cover React handlers and persisted state. Native
+  // pointer targeting is covered by Playwright; avoid jsdom's costly pointer
+  // simulation, and explicitly require an enabled control before dispatching.
+  await waitFor(() => expect(button.hasAttribute('disabled')).toBe(false));
+  fireEvent.click(button);
+}
 
 describe('P2D session engine', () => {
   let harness: Awaited<ReturnType<typeof sessionHarness>>;
@@ -32,7 +39,9 @@ describe('P2D session engine', () => {
     harness.render(<SessionScreen />);
     const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
     const exercises = await harness.repo.q.exercises();
-    await userEvent.click(await within(picker).findByRole('button', { name: exercises[0]!.name }));
+    await click(await within(picker).findByRole('button', { name: exercises[0]!.name }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
     expect(screen.queryByRole('region', { name: copy.readinessTitle })).toBeNull();
   }
@@ -43,38 +52,44 @@ describe('P2D session engine', () => {
     const exercise = await seedBench(80, 9);
     await openSession();
     const open = await harness.repo.q.openSession();
+    const logButton = screen.getByRole('button', { name: copy.x4Log }) as HTMLButtonElement;
+    const kgDial = screen.getByRole('slider', { name: copy.kg });
     expect(open?.readiness).toBeNull();
     expect(open?.mode).toBe('full');
     expect(screen.getAllByRole('heading', { name: exercise.name })).toHaveLength(1);
     expect(screen.getByRole('button', { name: copy.x4Change })).toBeTruthy();
-    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('80');
+    expect(kgDial.getAttribute('aria-valuenow')).toBe('80');
     expect(screen.getByRole('slider', { name: copy.reps }).getAttribute('aria-valuenow')).toBe('5');
 
     harness.tick();
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    await click(logButton);
     await waitFor(() => expect(rows()).toHaveLength(1));
+    // A published row is not a signal that the next dial input is enabled.
+    await waitFor(() => expect(logButton.disabled).toBe(false));
     expect(screen.getAllByRole('region', { name: copy.restTimerLabel }).length).toBeGreaterThan(0);
     expect((await harness.repo.q.setsOfSession(open!.id)).map((set) => [set.weight_kg, set.reps, set.rpe])).toEqual([[80, 5, null]]);
 
     harness.tick();
-    fireEvent.keyDown(screen.getByRole('slider', { name: copy.kg }), { key: 'ArrowUp' });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    fireEvent.keyDown(kgDial, { key: 'ArrowUp' });
+    expect(kgDial.getAttribute('aria-valuenow')).toBe('82.5');
+    await click(logButton);
     const card = await screen.findByRole('region', { name: copy.prCardLabel });
     expect(card.textContent).toContain(copy.prE1rm);
     expect(await harness.repo.q.prEvents({ sessionId: open!.id })).toHaveLength(1);
 
     const heavy = rows().find((row) => row.textContent?.includes('82.5'));
     expect(heavy).toBeTruthy();
-    await userEvent.click(within(heavy!).getByRole('button'));
-    await userEvent.click(screen.getByRole('button', { name: fill(copy.sessionDelete, { index: 2 }) }));
+    await click(within(heavy!).getByRole('button'));
+    await click(screen.getByRole('button', { name: fill(copy.sessionDelete, { index: 2 }) }));
     await waitFor(() => expect(screen.queryByRole('region', { name: copy.prCardLabel })).toBeNull());
     await waitFor(async () => expect(await harness.repo.q.prEvents({ sessionId: open!.id })).toHaveLength(0));
 
     const skip = screen.queryByRole('button', { name: copy.skip });
-    if (skip) await userEvent.click(skip);
+    if (skip) await click(skip);
     const rack = screen.getByRole('button', { name: copy.x4FinishHold });
     expect(rack.className).toContain('ui-button--xl');
     expect(screen.getByRole('button', { name: copy.x4Log }).className).toContain('ui-button--xl');
+    await waitFor(() => expect(rack.hasAttribute('disabled')).toBe(false));
     vi.useFakeTimers();
     fireEvent.keyDown(rack, { key: ' ' });
     act(() => { vi.advanceTimersByTime(600); });
@@ -96,7 +111,7 @@ describe('P2D session engine', () => {
     expect(screen.getByText(copy.progressionNudge)).toBeTruthy();
     expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('80');
     expect(logSet).not.toHaveBeenCalled();
-    await userEvent.click(chip);
+    await click(chip);
     expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('82.5');
     expect(logSet).not.toHaveBeenCalled();
   });
@@ -123,7 +138,9 @@ describe('P2D session engine', () => {
     const plan = doMinPlan({ sessions: prior.sessions, sets: prior.sets, exercises: [exercise], userId: me.id, barKg: me.bar_kg, platesKg: me.plates_kg });
     unwrap(await harness.repo.w.startSession({ kind: 'gym', mode: 'min', readiness: { sleep: 1, soreness: 1, energy: 1 } }));
     harness.render(<SessionScreen />);
-    await userEvent.click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
+    await click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
     expect(screen.queryByRole('region', { name: copy.readinessTitle })).toBeNull();
     expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe(String(plan.blocks[0]!.sets[0]!.weight_kg));
@@ -137,26 +154,29 @@ describe('P2D session engine', () => {
     expect(await screen.findByText(copy.openSession)).toBeTruthy();
     expect(screen.getByText(/Resume session \(\d+ min\)\?/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: copy.start })).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: copy.sessionResumeAction }));
+    await click(screen.getByRole('button', { name: copy.sessionResumeAction }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
   });
 
   it('offers readiness only on the summary and persists the optional check-in', async () => {
     await seedBench(80, 9);
     await openSession();
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     await waitFor(() => expect(rows()).toHaveLength(1));
     const open = (await harness.repo.q.openSession())!;
     const finish = screen.getByRole('button', { name: copy.x4FinishHold });
+    await waitFor(() => expect(finish.hasAttribute('disabled')).toBe(false));
     vi.useFakeTimers(); fireEvent.keyDown(finish, { key: ' ' });
     act(() => vi.advanceTimersByTime(600)); vi.useRealTimers();
     const summary = await screen.findByRole('region', { name: copy.summaryTitle });
-    await userEvent.click(await within(summary).findByText(copy.x4Readiness, { exact: false }));
+    await click(await within(summary).findByText(copy.x4Readiness, { exact: false }));
     for (const label of [copy.readinessSleep, copy.readinessSoreness, copy.readinessEnergy]) {
-      await userEvent.selectOptions(within(summary).getByRole('combobox', { name: label }), '2');
+      fireEvent.change(within(summary).getByRole('combobox', { name: label }), { target: { value: '2' } });
     }
-    await userEvent.type(within(summary).getByRole('textbox', { name: copy.x4Note }), 'Good workout');
-    await userEvent.click(within(summary).getByRole('button', { name: copy.summaryDone }));
+    fireEvent.change(within(summary).getByRole('textbox', { name: copy.x4Note }), { target: { value: 'Good workout' } });
+    await click(within(summary).getByRole('button', { name: copy.summaryDone }));
     await waitFor(async () => {
       const history = await harness.repo.q.entriesBetween(open.user_id, open.local_date, open.local_date);
       expect(history.sessions.find((row) => row.id === open.id)).toMatchObject({ note: 'Good workout', readiness: { sleep: 2, soreness: 2, energy: 2 } });
@@ -168,7 +188,7 @@ describe('P2D session engine', () => {
     await openSession();
     const timeouts = vi.spyOn(window, 'setTimeout');
     harness.tick();
-    await userEvent.click(await screen.findByRole('button', { name: copy.x4Log }));
+    await click(await screen.findByRole('button', { name: copy.x4Log }));
     const undo = await screen.findByRole('button', { name: copy.undo });
     expect(undo.className).toContain('ui-button--xl');
     expect(FRESH_UNDO_MS).toBe(8000);

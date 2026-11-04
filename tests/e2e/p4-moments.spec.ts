@@ -1,7 +1,7 @@
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 import { MOCK_USER_IDS } from '../../src/data/adapter.mock.ts';
 import { copy, fill } from '../../src/ui/copy.ts';
-import { reachFloor, waitForBench } from './helpers.ts';
+import { loadBar, reachFloor, waitForBench } from './helpers.ts';
 
 const CLOCK = Date.parse('2026-06-01T08:00:00.000Z');
 const chip = (page: Page) => page.locator('.rest-timer__chip');
@@ -19,7 +19,7 @@ async function openBench(page: Page): Promise<void> {
 }
 
 async function log(page: Page, kg: string): Promise<void> {
-  await page.getByRole('spinbutton', { name: copy.kg, exact: true }).fill(kg);
+  await loadBar(page, Number(kg));
   await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
   await expect(page.getByText(copy.x4SetOne, { exact: true })).toBeVisible();
 }

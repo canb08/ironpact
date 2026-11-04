@@ -199,31 +199,43 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       expect(repo.sync.status()).toMatchObject({ pendingCount: 0, deadCount: 1 });
     });
 
-    it('keyset pull retains all 1005 rows sharing one updated_at across a 1000-row page boundary', async () => {
-      const [template] = await logSets(1);
-      const timestamp = '2026-10-25T22:40:00.000Z';
-      const rows = Array.from({ length: 1005 }, (_, index) => ({
-        ...template!, id: fixtureId(index + 1), set_index: index + 1, updated_at: timestamp,
-      }));
-      await db.outbox.clear();
-      await db.sets.clear();
-      const pages: { after: string | null; limit: number }[] = [];
-      await restart(decorateRemote(remote, {
-        async pullPage(table, after, limit) {
-          if (table !== 'sets') return remote.pullPage(table, after, limit);
-          pages.push({ after: after?.id ?? null, limit });
-          return { ok: true, value: rows.filter((row) => !after || row.updated_at > after.updated_at || (row.updated_at === after.updated_at && row.id > after.id)).slice(0, limit) };
-        },
-      }));
-      environment.setOnline(true);
-      await repo.sync.pullNow();
-      expect(await db.sets.count()).toBe(1005);
-      expect(new Set((await repo.q.setsOfSession(template!.session_id)).map((row) => row.id)).size).toBe(1005);
-      expect(pages).toEqual([{ after: null, limit: 1000 }, { after: fixtureId(1000), limit: 1000 }]);
-      // A second pull overlaps the cursor and must remain idempotent.
-      await repo.sync.pullNow();
-      expect(await db.sets.count()).toBe(1005);
-      expect(pages[2]).toEqual({ after: '', limit: 1000 });
+    describe('keyset paging with a full mirror', () => {
+      let template: SetRow;
+      let pages: { after: string | null; limit: number }[];
+
+      // Building a 1005-row local mirror is fixture setup. Keep the default
+      // timeouts and every boundary/overlap assertion; do not charge fixture
+      // materialization and the second full pull to one test's runtime budget.
+      beforeEach(async () => {
+        const [logged] = await logSets(1);
+        template = logged!;
+        const timestamp = '2026-10-25T22:40:00.000Z';
+        const rows = Array.from({ length: 1005 }, (_, index) => ({
+          ...template, id: fixtureId(index + 1), set_index: index + 1, updated_at: timestamp,
+        }));
+        await db.outbox.clear();
+        await db.sets.clear();
+        pages = [];
+        await restart(decorateRemote(remote, {
+          async pullPage(table, after, limit) {
+            if (table !== 'sets') return remote.pullPage(table, after, limit);
+            pages.push({ after: after?.id ?? null, limit });
+            return { ok: true, value: rows.filter((row) => !after || row.updated_at > after.updated_at || (row.updated_at === after.updated_at && row.id > after.id)).slice(0, limit) };
+          },
+        }));
+        environment.setOnline(true);
+        await repo.sync.pullNow();
+      });
+
+      it('keyset pull retains all 1005 rows sharing one updated_at across a 1000-row page boundary', async () => {
+        expect(await db.sets.count()).toBe(1005);
+        expect(new Set((await repo.q.setsOfSession(template!.session_id)).map((row) => row.id)).size).toBe(1005);
+        expect(pages).toEqual([{ after: null, limit: 1000 }, { after: fixtureId(1000), limit: 1000 }]);
+        // A second pull overlaps the cursor and must remain idempotent.
+        await repo.sync.pullNow();
+        expect(await db.sets.count()).toBe(1005);
+        expect(pages[2]).toEqual({ after: '', limit: 1000 });
+      });
     });
 
     it('23:30 Sunday 25 Oct 2026 Amsterdam session keeps its date for a 00:10 set after DST ends', async () => {

@@ -20,6 +20,7 @@ async function openDay() {
   const run = await harness.repo.w.logRun({ distance_m: 5200, duration_s: 1660 });
   expect(run.ok).toBe(true);
   harness.render(`/day/${DAY}`);
+  await waitFor(() => expect(document.querySelector('.day-workout')).not.toBeNull());
   expect(await screen.findByRole('region', { name: copy.run })).toBeTruthy();
   const current = document.querySelector('.day-chip.is-current');
   expect(current?.getAttribute('aria-current')).toBe('date');
@@ -38,6 +39,7 @@ it('moves a run to another day and shows it only there', async () => {
   fireEvent.change(run.getByLabelText(copy.dateLabel), { target: { value: '2026-10-25' } });
   fireEvent.click(run.getByRole('button', { name: copy.save }));
 
+  await waitFor(() => expect(document.querySelector('.day-editor > h1')?.textContent).toBe('Sun 25 Oct'));
   await waitFor(() => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Sun 25 Oct');
   });
@@ -48,9 +50,11 @@ it('moves a run to another day and shows it only there', async () => {
   });
 
   fireEvent.click(screen.getByRole('link', { name: 'Sat 24 Oct' }));
+  await waitFor(() => expect(document.querySelector('.day-editor > h1')?.textContent).toBe('Sat 24 Oct'));
   await waitFor(() => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Sat 24 Oct');
   });
+  await waitFor(() => expect(document.querySelector('.day-workout')).toBeNull());
   await waitFor(() => {
     expect(screen.queryByRole('region', { name: copy.run })).toBeNull();
   });
@@ -112,6 +116,7 @@ it('shows the copy-bank error for an out-of-range edit and does not save', async
 it('soft-deletes a run and restores it on the same day', async () => {
   const opened = await openDay();
   fireEvent.click(screen.getByRole('button', { name: fill(copy.deleteEntry, { name: copy.run }) }));
+  await waitFor(() => expect(document.querySelector('.day-workout')).toBeNull());
   await waitFor(() => {
     expect(screen.queryByRole('region', { name: copy.run })).toBeNull();
   });

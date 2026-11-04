@@ -133,7 +133,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   await expect(page.getByRole('link', { name: copy.x3StartWorkout, exact: true })).toBeVisible();
   await page.getByRole('link', { name: copy.x3StartWorkout, exact: true }).click();
   const again = page.getByRole('dialog', { name: copy.pickerTitle });
-  const kg = page.getByRole('spinbutton', { name: copy.kg, exact: true });
+  const kg = page.getByRole('slider', { name: copy.kg, exact: true });
   const readinessAgain = page.getByRole('region', { name: copy.readinessTitle });
   await expect.poll(async () => {
     if (await again.isVisible()) return 'picker';

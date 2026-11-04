@@ -8,11 +8,13 @@ export function DockDial({ label, value, step, min, max, disabled, onChange }: {
   disabled: boolean; onChange: (value: number) => void;
 }) {
   const [typing, setTyping] = useState(false);
-  return <div className="session-dial">
+  return <div className="session-dial" onKeyDown={(event) => {
+    if (!disabled && (event.key === 'Enter' || event.key === ' ') && event.target instanceof Element && event.target.getAttribute('role') === 'slider') {
+      event.preventDefault(); setTyping(true);
+    }
+  }}>
     <ScrubDial label={label} value={value} format={String} step={step} min={min} max={max}
       disabled={disabled} onChange={onChange} onTapNumber={() => setTyping(true)} />
-    <button className="session-type" type="button" disabled={disabled} onClick={() => setTyping(true)}
-      aria-label={`${copy.y3TypeValue}: ${label}`}>{copy.y3TypeValue}</button>
     <Sheet open={typing} title={`${copy.y3TypeValue}: ${label}`} onClose={() => setTyping(false)}>
       <div className="session-keyboard">
         <label>{label}<input type="number" inputMode="decimal" value={Number.isNaN(value) ? '' : value}
