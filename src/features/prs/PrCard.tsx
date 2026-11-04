@@ -17,10 +17,10 @@ export function PrCard({ event, onClose }: { event: PrEventDraft; onClose: () =>
   const mediaStill = useReducedMotion(false);
   const still = profileStill || mediaStill;
   const closeRef = useRef(onClose);
-  const felt = useRef(false);
+  const felt = useRef<string | null>(null);
   useEffect(() => {
-    if (still && !felt.current) { felt.current = true; feel('pr', { weightKg: event.value, reducedMotion: true }); }
-  }, [event.value, still]);
+    if (still && felt.current !== event.source_id) { felt.current = event.source_id; feel('pr', { weightKg: event.value, reducedMotion: true }); }
+  }, [event.source_id, event.value, still]);
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);

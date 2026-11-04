@@ -52,7 +52,7 @@ function Delta({ line }: { line: { text: string; kg: number } }) {
 export function PrMomentSlot({ id, event, onClose }: { id: string; event: PrEventDraft; onClose: () => void }) {
   const dead = useSyncExternalStore(subscribePrGone, () => prMomentGone(id), () => false);
   if (dead) return null;
-  return <Takeover event={event} onClose={onClose} />;
+  return <Takeover key={id} event={event} onClose={onClose} />;
 }
 
 /** Full-screen PR takeover (§3.9.4). Tap anywhere to skip to the final frame. */

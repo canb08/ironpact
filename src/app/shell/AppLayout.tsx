@@ -51,12 +51,12 @@ export default function AppLayout() {
     : pathname.startsWith('/day/') ? date ? formatDate(date, today, copy) : copy.recentDays
       : pathname.startsWith('/settings') ? settingsSections.find((item) => item.id === section)?.title ?? copy.settingsTitle
         : tabs.find((tab) => tab.to === currentTab)?.label ?? copy.x10Today;
-  const transitionTo = (to: string | number) => {
+  const transitionTo = (to: string | number, replace = false) => {
     const target = typeof to === 'string' ? to : currentTab;
     const direction = tabDirection(pathname, target);
     const shared = pathname === '/progress' && target.startsWith('/exercise/')
       || pathname.startsWith('/exercise/') && target === '/progress';
-    if (!direction && !shared) { if (typeof to === 'number') void navigate(to); else void navigate(to); return; }
+    if (!direction && !shared) { if (typeof to === 'number') void navigate(to); else void navigate(to, { replace }); return; }
     const root = document.documentElement;
     if (direction) root.dataset.tabDirection = direction;
     else delete root.dataset.tabDirection;
@@ -68,7 +68,7 @@ export default function AppLayout() {
     }
     startViewTransition(async () => {
       if (typeof to === 'number') await navigate(to);
-      else await navigate(to, { flushSync: true });
+      else await navigate(to, { flushSync: true, replace });
       const selector = target === '/' ? '[data-testid="shared-bar"]'
         : target === '/session' ? '.session-active, [role="dialog"]'
         : target === '/progress' ? '.progress-lifts' : target === '/crew' ? '.crew-hero' : '.exercise-detail';
@@ -102,7 +102,7 @@ export default function AppLayout() {
   };
   const back = () => {
     if (canGoBack(window.history.state)) transitionTo(-1);
-    else transitionTo(pathname.startsWith('/settings/') ? '/settings' : currentTab);
+    else transitionTo(pathname.startsWith('/settings/') ? '/settings' : currentTab, true);
   };
 
   return <div className="app-shell" onClickCapture={follow}>

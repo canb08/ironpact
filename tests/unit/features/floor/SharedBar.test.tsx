@@ -83,4 +83,8 @@ it('delivers partner plates one at a time, then locks once; historical weeks sta
   render(<StrictMode><SharedBar me={{ ...me, credits: 3 }} partner={{ ...partner, credits: 3 }} reduced={false} /></StrictMode>);
   act(() => vi.runAllTimers());
   expect(vi.mocked(feel).mock.calls.filter(([kind]) => kind === 'lockout')).toHaveLength(1);
+  vi.mocked(feel).mockClear();
+  render(<SharedBar me={{ ...me, credits: 3, weekStart: '2026-10-26' }} partner={{ ...partner, credits: 3 }} reduced={false} current={false} />);
+  act(() => vi.runAllTimers());
+  expect(feel).not.toHaveBeenCalled();
 });

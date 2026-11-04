@@ -135,7 +135,7 @@ export default function FloorScreen() {
         trailing={<span className="ui-chip ui-chip--pr">{copy.x3Pr}</span>}
         chevron={!!pr.exercise_id} onClick={pr.exercise_id ? () => navigate(`/exercise/${pr.exercise_id}`) : undefined} />)}
     </section>
-    <p className="floor-volume">{copy.x3Volume.split('{kg}').map((part, index) => <span key={index}>{index > 0 && <AnimatedNumber value={data.volume} reduced={duo.reduceMotion} />}{part}</span>)}</p>
+    <p className="floor-volume">{copy.x3Volume.split('{kg}').map((part, index) => <span key={index}>{index > 0 && <AnimatedNumber value={Math.round(data.volume * 10) / 10} reduced={duo.reduceMotion} />}{part}</span>)}</p>
     {shownPlates >= 1 && <p className="floor-note" data-testid="week-streak">{copy.x3Streak.split('{count}').map((part, index) => <span key={index}>{index > 0 && <AnimatedNumber value={shownPlates} reduced={duo.reduceMotion} />}{part}</span>)}</p>}
     {duo.adjusted && <p className="floor-note">{copy.x3Adjusted}</p>}
     {debugClose && <p className="floor-note" role="status" data-testid="debug-week">{copy.x3DebugWeek}</p>}

@@ -18,3 +18,5 @@ html[data-reduced-motion='on']::view-transition-old(*),
 html[data-reduced-motion='on']::view-transition-new(*) { animation: none !important; }
 
 ::view-transition { pointer-events: none; }
+/* The root snapshot has no geometry animation; only the named page moves. */
+::view-transition-group(root) { animation: none; }
