@@ -118,9 +118,9 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 |---|---|---|---|---|
 | Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | merged #70 (iOS haptic on-device check still open: WebKit may ignore the switch trick) |
 | Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | Grok Build | E | merged #75 (Lead ran it on mock: 2 taps → bar 1 of 3, combo book; Lead merged main for the Y6 copy/test conflict; one p7-shell Pixel 7 flake, passed on re-run) |
-| Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | queued (after X4, Y1) |
+| Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | running (friend's Codex, 2026-11-04) |
 | Y4 | Rest ritual + full-screen rest | Grok Build | E | queued (after Y3) |
-| Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | queued (after X3-X7, Y1; before X11) |
+| Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | running (friend's Codex, 2026-11-04; X11 already merged, see lane C note) |
 | Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
 | Y7 | Voice log (experimental) | Grok Build | E | queued (after Y3) |
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
@@ -130,7 +130,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 
 **Engines (2026-11-03 00:20):** friend's Grok hit its weekly limit (resets 2026-11-08). Friend's Codex is back after 00:43. Remaining lane E work: Y3 (after X4), Y4, Y5, Y7, Y8 (needs lane C ack), Y9 → Codex, or wait for the Grok reset.
 
-**Lane C:** X11 waits for Y5 (L20). Y9 adds a 5th tab (Proof) to the X2 shell, and Y8 adds migration 0012 (L21). Ack/object here.
+**Lane C:** X11 waits for Y5 (L20). **Order note for Can (friend's Claude, 2026-11-04):** X11 merged (#78) before Y5, against the R3 order. Nothing undone. Y5 moves screens, so it will refresh any X11 WebKit baselines it changes in its own PR; object here if lane C wants that handled differently. Y9 adds a 5th tab (Proof) to the X2 shell, and Y8 adds migration 0012 (L21). Ack/object here.
 
 ## Parked / follow-ups
 - **Flaky e2e (seen twice, 2026-11-02, P3G #49 and H3 #48 PR runs):** `tests/e2e/p1-demo.spec.ts` + `p1-flight.spec.ts` on **Pixel 7** time out in `warmLazyRoutes` (`tests/e2e/helpers.ts:75`): the Floor `Weight` link is "detached from the DOM" while clicking, likely a Floor re-render (P3E/P4E duo moments, live data). Twin push runs pass. Fix: wait for the Floor to settle (e.g. `my-week` stable / moments idle) or navigate by URL in `warmLazyRoutes`. Until then: re-run failed jobs, don't merge on red. **Diagnosis (friend's Claude, 06:00):** `useRepoQuery` (`src/features/floor/useRepoQuery.ts`) builds a fresh store with `value = undefined` whenever its deps change; FloorScreen passes `crewTick` (P3E), so every crew delta pull blanks the Floor to its `aria-busy` shell and remounts the buttons (real UX flicker, and the detached `Weight` link in CI). Tried a keep-last-value fix: unit test proves it, and the detach failure stopped, but locally it produced a new p1-demo failure on Pixel 7 (MIN toast shown twice, strict-mode violation) that main does not show in 5/5 runs, so it was not pushed. Needs a proper ticket (Floor owner) that keeps the last value **and** guards the MIN double-tap/toast.
