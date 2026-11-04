@@ -6,7 +6,8 @@ import { progressionForExercise } from '../../core/progression.ts';
 import { detectSessionVolumePrs, detectSetPr, type PrEventDraft, type PrHistory } from '../../core/prs.ts';
 import { doMinPlan } from '../../core/readiness.ts';
 import type { Exercise, Session, SetRow } from '../../core/types.ts';
-import { haptic, setHapticsOn } from '../../platform/haptics.ts';
+import { setHapticsOn } from '../../platform/haptics.ts';
+import { feel } from '../../ui/feel/feel.ts';
 import { keepAwake, releaseKeepAwake } from '../../platform/wakeLock.ts';
 import { HoldButton, copy, fill, useToast } from '../../ui';
 import { PrCard } from '../prs/PrCard.tsx';
@@ -139,7 +140,7 @@ export function ActiveSession({ session, onFinish, initialExercise }: {
       }
       taken.current.add(exerciseKey);
       setCard(event);
-      haptic('pr');
+      feel('pr');
     });
   };
 
@@ -181,6 +182,7 @@ export function ActiveSession({ session, onFinish, initialExercise }: {
     <WriteFeedback error={write.error} retry={write.retry} />
     {shown && <PrCard event={shown} onClose={() => setCard(null)} />}
     {focus ? <LoggingCard key={focus.id} session={session} exercise={focus} sets={snapshot.sets.filter((row) => row.exercise_id === focus.id)}
+      barKg={snapshot.profile?.bar_kg ?? 20} platesKg={snapshot.profile?.plates_kg ?? [25, 20, 15, 10, 5, 2.5, 1.25]}
       reduceMotion={snapshot.profile?.reduce_motion} allSets={snapshot.sets} exercises={snapshot.exercises} bigJumps={snapshot.profile?.big_jumps ?? false}
       prefillSets={prefillSets} pending={snapshot.pending} restSeconds={restSeconds} nudge={nudge}
       onNext={goNext} onChangeExercise={() => setPickerOpen(true)} onLogged={noteSet} finishing={write.busy} onBusyChange={setLoggingBusy} />

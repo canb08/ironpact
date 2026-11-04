@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copy } from '../../src/ui/copy.ts';
-import { reachFloor, waitForBench } from './helpers.ts';
+import { loadBar, reachFloor, settleSessionDock, waitForBench } from './helpers.ts';
 
 async function expectNoHorizontalScroll(page: Page): Promise<void> {
   const layout = await page.evaluate(() => {
@@ -32,10 +32,12 @@ for (const zoom of [1, 2]) {
     await page.evaluate((scale) => { document.documentElement.style.zoom = String(scale); }, zoom);
 
     await expectNoHorizontalScroll(page);
-    const kg = page.getByRole('spinbutton', { name: copy.kg, exact: true });
-    const reps = page.getByRole('spinbutton', { name: copy.reps, exact: true });
-    await kg.fill('80');
-    await reps.fill('5');
+    const kg = page.getByRole('slider', { name: copy.kg, exact: true });
+    const reps = page.getByRole('slider', { name: copy.reps, exact: true });
+    await loadBar(page, 80);
+    await reps.press('Home');
+    for (let rep = 1; rep < 5; rep++) await reps.press('ArrowUp');
+    await expect(reps).toHaveAttribute('aria-valuenow', '5');
     const log = page.getByRole('button', { name: copy.x4Log, exact: true });
     const rack = page.getByRole('button', { name: copy.x4FinishHold, exact: true });
     await expect(log).toBeVisible();
@@ -53,7 +55,7 @@ for (const zoom of [1, 2]) {
     await expect(rack).toBeInViewport();
     await expectNoHorizontalScroll(page);
 
-    for (const target of [kg, reps, log, rack, ...await page.locator('.session-steppers button, .rest-timer__controls button').all()]) {
+    for (const target of [kg, reps, log, rack, ...await page.locator('.session-plate-chips button, .rest-timer__controls button').all()]) {
       const box = await target.boundingBox();
       if (!box) throw new Error('Workout target has no bounding box');
       expect(box.width / zoom).toBeGreaterThanOrEqual(44);
@@ -81,6 +83,7 @@ test('three taps to a set, ten sets scroll in the page, and Done returns to Toda
     await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
     await expect(page.getByRole('region', { name: copy.sessionSets }).getByRole('listitem')).toHaveCount(index);
   }
+  await settleSessionDock(page);
   const rows = page.locator('.session-set-row');
   for (const row of await rows.all()) {
     await row.evaluate((element) => element.scrollIntoView({ block: 'center' }));
@@ -114,7 +117,7 @@ test('current lift stays above the dock, earlier lifts collapse, and summary has
   await page.goto('/session');
   const picker = page.getByRole('dialog', { name: copy.pickerTitle });
   await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
-  await page.getByRole('spinbutton', { name: copy.kg, exact: true }).fill('80');
+  await loadBar(page, 80);
   for (let count = 1; count <= 3; count++) {
     await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
     await expect(page.locator('[data-current-exercise] .session-set-row')).toHaveCount(count);
@@ -126,7 +129,7 @@ test('current lift stays above the dock, earlier lifts collapse, and summary has
   await picker.getByRole('textbox', { name: copy.pickerExportLabel, exact: true }).fill('Squat');
   await picker.getByRole('button', { name: copy.pickerCreate, exact: true }).click();
   await expect(page.getByRole('form', { name: 'Back squat', exact: true })).toBeVisible();
-  await page.getByRole('spinbutton', { name: copy.kg, exact: true }).fill('100');
+  await loadBar(page, 100);
   for (let count = 1; count <= 3; count++) {
     await page.getByRole('button', { name: copy.x4Log, exact: true }).click();
     const rows = page.locator('[data-current-exercise] .session-set-row');

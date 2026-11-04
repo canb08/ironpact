@@ -13,6 +13,17 @@ import { sessionHarness } from './harness.tsx';
 HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
 HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
 
+async function click(button: HTMLElement) {
+  await waitFor(() => expect(button.hasAttribute('disabled')).toBe(false));
+  fireEvent.click(button);
+}
+
+function typeValue(label: string, value: string) {
+  fireEvent.keyDown(screen.getByRole('slider', { name: label }), { key: 'Enter' });
+  fireEvent.change(screen.getByRole('spinbutton', { name: label }), { target: { value } });
+  fireEvent.click(screen.getByRole('button', { name: copy.y3UseValue }));
+}
+
 describe('S6 with the A6 mock Repo', () => {
   let harness: Awaited<ReturnType<typeof sessionHarness>>;
   beforeEach(async () => { localStorage.clear(); skipRest(); harness = await sessionHarness(); });
@@ -22,24 +33,30 @@ describe('S6 with the A6 mock Repo', () => {
     await harness.exercise();
     harness.render(<SessionScreen />);
     const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
-    await userEvent.click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    await click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
   }
   const rows = () => within(screen.getByRole('region', { name: copy.sessionSets })).queryAllByRole('listitem');
   async function log(count: number) {
     for (let index = 1; index <= count; index++) {
       harness.tick();
-      await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+      const button = screen.getByRole('button', { name: copy.x4Log }) as HTMLButtonElement;
+      // The live query can publish the row before the write's busy state clears.
+      await waitFor(() => expect(button.disabled).toBe(false));
+      await click(button);
       await waitFor(() => expect(rows()).toHaveLength(index));
+      await waitFor(() => expect(button.disabled).toBe(false));
     }
   }
 
   it('starts a gym session and logs three offline sets as three persisted rows', async () => {
     await start();
-    fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value: '80' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.sessionWarmup }));
-    await userEvent.click(screen.getByRole('button', { name: copy.x4AddRpe }));
-    await userEvent.click(screen.getByRole('button', { name: fill(copy.sessionRpeValue, { value: 8 }) }));
+    typeValue(copy.kg, '80');
+    await click(screen.getByRole('button', { name: copy.sessionWarmup }));
+    await click(screen.getByRole('button', { name: copy.x4AddRpe }));
+    await click(screen.getByRole('button', { name: fill(copy.sessionRpeValue, { value: 8 }) }));
     await log(3);
     const session = await harness.repo.q.openSession();
     const sets = await harness.repo.q.setsOfSession(session!.id);
@@ -53,8 +70,8 @@ describe('S6 with the A6 mock Repo', () => {
   it.each(['501', '-1', '0.1'])('blocks invalid lift kg %s with copy-bank feedback and no write', async (value) => {
     await start();
     const logSet = vi.spyOn(harness.repo.w, 'logSet');
-    fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value } });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    typeValue(copy.kg, value);
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     expect(screen.getByRole('alert').textContent).toBe(copy.outOfRange);
     expect(logSet).not.toHaveBeenCalled();
     expect(rows()).toHaveLength(0);
@@ -62,15 +79,15 @@ describe('S6 with the A6 mock Repo', () => {
 
   it('uses ±2.5 kg and ±1 rep controls, accepts quarter kg, and blocks invalid reps', async () => {
     await start();
-    await userEvent.click(screen.getByRole('button', { name: fill(copy.increase, { label: copy.kg }) }));
-    await userEvent.click(screen.getByRole('button', { name: fill(copy.increase, { label: copy.reps }) }));
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('2.5');
-    expect((screen.getByRole('spinbutton', { name: copy.reps }) as HTMLInputElement).value).toBe('6');
-    fireEvent.change(screen.getByRole('spinbutton', { name: copy.reps }), { target: { value: '101' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    fireEvent.keyDown(screen.getByRole('slider', { name: copy.kg }), { key: 'ArrowUp' });
+    fireEvent.keyDown(screen.getByRole('slider', { name: copy.reps }), { key: 'ArrowUp' });
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('2.5');
+    expect(screen.getByRole('slider', { name: copy.reps }).getAttribute('aria-valuenow')).toBe('6');
+    typeValue(copy.reps, '101');
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     expect(screen.getByRole('alert').textContent).toBe(copy.outOfRange);
-    fireEvent.change(screen.getByRole('spinbutton', { name: copy.reps }), { target: { value: '6' } });
-    fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value: '80.25' } });
+    typeValue(copy.reps, '6');
+    typeValue(copy.kg, '80.25');
     await log(1);
     expect(rows()[0]!.textContent).toContain('80.25');
   });
@@ -78,11 +95,11 @@ describe('S6 with the A6 mock Repo', () => {
   it('keeps a failed storage write unsaved, then retries the same draft from the blocking modal', async () => {
     await start();
     const logSet = vi.spyOn(harness.repo.w, 'logSet').mockResolvedValueOnce({ ok: false, error: 'storage_full' });
-    fireEvent.change(screen.getByRole('spinbutton', { name: copy.kg }), { target: { value: '82.5' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    typeValue(copy.kg, '82.5');
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     const modal = await screen.findByRole('alertdialog', { name: copy.storageFull });
     expect(rows()).toHaveLength(0);
-    await userEvent.click(within(modal).getByRole('button', { name: copy.retry }));
+    await click(within(modal).getByRole('button', { name: copy.retry }));
     await waitFor(() => expect(rows()).toHaveLength(1));
     expect(logSet).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(rows()[0]!.textContent).toContain('82.5'));
@@ -110,19 +127,19 @@ describe('S6 with the A6 mock Repo', () => {
     const session = unwrap(await harness.repo.w.startSession({ kind: 'gym' }));
     unwrap(await harness.repo.w.logSet({ session_id: session.id, exercise_id: exercise.id, reps: 5, weight_kg: -20 }));
     harness.render(<SessionScreen />);
-    await userEvent.click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
-    const input = await screen.findByRole('spinbutton', { name: copy.sessionAddedKg });
-    expect((input as HTMLInputElement).value).toBe('-20');
-    fireEvent.change(input, { target: { value: '-100.25' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    await click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
+    const input = await screen.findByRole('slider', { name: copy.sessionAddedKg });
+    expect(input.getAttribute('aria-valuenow')).toBe('-20');
+    typeValue(copy.sessionAddedKg, '-100.25');
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     expect(screen.getByRole('alert').textContent).toBe(copy.outOfRange);
-    fireEvent.change(input, { target: { value: '-22.5' } });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    typeValue(copy.sessionAddedKg, '-22.5');
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     await waitFor(() => expect(rows()).toHaveLength(2));
     expect((await harness.repo.q.setsOfSession(session.id))[1]!.weight_kg).toBe(-22.5);
   });
 
-  it('swipe-deletes only horizontally, then Undo restores the same row through the outbox', async () => {
+  it('swipes left to edit, keeps deletion in the menu, and Undo restores the row through the outbox', async () => {
     await start();
     await log(1);
     const session = (await harness.repo.q.openSession())!;
@@ -132,12 +149,37 @@ describe('S6 with the A6 mock Repo', () => {
     expect(rows()).toHaveLength(1);
     fireEvent.pointerDown(rows()[0]!, { button: 0, pointerId: 2, clientX: 250, clientY: 100 });
     fireEvent.pointerUp(rows()[0]!, { pointerId: 2, clientX: 100, clientY: 108 });
+    const edit = await screen.findByRole('dialog', { name: copy.x4EditTitle });
+    expect(rows()).toHaveLength(1);
+    await click(within(edit).getByRole('button', { name: copy.close }));
+    await click(screen.getByRole('button', { name: fill(copy.x4SetOptions, { index: 1 }) }));
+    await click(screen.getByRole('button', { name: fill(copy.sessionDelete, { index: 1 }) }));
     await waitFor(() => expect(rows()).toHaveLength(0));
     expect(await harness.repo.q.setsOfSession(session.id)).toHaveLength(0);
-    await userEvent.click(await screen.findByRole('button', { name: copy.undo }));
+    await click(await screen.findByRole('button', { name: copy.undo }));
     await waitFor(() => expect(rows()).toHaveLength(1));
     expect((await harness.repo.q.setsOfSession(session.id))[0]!.id).toBe(original!.id);
     expect(await harness.repo.q.isPending(original!.id)).toBe(true);
+  });
+
+  it('swipes right to repeat and offers the same action in the accessible menu', async () => {
+    await start();
+    typeValue(copy.kg, '70');
+    await log(1);
+    const first = rows()[0]!;
+    harness.tick();
+    fireEvent.pointerDown(first, { button: 0, pointerId: 1, clientX: 100, clientY: 100 });
+    fireEvent.pointerUp(first, { pointerId: 1, clientX: 220, clientY: 108 });
+    await waitFor(() => expect(rows()).toHaveLength(2));
+    await click(within(first).getByRole('button'));
+    harness.tick();
+    await click(screen.getByRole('button', { name: copy.y3SameAgain }));
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    const session = (await harness.repo.q.openSession())!;
+    const saved = await harness.repo.q.setsOfSession(session.id);
+    expect(saved.map((row) => [row.weight_kg, row.reps, row.rpe])).toEqual([[70, 5, null], [70, 5, null], [70, 5, null]]);
+    expect(new Set(saved.map((row) => row.id)).size).toBe(3);
+    expect(screen.getByLabelText(copy.y3Ghost).textContent).toContain('70 kg × 5');
   });
 
   it('shows chalk ticks after acknowledgement and grey again while an edit is pending', async () => {
@@ -187,7 +229,9 @@ describe('S6 with the A6 mock Repo', () => {
     cleanup();
     const startSession = vi.spyOn(harness.repo.w, 'startSession');
     harness.render(<SessionScreen />);
-    await userEvent.click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
+    await click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
     expect(rows()).toHaveLength(1);
     expect(startSession).not.toHaveBeenCalled();
@@ -205,9 +249,11 @@ describe('S6 with the A6 mock Repo', () => {
     harness.tick();
     harness.render(<SessionScreen />);
     const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
-    await userEvent.click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    await click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('60');
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('60');
     await log(3);
     const active = (await harness.repo.q.openSession())!;
     expect((await harness.repo.q.setsOfSession(active.id)).map((row) => [row.weight_kg, row.rpe])).toEqual([[60, null], [80, null], [80, null]]);
@@ -216,11 +262,11 @@ describe('S6 with the A6 mock Repo', () => {
     await start();
     const squat = await harness.exercise('Back squat');
     await log(3);
-    await userEvent.click(screen.getByRole('button', { name: copy.nextExercise }));
+    await click(screen.getByRole('button', { name: copy.nextExercise }));
     const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
-    await userEvent.click(await within(picker).findByRole('button', { name: squat.name }));
+    await click(await within(picker).findByRole('button', { name: squat.name }));
     await screen.findByRole('form', { name: squat.name });
-    await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
+    await click(screen.getByRole('button', { name: copy.x4Log }));
     await waitFor(() => expect(within(document.querySelector('[data-current-exercise]')!).getAllByRole('listitem')).toHaveLength(1));
     const list = screen.getByRole('region', { name: copy.sessionSets });
     const earlier = within(list).getByText(fill(copy.x4EarlierExercise, { exercise: 'Bench press', sets: '3 sets', kg: 0, reps: 5 }));
@@ -228,12 +274,12 @@ describe('S6 with the A6 mock Repo', () => {
     await userEvent.click(earlier);
     expect(rows()).toHaveLength(4);
     expect(within(list).getByRole('heading', { name: squat.name })).toBeTruthy();
-    await userEvent.click(within(rows()[0]!).getByRole('button', { name: fill(copy.x4SetOptions, { index: 1 }) }));
+    await click(within(rows()[0]!).getByRole('button', { name: fill(copy.x4SetOptions, { index: 1 }) }));
     const menu = await screen.findByRole('dialog', { name: copy.x4SetMenu });
-    await userEvent.click(within(menu).getByRole('button', { name: copy.x4Edit }));
+    await click(within(menu).getByRole('button', { name: copy.x4Edit }));
     const edit = await screen.findByRole('dialog', { name: copy.x4EditTitle });
     fireEvent.change(within(edit).getByRole('spinbutton', { name: copy.kg }), { target: { value: '82.5' } });
-    await userEvent.click(within(edit).getByRole('button', { name: copy.x4SaveSet }));
+    await click(within(edit).getByRole('button', { name: copy.x4SaveSet }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: copy.x4EditTitle })).toBeNull());
     await waitFor(() => expect(rows()[0]!.textContent).toContain('82.5'));
     const session = (await harness.repo.q.openSession())!;
@@ -247,11 +293,13 @@ describe('S6 with the A6 mock Repo', () => {
     const begin = vi.spyOn(harness.repo.w, 'startSession').mockResolvedValueOnce({ ok: false, error: 'storage_full' });
     harness.render(<SessionScreen />);
     const picker = await screen.findByRole('dialog', { name: copy.pickerTitle });
-    await userEvent.click(await within(picker).findByRole('button', { name: 'Bench press' }));
+    await click(await within(picker).findByRole('button', { name: 'Bench press' }));
     const modal = await screen.findByRole('alertdialog', { name: copy.storageFull });
     expect(screen.queryByRole('dialog', { name: copy.pickerTitle })).toBeNull();
     expect(await harness.repo.q.openSession()).toBeUndefined();
-    await userEvent.click(within(modal).getByRole('button', { name: copy.retry }));
+    await click(within(modal).getByRole('button', { name: copy.retry }));
+    // Do not repeatedly scan the loading screen's inaccessible picker/dock.
+    await waitFor(() => expect(document.querySelector('[data-session-dock]')).not.toBeNull());
     await screen.findByRole('button', { name: copy.x4Log });
     expect(begin).toHaveBeenCalledTimes(2);
     expect(await harness.repo.q.openSession()).toBeDefined();

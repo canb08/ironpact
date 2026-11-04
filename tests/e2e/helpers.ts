@@ -97,6 +97,59 @@ export async function warmLazyRoutes(page: Page): Promise<void> {
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 }
 
+/** Let the real resize observer and two-frame reveal finish before browsing history or capturing. */
+export async function settleSessionDock(page: Page): Promise<void> {
+  await expect.poll(() => page.evaluate(async () => {
+    await document.fonts.ready;
+    for (let frame = 0; frame < 3; frame++) await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const row = document.querySelector('[data-current-exercise] .session-ghost');
+    const dock = document.querySelector('[data-session-dock]');
+    if (!row || !dock) return Infinity;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const target = Math.max(0, Math.min(max, scrollY + row.getBoundingClientRect().bottom - dock.getBoundingClientRect().top + 12));
+    return Math.abs(scrollY - target);
+  })).toBeLessThanOrEqual(1);
+}
+
+/** Zoom/focus can defer the dock's flow-layout switch beyond click's two stable frames. */
+async function settleDockLayout(page: Page): Promise<void> {
+  await expect.poll(() => page.locator('[data-session-dock]').evaluate(async (dock) => {
+    const boxes = [dock.getBoundingClientRect()];
+    for (let frame = 0; frame < 3; frame++) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      boxes.push(dock.getBoundingClientRect());
+    }
+    const first = boxes[0]!;
+    return Math.max(...boxes.flatMap((box) => [Math.abs(box.x - first.x), Math.abs(box.y - first.y), Math.abs(box.width - first.width), Math.abs(box.height - first.height)]));
+  })).toBe(0);
+}
+
+/** Set the load through plate chips and the dial; never open the number keyboard. */
+export async function loadBar(page: Page, kg: number): Promise<void> {
+  const dial = page.getByRole('slider', { name: copy.kg, exact: true });
+  await expect(dial).toBeVisible();
+  await dial.press('Home');
+  await expect(dial).toHaveAttribute('aria-valuenow', '0');
+  const barKg = Number.parseFloat(await page.locator('.session-bar-label').innerText());
+  expect(Number.isFinite(barKg)).toBe(true);
+  let perSide = (kg - barKg) / 2;
+  let expectedKg = 0;
+  for (const plate of [25, 20, 15, 10, 5, 2.5, 1.25]) {
+    while (perSide >= plate) {
+      const chip = page.getByRole('button', { name: fill(copy.y3AddPair, { kg: plate }), exact: true });
+      await chip.scrollIntoViewIfNeeded();
+      await settleDockLayout(page);
+      await chip.click();
+      expectedKg = Math.max(expectedKg, barKg) + plate * 2;
+      await expect(dial).toHaveAttribute('aria-valuenow', String(expectedKg));
+      perSide -= plate;
+    }
+  }
+  expect(perSide, 'fixture load must be exactly representable by plate pairs').toBe(0);
+  await expect(dial).toHaveAttribute('aria-valuenow', String(kg));
+  await expect(page.locator('[data-session-dock] input[type="number"]')).toHaveCount(0);
+}
+
 export async function logBench(page: Page, sets: number): Promise<void> {
   // Choosing an exercise starts the workout directly.
   if (!page.url().includes('/session')) {
@@ -106,10 +159,10 @@ export async function logBench(page: Page, sets: number): Promise<void> {
   await expect(picker).toBeVisible();
   await picker.getByRole('button', { name: 'Bench press', exact: true }).click();
   await expect(picker).toBeHidden();
-  const weight = page.getByRole('spinbutton', { name: copy.kg });
-  await weight.fill('80');
-  await expect(weight).toHaveValue('80');
-  await expect(page.getByRole('spinbutton', { name: copy.reps })).toHaveValue('5');
+  const weight = page.getByRole('slider', { name: copy.kg });
+  await loadBar(page, 80);
+  await expect(weight).toHaveAttribute('aria-valuenow', '80');
+  await expect(page.getByRole('slider', { name: copy.reps })).toHaveAttribute('aria-valuenow', '5');
   for (let index = 1; index <= sets; index += 1) {
     await page.getByRole('button', { name: copy.x4Log }).click();
     await expect(page.getByText((index === 1 ? copy.x4SetOne : fill(copy.x4SetCount, { count: index })), { exact: true })).toBeVisible();

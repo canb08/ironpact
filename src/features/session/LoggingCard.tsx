@@ -4,15 +4,17 @@ import type { Nudge } from '../../core/progression.ts';
 import { formatNudgeChip, nudgeCopyKey } from '../../core/progression.ts';
 import type { Exercise, Session, SetRow } from '../../core/types.ts';
 import { uiSchemas } from '../../core/validate.ts';
-import { haptic } from '../../platform/haptics.ts';
-import { Button, Stepper, copy, fill, useToast } from '../../ui';
+import { feel } from '../../ui/feel/feel.ts';
+import { useReducedMotion } from '../../ui/motion/reduced.ts';
+import { Button, copy, fill, useToast } from '../../ui';
 import { RestTimerOverlay } from '../timer/RestTimerOverlay.tsx';
 import { skipRest, startRest, useRestTimer } from '../timer/useRestTimer.ts';
 import { revealLatestSet } from './sessionViewport.ts';
 import { SetList } from './SetList.tsx';
 import { FRESH_UNDO_MS, prefillAt, roundKg } from './sessionModel.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
-import { SetLoggedMotion } from '../../ui/motion/SetLogged.tsx';
+import { DockDial } from './DockDial.tsx';
+import { PlateLoader } from './PlateLoader.tsx';
 import { useSetLoggedMicro } from './useSetLoggedMicro.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
@@ -25,6 +27,8 @@ interface LoggingCardProps {
   allSets: SetRow[];
   exercises: Exercise[];
   bigJumps: boolean;
+  barKg: number;
+  platesKg: readonly number[];
   finishing: boolean;
   reduceMotion?: boolean | undefined;
   onBusyChange: (busy: boolean) => void;
@@ -41,7 +45,7 @@ function nudgeSentence(nudge: Nudge): string {
   return copy[key];
 }
 
-export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJumps, finishing, reduceMotion, onBusyChange, prefillSets, pending, restSeconds, nudge, onNext, onChangeExercise, onLogged }: LoggingCardProps) {
+export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJumps, barKg, platesKg, finishing, reduceMotion, onBusyChange, prefillSets, pending, restSeconds, nudge, onNext, onChangeExercise, onLogged }: LoggingCardProps) {
   const repo = useRepo();
   const write = useSessionWrite();
   const logged = useSetLoggedMicro();
@@ -75,7 +79,8 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
   const [invalid, setInvalid] = useState(false);
   const [rpeOpen, setRpeOpen] = useState(false);
   const [applied, setApplied] = useState(false);
-  const [bump, setBump] = useState(0);
+  const [removing, setRemoving] = useState(false);
+  const reduced = useReducedMotion(reduceMotion || logged.reduced);
   const [freshId, setFreshId] = useState<string | null>(null);
   const weightLabel = exercise.kind === 'bw_lift' ? copy.sessionAddedKg : copy.kg;
   const step = bigJumps && exercise.lower_body && exercise.category === 'compound' ? 5 : exercise.increment_kg > 0 ? exercise.increment_kg : 2.5;
@@ -102,8 +107,29 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
     void repo.w.setExercisePref(exercise.id, { rest_s: seconds });
   }, [rest.state.endsAt, rest.state.startedAt, rest.state.exerciseId, exercise.id, restSeconds, repo]);
 
+  const saveSet = (draft: { exercise_id: string; weight_kg: number; reps: number; rpe: number | null; is_warmup: boolean }) => {
+    if (busy) return;
+    void write.run(() => repo.w.logSet({ session_id: session.id, ...draft }), (row) => {
+      const next = prefillAt(prefillSets, workingLogged + (row.is_warmup ? 0 : 1));
+      // An adjusted straight set stays adjusted. Matching historical sets still advance.
+      const matchesPlan = opening && kg === opening.weight_kg && reps === opening.reps;
+      if (row.exercise_id === exercise.id) {
+        setKg(matchesPlan && next ? next.weight_kg : row.weight_kg);
+        setReps(matchesPlan && next ? next.reps : row.reps);
+        setRpe(null);
+        setWarmup(false);
+      }
+      setFreshId(row.id);
+      feel('set', { weightKg: row.weight_kg, reducedMotion: reduced });
+      logged.play();
+      startRest(row.exercise_id, restSeconds);
+      onLogged(row);
+    });
+  };
+
   return <>
-    <SetList sets={allSets} exercises={exercises} currentExerciseId={exercise.id} onChangeExercise={onChangeExercise} pending={pending} onDeleted={(row) => {
+    <SetList ghost={{ weight_kg: kg, reps }} freshId={freshId} reduced={reduced} busy={busy}
+      onRepeat={(row) => saveSet({ exercise_id: row.exercise_id, weight_kg: row.weight_kg, reps: row.reps, rpe: null, is_warmup: row.is_warmup })} sets={allSets} exercises={exercises} currentExerciseId={exercise.id} onChangeExercise={onChangeExercise} pending={pending} onDeleted={(row) => {
       if (row.id === freshId || row.id === sets.at(-1)?.id) skipRest();
       if (row.id === freshId) setFreshId(null);
     }} />
@@ -111,54 +137,31 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
       {invalid && !valid && <p role="alert" className="session-error">{copy.outOfRange}</p>}
       <WriteFeedback error={write.error} retry={write.retry} />
     </div>
-    <form ref={dock} data-session-dock className="session-controls" noValidate aria-label={exercise.name} onSubmit={(event) => {
+    <form ref={dock} data-session-dock className={`session-controls${reduced ? ' session-controls--instant' : ''}`} data-land={logged.playKey ? logged.playKey % 2 : undefined} noValidate aria-label={exercise.name} onSubmit={(event) => {
       event.preventDefault();
       if (finishing) return;
       setInvalid(!valid);
       if (!valid) return;
-      void write.run(() => repo.w.logSet({ session_id: session.id, exercise_id: exercise.id,
-        weight_kg: kg, reps, rpe, is_warmup: warmup }), (row) => {
-        const next = prefillAt(prefillSets, workingLogged + (warmup ? 0 : 1));
-        setKg(next ? roundKg(next.weight_kg + bump) : row.weight_kg);
-        setReps(next?.reps ?? row.reps);
-        setRpe(null);
-        setWarmup(false);
-        setFreshId(row.id);
-        haptic('setLogged');
-        logged.play();
-        startRest(exercise.id, restSeconds);
-        onLogged(row);
-      });
+      saveSet({ exercise_id: exercise.id, weight_kg: kg, reps, rpe, is_warmup: warmup });
     }}>
       <RestTimerOverlay reduceMotion={reduceMotion} />
       {nudge && !applied && !resting && <div className="session-nudge">
         <Button variant="secondary" disabled={busy} onClick={() => {
-          setApplied(true); setBump(nudge.incrementKg);
+          setApplied(true);
           setKg((current) => roundKg(current + nudge.incrementKg));
         }}>{formatNudgeChip(nudge)}</Button>
         <p>{nudgeSentence(nudge)}</p>
       </div>}
-      {/* Keep the spring's overshoot inside the dock's gutters, away from the page edges. */}
-      <SetLoggedMotion playKey={logged.playKey} reduced={logged.reduced}>
-        <div className="session-steppers">
-          <div data-set-logged-weight="">
-            <Stepper label={weightLabel} value={kg} step={step} unit={copy.kg} onChange={setKg} disabled={busy} />
-          </div>
-          <Stepper label={copy.reps} value={reps} step={1} onChange={setReps} disabled={busy} />
-        </div>
-      </SetLoggedMotion>
       <div className="session-options">
         <Button variant="ghost" disabled={busy} aria-expanded={rpeOpen} onClick={() => setRpeOpen(!rpeOpen)}>
           {rpe === null ? copy.x4AddRpe : fill(copy.sessionRpeValue, { value: rpe })}
         </Button>
         <Button variant="ghost" aria-pressed={warmup} disabled={busy}
           onClick={() => setWarmup(!warmup)}>{copy.sessionWarmup}</Button>
+        <Button variant="ghost" disabled={busy} aria-pressed={removing} onClick={() => setRemoving(!removing)}>{copy.y3RemovePlates}</Button>
         <Button variant="ghost" disabled={busy} onClick={onNext}>{copy.nextExercise}</Button>
       </div>
       {rpeOpen && rpePills}
-      <Button className="session-log" type="submit" size="xl" disabled={busy} aria-describedby={`${id}-error`}>
-        {copy.x4Log}
-      </Button>
       {freshId && allSets.some((row) => row.id === freshId) && <div className="session-fresh">
         <p role="status">{copy.x4Saved}</p>
         <Button size="xl" variant="secondary" disabled={busy} onClick={() => {
@@ -171,6 +174,16 @@ export function LoggingCard({ session, exercise, sets, allSets, exercises, bigJu
           });
         }}>{copy.undo}</Button>
       </div>}
+      <div className="session-dials">
+        <DockDial label={weightLabel} value={kg} step={step} min={exercise.kind === 'bw_lift' ? -100 : 0}
+          max={500} onChange={setKg} disabled={busy} />
+        <DockDial label={copy.reps} value={reps} step={1} min={1} max={100} onChange={setReps} disabled={busy} />
+      </div>
+      {exercise.kind !== 'bw_lift' && <PlateLoader kg={kg} barKg={barKg} available={platesKg} disabled={busy}
+        removing={removing} onChange={setKg} />}
+      <Button className="session-log" type="submit" size="xl" disabled={busy} aria-describedby={`${id}-error`}>
+        {copy.x4Log}
+      </Button>
     </form>
   </>;
 }

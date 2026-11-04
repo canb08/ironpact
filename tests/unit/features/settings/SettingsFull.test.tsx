@@ -25,12 +25,23 @@ afterEach(async () => {
 });
 
 let router: ReturnType<typeof createMemoryRouter>;
-function mount(section = 'profile') {
+async function mount(section = 'profile') {
   router = createMemoryRouter([{ path: '/settings/:section?', element: <SettingsScreen /> }], { initialEntries: [`/settings/${section}`] });
-  return render(<RepoProvider repo={context.repo}><RouterProvider router={router} /></RepoProvider>);
+  const view = render(<RepoProvider repo={context.repo}><RouterProvider router={router} /></RepoProvider>);
+  if (['profile', 'training', 'appearance', 'privacy'].includes(section)) await profileReady();
+  return view;
 }
 async function go(section: string) {
   await act(async () => { await router.navigate(`/settings/${section}`); });
+  // Navigation remounts the profile query; persisted data alone does not mean
+  // that the new screen has left its inert loading state.
+  if (['profile', 'training', 'appearance', 'privacy'].includes(section)) await profileReady();
+}
+
+async function profileReady() {
+  // Poll the loading boundary cheaply before asking getByRole to walk hidden
+  // controls. That leaves the event loop free to deliver IndexedDB results.
+  await waitFor(() => expect(document.querySelector('.settings-profile')?.getAttribute('aria-busy')).toBe('false'));
 }
 
 function setInput(element: HTMLElement, value: string) {
@@ -52,7 +63,7 @@ async function me() {
 it('persists every toggle through upsertMyProfile and applies feel flags', async () => {
   const user = userEvent.setup();
   const original = (await me())!;
-  mount('appearance');
+  await mount('appearance');
   await screen.findByRole('switch', { name: copy.soundOn });
 
   await user.click(screen.getByRole('switch', { name: copy.soundOn }));
@@ -102,7 +113,7 @@ it('persists every toggle through upsertMyProfile and applies feel flags', async
 it('saves name, colour, target, plates, bar and min label, preserving hidden quiet hours', async () => {
   const user = userEvent.setup();
   const original = (await me())!;
-  mount();
+  await mount();
   const name = await screen.findByRole('textbox', { name: copy.displayName });
   setInput(name, 'Lifter');
   fireEvent.blur(name);
@@ -148,7 +159,7 @@ it('shows one dead entry and retries or discards it', async () => {
     last_error: 'invalid set',
   });
   const user = userEvent.setup();
-  mount('');
+  await mount('');
   expect(await screen.findByText(copy.deadOne)).toBeTruthy();
   await user.click(screen.getByText(copy.x8ReviewSync, { selector: 'summary' }));
   const retry = vi.spyOn(context.repo.sync, 'retryDead').mockResolvedValue(undefined);
@@ -164,7 +175,7 @@ it('shows one dead entry and retries or discards it', async () => {
 it('does not delete until the hold and DELETE are both done', async () => {
   const user = userEvent.setup();
   const spy = vi.spyOn(context.repo.auth, 'deleteAccount');
-  mount();
+  await mount();
   const name = await screen.findByRole('textbox', { name: copy.displayName });
   await user.type(name, 'DELETE');
   expect(spy).not.toHaveBeenCalled();
@@ -188,7 +199,7 @@ it('does not delete until the hold and DELETE are both done', async () => {
 
 it('copies a crew invite and leaves on hold', async () => {
   const user = userEvent.setup();
-  mount('crew');
+  await mount('crew');
   await user.click(await screen.findByRole('button', { name: copy.copyInvite }));
   const code = await screen.findByLabelText(copy.inviteCodeLabel);
   expect(code.textContent).toMatch(/^[0-9A-HJKMNP-TV-Z]{10}$/);
@@ -199,7 +210,7 @@ it('copies a crew invite and leaves on hold', async () => {
 
 it('signs out from settings', async () => {
   const user = userEvent.setup();
-  mount('account');
+  await mount('account');
   await user.click(await screen.findByRole('button', { name: copy.signOut }));
   expect(await screen.findByText(copy.profileNeeded)).toBeTruthy();
 });

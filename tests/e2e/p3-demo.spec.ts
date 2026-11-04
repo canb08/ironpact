@@ -1,7 +1,7 @@
 import { devices, expect, test, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { MOCK_USER_IDS } from '../../src/data/adapter.mock.ts';
 import { copy } from '../../src/ui/copy.ts';
-import { reachFloor } from './helpers.ts';
+import { loadBar, reachFloor } from './helpers.ts';
 
 /**
  * L10's mock bus is one in-memory room per page, not a cross-process transport.
@@ -218,9 +218,9 @@ test('phase 3 demo: presence, crew feed, ring, debug week, then presence clears'
     await expect(bob.locator('.session-exercise').getByRole('heading', { name: 'Bench press', exact: true })).toBeVisible();
     await expect(page.getByTestId('presence-banner')).toHaveText(QUIET);
     const dock = bob.locator('[data-session-dock]');
-    const weight = dock.getByRole('spinbutton', { name: copy.kg, exact: true });
-    await weight.fill('80');
-    await expect(weight).toHaveValue('80');
+    const weight = dock.getByRole('slider', { name: copy.kg, exact: true });
+    await loadBar(bob, 80);
+    await expect(weight).toHaveAttribute('aria-valuenow', '80');
     await dock.getByRole('button', { name: copy.x4Log, exact: true }).click();
     await expect(bob.getByText(copy.x4SetOne, { exact: true })).toBeVisible();
     await expect(page.getByTestId('presence-banner')).toHaveText(BENCH);

@@ -77,33 +77,35 @@ function fillRun(distance: string, duration: string) {
   fireEvent.change(screen.getByRole('textbox', { name: copy.y6DurationClock }), { target: { value: duration } });
 }
 
-it('shows the copy for each quick-log range error and does not save', async () => {
-  const created = await makeRepo();
-  const cases: { path: string; fill: () => void; id: string; text: string }[] = [
-    { path: '/log/run', fill: () => fillRun('101', '30:00'), id: 'error-distance', text: copy.outOfRange },
-    { path: '/log/run', fill: () => fillRun('0', '30:00'), id: 'error-distance', text: copy.outOfRange },
-    { path: '/log/run', fill: () => fillRun('5', '24:00:00'), id: 'error-duration', text: copy.outOfRange },
-    { path: '/log/run', fill: () => fillRun('5', '0:00'), id: 'error-duration', text: copy.outOfRange },
-    { path: '/log/weight', fill: () => setField(copy.weight, '250.1'), id: 'error-weight', text: copy.outOfRange },
-    { path: '/log/weight', fill: () => setField(copy.weight, '29.9'), id: 'error-weight', text: copy.outOfRange },
-    { path: '/log/min', fill: () => setField(copy.minLabel, 'a'.repeat(41)), id: 'error-min', text: copy.keepTo40 },
-    { path: '/log/min', fill: () => setField(copy.minLabel, ''), id: 'error-min', text: copy.keepTo40 },
-  ];
+// Each invalid draft gets a fresh form/repo and the full no-write assertion.
+const rangeCases: { path: string; fill: () => void; id: string; text: string; n: number }[] = [
+  { n: 1, path: '/log/run', fill: () => fillRun('101', '30:00'), id: 'error-distance', text: copy.outOfRange },
+  { n: 2, path: '/log/run', fill: () => fillRun('0', '30:00'), id: 'error-distance', text: copy.outOfRange },
+  { n: 3, path: '/log/run', fill: () => fillRun('5', '24:00:00'), id: 'error-duration', text: copy.outOfRange },
+  { n: 4, path: '/log/run', fill: () => fillRun('5', '0:00'), id: 'error-duration', text: copy.outOfRange },
+  { n: 5, path: '/log/weight', fill: () => setField(copy.weight, '250.1'), id: 'error-weight', text: copy.outOfRange },
+  { n: 6, path: '/log/weight', fill: () => setField(copy.weight, '29.9'), id: 'error-weight', text: copy.outOfRange },
+  { n: 7, path: '/log/min', fill: () => setField(copy.minLabel, 'a'.repeat(41)), id: 'error-min', text: copy.keepTo40 },
+  { n: 8, path: '/log/min', fill: () => setField(copy.minLabel, ''), id: 'error-min', text: copy.keepTo40 },
+];
 
-  for (const item of cases) {
-    cleanup();
-    renderLog(item.path);
-    if (item.path === '/log/min') {
-      await waitFor(() => {
-        expect((screen.getByRole('textbox', { name: copy.minLabel }) as HTMLInputElement).value).toBe(copy.walk);
-      });
-    } else {
-      expect(await screen.findByRole('button', { name: saveLabel })).toBeTruthy();
-    }
-    item.fill();
-    fireEvent.click(screen.getByRole('button', { name: saveLabel }));
-    expect((await screen.findByTestId(item.id)).textContent).toBe(item.text);
+
+it.each(rangeCases)('shows the copy for each quick-log range error and does not save ($path, $id, case $n)', async (item) => {
+  const created = await makeRepo();
+  // Each independent case must await the same profile that the old loop's
+  // earlier forms happened to give the background pull time to load.
+  await created.sync.pullNow();
+  renderLog(item.path);
+  if (item.path === '/log/min') {
+    await waitFor(() => {
+      expect((screen.getByRole('textbox', { name: copy.minLabel }) as HTMLInputElement).value).toBe(copy.walk);
+    });
+  } else {
+    expect(await screen.findByRole('button', { name: saveLabel })).toBeTruthy();
   }
+  item.fill();
+  fireEvent.click(screen.getByRole('button', { name: saveLabel }));
+  expect((await screen.findByTestId(item.id)).textContent).toBe(item.text);
 
   const entries = await created.q.entriesBetween(MOCK_USER_IDS.alice, '0000-01-01', '9999-12-31');
   expect(entries.cardio).toHaveLength(0);

@@ -73,11 +73,23 @@ test('only set-input focus hides the tabs; they return after blur and workout co
   await logBench(page, 1);
   const dock = page.locator('[data-session-dock]');
   await expect(dock).toBeVisible();
-  const kg = dock.getByRole('spinbutton', { name: copy.kg, exact: true });
+  const kg = dock.getByRole('slider', { name: copy.kg, exact: true });
   await kg.focus();
   await expect(tabs(page)).toBeHidden();
   await kg.blur();
   await expect(tabs(page)).toBeVisible();
+  await dock.getByRole('button', { name: copy.x4Log, exact: true }).focus();
+  await expect(tabs(page)).toBeVisible();
+  // The keyboard fallback is portalled outside the dock; it is still set input.
+  await kg.focus();
+  await kg.press('Enter');
+  const fallback = page.getByRole('dialog', { name: `${copy.y3TypeValue}: ${copy.kg}` });
+  const typedKg = fallback.getByRole('spinbutton', { name: copy.kg, exact: true });
+  await typedKg.focus();
+  await expect(tabs(page)).toBeHidden();
+  await typedKg.blur();
+  await expect(tabs(page)).toBeVisible();
+  await fallback.getByRole('button', { name: copy.y3UseValue, exact: true }).click();
   await dock.getByRole('button', { name: copy.x4Log, exact: true }).focus();
   await expect(tabs(page)).toBeVisible();
   const rack = page.getByRole('button', { name: copy.x4FinishHold, exact: true });

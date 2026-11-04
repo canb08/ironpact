@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { copy } from '../../src/ui/copy.ts';
-import { logBench } from './helpers.ts';
+import { logBench, settleSessionDock } from './helpers.ts';
 import { BENCH, navigate, seedVisuals } from './x11-seed.ts';
 
 test.use({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 1, reducedMotion: 'reduce', timezoneId: 'Europe/Amsterdam' });
@@ -34,19 +34,6 @@ async function capture(page: Page, name: string, scrollTop = true) {
     await mkdir(path.slice(0, path.lastIndexOf('/')), { recursive: true });
     await page.screenshot({ path, animations: 'disabled' });
   }
-}
-
-// The set list intentionally reveals its latest row after two animation frames.
-// Wait for that real layout effect; resetting scroll during capture races it.
-async function settleWorkout(page: Page) {
-  await expect.poll(() => page.evaluate(() => {
-    const row = document.querySelector('[data-current-exercise] .session-set-row:last-child');
-    const dock = document.querySelector('[data-session-dock]');
-    if (!row || !dock) return Infinity;
-    const max = document.documentElement.scrollHeight - innerHeight;
-    const target = Math.max(0, Math.min(max, scrollY + row.getBoundingClientRect().bottom - dock.getBoundingClientRect().top + 12));
-    return Math.abs(scrollY - target);
-  })).toBeLessThanOrEqual(1);
 }
 
 for (const theme of ['dark', 'light'] as const) {
@@ -107,13 +94,13 @@ for (const theme of ['dark', 'light'] as const) {
     await capture(page, `${theme}/train-picker`);
     await logBench(page, 6);
     await expect(page.locator('[data-session-dock]')).toBeVisible();
-    await settleWorkout(page);
+    await settleSessionDock(page);
     await capture(page, `${theme}/train-rest`, false);
     const skip = page.getByRole('button', { name: copy.skip, exact: true });
     await expect(skip).toBeVisible();
     await skip.click();
     await expect(skip).toBeHidden();
-    await settleWorkout(page);
+    await settleSessionDock(page);
     await capture(page, `${theme}/train-six-sets`, false);
     await page.getByRole('button', { name: copy.x4FinishHold, exact: true }).focus();
     await page.keyboard.down('Enter');

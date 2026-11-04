@@ -880,6 +880,17 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   y2NoClass: 'No class yet.',
   y2ComboBook: 'Combo book',
   y2Drilled: '{combo}, drilled {count}',
+  // ── Y3
+  y3TypeValue: 'Type a value',
+  y3UseValue: 'Use value',
+  y3Plates: 'Load plates',
+  y3AddPair: 'Add a pair of {kg} kg plates',
+  y3RemovePair: 'Remove a pair of {kg} kg plates',
+  y3RemovePlates: 'Remove plates',
+  y3PlateHint: 'Tap to add a pair. Hold to remove, or use Remove plates. Arrow keys adjust the dials. Delete removes a focused plate pair.',
+  y3LoadedBar: '{bar} kg bar, {kg} kg total',
+  y3Ghost: 'Next set',
+  y3SameAgain: 'Repeat set',
   // ── Y6
   y6SameAsLast: 'Same as last run',
   y6LiveRun: 'Live run',

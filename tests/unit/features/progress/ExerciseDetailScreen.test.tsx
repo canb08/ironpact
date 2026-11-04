@@ -80,6 +80,9 @@ it('editing a set kg updates the list and the export preview', async () => {
   harness.render(`/exercise/${exercise.value.id}`);
 
   const line = fill(copy.setLine, { index: 1, reps: 5, kg: 80 });
+  // A text readiness check avoids expensive role scans while the history
+  // query is still loading; the accessible-region assertion remains below.
+  await screen.findByText(line);
   const region = within(await screen.findByRole('region', { name: fill(copy.sessionSet, { index: 1 }) }));
   expect(region.getByText(line)).toBeTruthy();
   fireEvent.click(region.getByRole('button', { name: fill(copy.editSet, { index: 1 }) }));
@@ -118,6 +121,9 @@ it('soft-deletes a set and restores it onto the list and the export preview', as
   harness.render(`/exercise/${exercise.value.id}`);
 
   const line = fill(copy.setLine, { index: 1, reps: 5, kg: 80 });
+  // A text readiness check avoids expensive role scans while the history
+  // query is still loading; the accessible-region assertion remains below.
+  await screen.findByText(line);
   const region = within(await screen.findByRole('region', { name: fill(copy.sessionSet, { index: 1 }) }));
   fireEvent.click(region.getByRole('button', { name: fill(copy.deleteEntry, { name: fill(copy.sessionSet, { index: 1 }) }) }));
   await waitFor(() => {
