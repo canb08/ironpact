@@ -240,7 +240,7 @@ it('shows friendly dates, exercise names and one personal volume stat; the last 
   const router = renderFloor();
   await screen.findByTestId('shared-bar');
   expect(screen.getByText(copy.x5Today, { selector: 'time' })).toBeTruthy();
-  expect(screen.getAllByText('400 kg moved this week')).toHaveLength(1);
+  expect(screen.getAllByText((_, element) => element?.matches('.floor-volume') === true && element.textContent === '400 kg moved this week')).toHaveLength(1);
   expect(screen.getAllByText('Today: Bench press 5 × 80 kg')).toHaveLength(2);
   fireEvent.click(screen.getByRole('button', { name: /You: last workout/ }));
   expect(router.state.location.pathname).toBe('/day/2026-11-02');

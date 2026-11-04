@@ -1,5 +1,6 @@
 import { copy } from '../../ui/copy.ts';
-import { BigNumber, Button } from '../../ui';
+import { Button } from '../../ui';
+import { AnimatedNumber } from '../../ui/motion/AnimatedNumber';
 import { barTier, platesAfterDebugClose } from './view.ts';
 import { ForgeFlame } from './ForgeFlame.tsx';
 
@@ -30,7 +31,7 @@ export function BarStrip({
     <section className={`bar-strip${archived ? ' is-archived' : ''}`} aria-label={copy.platesLabel}>
       <div className="bar-strip__main">
         <p className="bar-tier" data-testid={platesTestId ? 'bar-tier' : undefined}>{tier}</p>
-        <BigNumber data-testid={platesTestId} value={shown} unit={copy.platesLabel} size="xl" />
+        <span data-testid={platesTestId} className="ui-number ui-number--xl"><AnimatedNumber value={shown} reduced={reduced} /><span className="ui-number__unit">{copy.platesLabel}</span></span>
         {archived ? <p className="bar-note">{copy.archived}</p> : null}
         {ghost && !debugClose && !archived ? (
           <p className="bar-ghost" data-testid="ghost-plate">{copy.weekTargetHit}</p>

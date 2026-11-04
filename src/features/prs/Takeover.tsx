@@ -1,7 +1,8 @@
 import { Component, Suspense, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import * as m from 'motion/react-m';
 import type { PrEventDraft } from '../../core/prs.ts';
-import { play } from '../../platform/audio.ts';
+import { feel } from '../../ui/feel/feel';
+import { barBend } from '../../ui/motion/weight';
 import { BigNumber, Button, copy, fill } from '../../ui';
 import { AnimatedNumber } from '../../ui/motion/AnimatedNumber.tsx';
 import { createFlashGuard } from '../../ui/motion/flash.ts';
@@ -51,7 +52,7 @@ function Delta({ line }: { line: { text: string; kg: number } }) {
 export function PrMomentSlot({ id, event, onClose }: { id: string; event: PrEventDraft; onClose: () => void }) {
   const dead = useSyncExternalStore(subscribePrGone, () => prMomentGone(id), () => false);
   if (dead) return null;
-  return <Takeover event={event} onClose={onClose} />;
+  return <Takeover key={id} event={event} onClose={onClose} />;
 }
 
 /** Full-screen PR takeover (§3.9.4). Tap anywhere to skip to the final frame. */
@@ -63,28 +64,24 @@ export function Takeover({ event, onClose }: { event: PrEventDraft; onClose: () 
   const [flash] = useState(() => createFlashGuard().allow());
   const played = useRef(false);
   const delta = deltaLine(event);
+  const bar = useRef<SVGSVGElement>(null);
+  const bend = barBend(event.pr_type === 'e1rm' || event.pr_type === 'rep_max' ? event.value : 0);
   const stamp = event.pr_type === 'rep_max' && event.reps === 5 ? copy.prStamp : copy.prNewStamp;
   const final = still || skipped;
 
   useEffect(() => {
-    if (still || played.current) return undefined;
-    if (skipped) {
-      played.current = true;
-      play('pr-riser');
-      return undefined;
-    }
-    const timer = window.setTimeout(() => {
-      if (played.current) return;
-      played.current = true;
-      play('pr-riser');
-    }, PR_SEQUENCE_MS.final);
-    return () => window.clearTimeout(timer);
-  }, [still, skipped]);
+    if (played.current) return;
+    played.current = true;
+    feel('pr', { weightKg: event.value, reducedMotion: still });
+  }, [event.value, still]);
 
   useEffect(() => {
     if (still || skipped) return undefined;
     const timer = window.setTimeout(() => {
-      void firePrConfettiLazy();
+      const origins = [...(bar.current?.querySelectorAll('[data-yellow-plate]') ?? [])].map((node) => {
+        const rect = node.getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      });
+      void firePrConfettiLazy(origins);
     }, PR_SEQUENCE_MS.burst);
     return () => {
       window.clearTimeout(timer);
@@ -109,6 +106,10 @@ export function Takeover({ event, onClose }: { event: PrEventDraft; onClose: () 
     >
       {!final && flash && <div className="pr-takeover__flash" data-flash="impact" aria-hidden="true" />}
       <div className={final ? 'pr-takeover__stage' : 'pr-takeover__stage pr-takeover__stage--shake'}>
+        <svg ref={bar} className="pr-takeover__bar" viewBox="0 0 343 112" aria-hidden="true" style={{ '--pr-bend': `${bend}deg`, '--pr-bend-reverse': `${-bend}deg` } as React.CSSProperties}>
+          <g className="pr-takeover__bar-left"><path d="M 10 56 H 171.5" /><rect data-yellow-plate x="60" y="12" width="24" height="88" rx="3" /></g>
+          <g className="pr-takeover__bar-right"><path d="M 171.5 56 H 333" /><rect data-yellow-plate x="259" y="12" width="24" height="88" rx="3" /></g>
+        </svg>
         <p className="pr-takeover__eyebrow">{prEyebrow(event)}</p>
         <p className="pr-takeover__stamp">{stamp}</p>
         <m.div

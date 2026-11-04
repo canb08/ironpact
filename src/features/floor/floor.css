@@ -70,3 +70,6 @@
   color: var(--text);
   cursor: pointer;
 }
+.week-bar__weeks { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--t-sm); color: var(--text-muted); }
+.week-bar__weeks .ui-button { min-width: 48px; min-height: 48px; }
+.week-bar__loading { min-height: 160px; }
