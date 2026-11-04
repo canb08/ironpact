@@ -47,8 +47,8 @@ describe('P2D session engine', () => {
     expect(open?.mode).toBe('full');
     expect(screen.getAllByRole('heading', { name: exercise.name })).toHaveLength(1);
     expect(screen.getByRole('button', { name: copy.x4Change })).toBeTruthy();
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('80');
-    expect((screen.getByRole('spinbutton', { name: copy.reps }) as HTMLInputElement).value).toBe('5');
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('80');
+    expect(screen.getByRole('slider', { name: copy.reps }).getAttribute('aria-valuenow')).toBe('5');
 
     harness.tick();
     await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
@@ -57,7 +57,7 @@ describe('P2D session engine', () => {
     expect((await harness.repo.q.setsOfSession(open!.id)).map((set) => [set.weight_kg, set.reps, set.rpe])).toEqual([[80, 5, null]]);
 
     harness.tick();
-    await userEvent.click(screen.getByRole('button', { name: fill(copy.increase, { label: copy.kg }) }));
+    fireEvent.keyDown(screen.getByRole('slider', { name: copy.kg }), { key: 'ArrowUp' });
     await userEvent.click(screen.getByRole('button', { name: copy.x4Log }));
     const card = await screen.findByRole('region', { name: copy.prCardLabel });
     expect(card.textContent).toContain(copy.prE1rm);
@@ -65,8 +65,8 @@ describe('P2D session engine', () => {
 
     const heavy = rows().find((row) => row.textContent?.includes('82.5'));
     expect(heavy).toBeTruthy();
-    fireEvent.pointerDown(heavy!, { button: 0, pointerId: 1, clientX: 250, clientY: 100 });
-    fireEvent.pointerUp(heavy!, { pointerId: 1, clientX: 100, clientY: 108 });
+    await userEvent.click(within(heavy!).getByRole('button'));
+    await userEvent.click(screen.getByRole('button', { name: fill(copy.sessionDelete, { index: 2 }) }));
     await waitFor(() => expect(screen.queryByRole('region', { name: copy.prCardLabel })).toBeNull());
     await waitFor(async () => expect(await harness.repo.q.prEvents({ sessionId: open!.id })).toHaveLength(0));
 
@@ -94,10 +94,10 @@ describe('P2D session engine', () => {
     const logSet = vi.spyOn(harness.repo.w, 'logSet');
     const chip = await screen.findByRole('button', { name: '+2.5 → 82.5' });
     expect(screen.getByText(copy.progressionNudge)).toBeTruthy();
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('80');
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('80');
     expect(logSet).not.toHaveBeenCalled();
     await userEvent.click(chip);
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('82.5');
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('82.5');
     expect(logSet).not.toHaveBeenCalled();
   });
 
@@ -126,7 +126,7 @@ describe('P2D session engine', () => {
     await userEvent.click(await screen.findByRole('button', { name: copy.sessionResumeAction }));
     await screen.findByRole('button', { name: copy.x4Log });
     expect(screen.queryByRole('region', { name: copy.readinessTitle })).toBeNull();
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe(String(plan.blocks[0]!.sets[0]!.weight_kg));
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe(String(plan.blocks[0]!.sets[0]!.weight_kg));
   });
 
   it('blocks a second session and offers resume after a remount', async () => {
@@ -179,7 +179,7 @@ describe('P2D session engine', () => {
     unwrap(await harness.repo.w.createExercise({ name: 'Back squat', export_label: 'Back squat', kind: 'lift', category: 'compound', lower_body: true }));
     unwrap(await harness.repo.w.upsertMyProfile({ big_jumps: true }));
     await openSession();
-    await userEvent.click(screen.getByRole('button', { name: fill(copy.increase, { label: copy.kg }) }));
-    expect((screen.getByRole('spinbutton', { name: copy.kg }) as HTMLInputElement).value).toBe('5');
+    fireEvent.keyDown(screen.getByRole('slider', { name: copy.kg }), { key: 'ArrowUp' });
+    expect(screen.getByRole('slider', { name: copy.kg }).getAttribute('aria-valuenow')).toBe('5');
   });
 });

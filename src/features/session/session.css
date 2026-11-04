@@ -100,3 +100,48 @@
 /* Allow intrinsic grid/flex content to shrink and wrap at 200% text. */
 .session-controls > * { min-width: 0; max-width: 100%; }
 .session-steppers .ui-stepper__controls { min-width: 0; max-width: 100%; }
+
+/* Y3: the dials, plates and log action stay together below the optional controls. */
+.session-controls { gap: 4px; padding-top: 8px; }
+.session-dials { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.session-dial { min-width: 0; position: relative; }
+.session-dials .ui-scrub { gap: 0; }
+.session-dials .ui-scrub__control { box-sizing: border-box; width: 100%; min-width: 0; min-height: 56px; padding: 0; align-items: center; }
+.session-dials .ui-scrub__value { font-size: 56px; }
+.session-type { position: absolute; inset: 0; width: 1px; height: 1px; padding: 0; border: 0; clip-path: inset(50%); overflow: hidden; }
+.session-type:focus-visible { position: static; width: 100%; height: 44px; clip-path: none; background: var(--surface-1); color: var(--text); outline: 2px solid var(--text); }
+.session-keyboard { display: grid; gap: 16px; }
+.session-keyboard label { display: grid; gap: 8px; }
+.session-keyboard input { box-sizing: border-box; width: 100%; min-height: 56px; color: var(--text); background: var(--surface-1); font: 600 2.5rem/1 var(--font-number); }
+.session-loader { display: grid; gap: 4px; min-width: 0; }
+.session-mini-bar { position: relative; height: 32px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.session-bar-shaft { position: absolute; inset-inline: 8px; height: 4px; background: var(--steel); }
+.session-bar-label { position: relative; background: var(--surface-2); padding-inline: 8px; font-size: .8125rem; color: var(--text-muted); }
+.session-sleeve { position: absolute; display: flex; align-items: center; gap: 2px; max-width: 36%; overflow: hidden; height: 32px; }
+.session-sleeve--left { right: 64%; flex-direction: row-reverse; --plate-enter: -36px; }
+.session-sleeve--right { left: 64%; --plate-enter: 36px; }
+.session-mini-plate { flex: 0 0 8px; height: var(--plate-height); background: var(--plate-colour); border-radius: 2px; animation: session-plate-load calc(var(--spring-heavy-duration) * var(--plate-mass)) var(--spring-heavy) both; }
+.session-plate-chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.session-plate-chips .session-plate-chip { min-width: 0; min-height: 56px; padding: 0; border-radius: 8px; border: 1px solid var(--line); border-bottom: 6px solid var(--plate-colour); color: var(--text); background: var(--bg); font-size: .9375rem; }
+.session-controls .session-log { min-height: 64px; }
+.session-controls .session-fresh { min-height: 44px; }
+.session-fresh .ui-button { min-height: 44px; padding: 4px 16px; }
+.session-controls::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: var(--plate-red); opacity: 0; pointer-events: none; }
+.session-controls[data-land='1']::before { animation: session-dock-flash-a var(--spring-heavy-duration) var(--spring-heavy); }
+.session-controls[data-land='0']::before { animation: session-dock-flash-b var(--spring-heavy-duration) var(--spring-heavy); }
+.session-set-row--land { animation: session-set-land var(--spring-slam-duration) var(--spring-slam) both; }
+.session-ghost { display: flex; align-items: center; gap: 4px; min-height: 56px; border: 1px dashed var(--line); border-radius: 8px; padding: 4px 8px; color: var(--text-muted); }
+.session-ghost-label { margin-left: auto; font-size: .8125rem; }
+.session-set-row { min-height: 56px; }
+.session-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes session-plate-load { from { transform: translateX(var(--plate-enter)); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes session-set-land { from { transform: translateY(12px) scale(.98); opacity: .45; } to { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes session-dock-flash-a { from { opacity: 1; } to { opacity: 0; } }
+@keyframes session-dock-flash-b { from { opacity: 1; } to { opacity: 0; } }
+.session-controls--instant .session-mini-plate, .session-controls--instant::before { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .session-mini-plate, .session-set-row--land, .session-controls::before { animation: none; }
+}
+@media (max-width: 339px) {
+  .session-plate-chips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

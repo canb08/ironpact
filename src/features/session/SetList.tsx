@@ -3,12 +3,18 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
 import type { Exercise, SetRow } from '../../core/types.ts';
 import { Button, Sheet, Stepper, copy, fill, useToast } from '../../ui';
+import { SPRING_MS } from '../../ui/motion/springs.ts';
 import { uiSchemas } from '../../core/validate.ts';
 import { useSessionWrite } from './useSessionWrite.ts';
 import { revealLatestSet } from './sessionViewport.ts';
 import { WriteFeedback } from './WriteFeedback.tsx';
 
-export function SetList({ sets, exercises, currentExerciseId, onChangeExercise, pending, onDeleted }: {
+export function SetList({ sets, exercises, currentExerciseId, onChangeExercise, pending, onDeleted, ghost, onRepeat, freshId, reduced, busy }: {
+  ghost: { weight_kg: number; reps: number };
+  onRepeat: (row: SetRow) => void;
+  freshId: string | null;
+  reduced: boolean;
+  busy: boolean;
   sets: SetRow[];
   exercises: Exercise[];
   pending: Map<string, boolean>;
@@ -56,7 +62,7 @@ export function SetList({ sets, exercises, currentExerciseId, onChangeExercise, 
   };
   const renderRows = (exerciseId: string) => <ol>{sets.filter((row) => row.exercise_id === exerciseId).map((row, index) => {
         const onPhone = pending.get(row.id) !== false || !row.updated_at;
-        return <li className="session-set-row" key={row.id} aria-label={fill(copy.sessionSet, { index: index + 1 })}
+        return <li className={`session-set-row${row.id === freshId && !reduced ? ' session-set-row--land' : ''}`} style={{ animationDuration: `${SPRING_MS.slam * (.75 + Math.min(500, Math.max(0, row.weight_kg)) / 500)}ms` }} key={row.id} aria-label={fill(copy.sessionSet, { index: index + 1 })}
           onPointerDown={(event) => {
             if (event.button !== 0 || (event.target instanceof Element && event.target.closest('button'))) return;
             gesture.current = { id: row.id, pointer: event.pointerId, x: event.clientX, y: event.clientY };
@@ -68,9 +74,11 @@ export function SetList({ sets, exercises, currentExerciseId, onChangeExercise, 
             const start = gesture.current;
             gesture.current = null;
             if (!start || start.id !== row.id || start.pointer !== event.pointerId) return;
-            const dx = start.x - event.clientX;
+            const dx = event.clientX - start.x;
             const dy = Math.abs(start.y - event.clientY);
-            if (dx >= 64 && dx > dy * 1.5) remove(row);
+            if (busy || write.busy || Math.abs(dx) < 64 || Math.abs(dx) <= dy * 1.5) return;
+            if (dx > 0) onRepeat(row);
+            else { setEditing(row); setEditOpen(true); setInvalid(false); }
           }}>
           <span className="session-set-value"><span className="session-set-index">{index + 1}</span> {row.weight_kg} {copy.kg} × {row.reps}
             {row.rpe !== null && <span className="session-set-rpe">{fill(copy.sessionRpeValue, { value: row.rpe })}</span>}
@@ -99,11 +107,17 @@ export function SetList({ sets, exercises, currentExerciseId, onChangeExercise, 
         <Button className="session-change" variant="secondary" onClick={onChangeExercise}>{copy.x4Change}</Button>
       </div>
       {newestId ? renderRows(currentExerciseId) : <p>{copy.sessionNoSets}</p>}
+      <div className="session-ghost" role="group" aria-label={copy.y3Ghost}>
+        <span className="session-set-index">{sets.filter((row) => row.exercise_id === currentExerciseId).length + 1}</span>
+        <span>{Number.isFinite(ghost.weight_kg) ? ghost.weight_kg : '—'} {copy.kg} × {ghost.reps}</span>
+        <span className="session-ghost-label">{copy.y3Ghost}</span>
+      </div>
     </section>
     <WriteFeedback error={write.error} retry={write.retry} />
   </section>
     <Sheet open={editing !== null} title={editOpen ? copy.x4EditTitle : copy.x4SetMenu} onClose={() => setEditing(null)}>
       {editing && !editOpen && <div className="session-set-menu">
+        <Button variant="secondary" disabled={busy || write.busy} onClick={() => { onRepeat(editing); setEditing(null); }}>{copy.y3SameAgain}</Button>
         <Button variant="secondary" onClick={() => setEditOpen(true)}>{copy.x4Edit}</Button>
         <Button variant="secondary" disabled={write.busy} aria-label={fill(copy.sessionDelete, { index: sets.filter((row) => row.exercise_id === editing.exercise_id).findIndex((row) => row.id === editing.id) + 1 })} onClick={() => remove(editing)}>{copy.x4Delete}</Button>
       </div>}
