@@ -119,10 +119,10 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y1 | Feel kernel: `feel()`, synth sounds, iOS haptic, ScrubDial, CSS springs | Grok Build | E | merged #70 (iOS haptic on-device check still open: WebKit may ignore the switch trick) |
 | Y2 | Muay Thai only: after-class 'Log class' card (2 taps), adjust, combos you remember, combo book | Grok Build | E | merged #75 (Lead ran it on mock: 2 taps → bar 1 of 3, combo book; Lead merged main for the Y6 copy/test conflict; one p7-shell Pixel 7 flake, passed on re-run) |
 | Y3 | Load the bar: plate taps, dials, same again, swipe rows | Codex Sol High | E | merged #79 |
-| Y4 | Rest ritual + full-screen rest | Codex Sol High (Grok out until ~8 Nov) | E | running |
+| Y4 | Rest ritual + full-screen rest | Codex Sol High (Grok out until ~8 Nov) | E | pr open on Y4-work (e2e red: p5-session-375, p6-a11y, p9 Train baselines; Codex 5-h limit, resumes 00:03) |
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | merged #80 (follow-up idea, not a ticket yet: AnimatedNumber for totals in session/stats/crew-feed/progress) |
 | Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
-| Y7 | Voice log (experimental) | Codex Sol High (Grok out until ~8 Nov) | E | running |
+| Y7 | Voice log (experimental) | Codex Sol High (Grok out until ~8 Nov) | E | merged #82 |
 | Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
 
