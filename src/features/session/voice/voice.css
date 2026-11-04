@@ -1,0 +1,11 @@
+/* Share the existing confirmation row so every dial stays in thumb reach. */
+.session-controls:has(> .session-voice) { grid-template-columns: minmax(0, 1fr) 56px; grid-auto-flow: row dense; }
+.session-controls:has(> .session-voice) > :not(.session-voice):not(.session-log) { grid-column: 1 / -1; }
+.session-controls:has(> .session-voice) > .session-log { grid-column: 1; }
+.session-voice { display: contents; }
+.session-voice-mic { grid-column: 2; display: flex; align-items: center; justify-content: center; min-width: 56px; min-height: 64px; padding: 8px; border: 1px solid var(--line); border-radius: 14px; color: var(--text); background: var(--bg); font: inherit; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.session-voice-mic[aria-pressed='true'] { color: var(--rubber); background: var(--chalk); }
+.session-voice-mic:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.session-voice-mic:disabled { opacity: .6; }
+.session-voice-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.session-voice[data-error='true'] .session-voice-status:not(:empty) { inset: auto 16px calc(100% + 8px); width: auto; height: auto; padding: 8px; border: 1px solid var(--line); border-radius: 8px; clip-path: none; white-space: normal; color: var(--text); background: var(--surface-2); font-size: .9375rem; }

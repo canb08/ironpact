@@ -891,6 +891,15 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   y3LoadedBar: '{bar} kg bar, {kg} kg total',
   y3Ghost: 'Next set',
   y3SameAgain: 'Repeat set',
+  // ── Y7
+  y7Hold: 'Hold to talk',
+  y7Listening: 'Listening…',
+  y7Processing: 'Filling next set…',
+  y7Hint: 'Experimental. Hold with your thumb, Space or Enter. Say “ninety by five” or “same again”. Release to fill the next set, then tap Log set to confirm. Escape cancels. Speech may be processed by your browser’s online service.',
+  y7Preview: '{reps} × {kg} kg ready. Tap Log set.',
+  y7Unclear: 'Try “ninety by five”, or use the dials.',
+  y7Blocked: 'Allow microphone access in your browser, or use the dials.',
+  y7Unavailable: 'Voice is unavailable. Use the dials or try again.',
   // ── Y6
   y6SameAsLast: 'Same as last run',
   y6LiveRun: 'Live run',
