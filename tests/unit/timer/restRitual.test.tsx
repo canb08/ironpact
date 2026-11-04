@@ -49,7 +49,10 @@ it('shows the live next ghost set, traps focus, closes with Escape and restores 
   const close = within(dialog).getByRole('button', { name: copy.close });
   close.focus();
   fireEvent.keyDown(document, { key: 'Tab' });
-  expect(document.activeElement).toBe(within(dialog).getByRole('button', { name: copy.restMinus15 }));
+  expect(document.activeElement).toBe(within(dialog).getByRole('button', { name: fill(copy.x4TimerAction, { time: '2:00', action: copy.x4TimerCollapse }) }));
+  fireEvent.click(within(dialog).getByRole('button', { name: fill(copy.x4TimerAction, { time: '2:00', action: copy.x4TimerCollapse }) }));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  fireEvent.click(expand);
   fireEvent.keyDown(document, { key: 'Escape' });
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(document.activeElement).toBe(expand);
@@ -74,6 +77,9 @@ it('swipes up to expand and down to close; cancellation leaves the view unchange
   fireEvent.pointerMove(countdown, { clientY: 320 });
   fireEvent.pointerUp(countdown, { clientY: 320 });
   expect(screen.queryByRole('dialog')).toBeNull();
+  // Keyboard activation must work after a pointer swipe consumed its click.
+  fireEvent.click(bar, { detail: 0 });
+  expect(screen.getByRole('dialog')).toBeTruthy();
   vi.unstubAllGlobals();
 });
 

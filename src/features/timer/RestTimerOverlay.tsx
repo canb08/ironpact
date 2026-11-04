@@ -119,7 +119,7 @@ export function RestTimerOverlay({ reduceMotion, onSkipHold, nextSet }: {
     if (!current || current.id !== event.pointerId) return;
     const delta = current.last - current.y;
     if (!open && delta <= -40) { swiped.current = true; expand(); }
-    else if (open && delta >= 80) close();
+    else if (open && delta >= 80) { swiped.current = true; close(); }
   };
 
   if (state.phase === 'idle' && !asleep) return null;
@@ -139,8 +139,8 @@ export function RestTimerOverlay({ reduceMotion, onSkipHold, nextSet }: {
           aria-label={fill(copy.x4TimerAction, { time: state.label, action: copy.x4TimerExpand })}
           aria-expanded={open} aria-haspopup="dialog" onPointerDown={begin} onPointerMove={move} onPointerUp={end}
           onPointerCancel={() => { swipe.current = null; }} onLostPointerCapture={() => { swipe.current = null; }}
-          onClick={() => { if (!swiped.current) expand(); swiped.current = false; }}>
-          {!open && readout}<span className="rest-timer__expand">{copy.y4Expand}</span>
+          onClick={(event) => { if (event.detail === 0 || !swiped.current) expand(); swiped.current = false; }}>
+          {!open && readout}{' '}<span className="rest-timer__expand">{copy.y4Expand}</span>
         </Button>
         <div className="rest-timer__controls">
           {controls}
@@ -153,8 +153,11 @@ export function RestTimerOverlay({ reduceMotion, onSkipHold, nextSet }: {
       {pulse && !reduce && <div className="rest-timer__pulse" data-testid="rest-pulse" aria-hidden="true" />}
       <MotionReducedContext.Provider value={reduce}><Sheet open={open} onClose={close} title={copy.y4Rest}>
         <div className="rest-full">
-          <div className="rest-full__readout" onPointerDown={begin} onPointerMove={move} onPointerUp={end}
-            onPointerCancel={() => { swipe.current = null; }} onLostPointerCapture={() => { swipe.current = null; }}>{readout}</div>
+          <Button variant="ghost" className="rest-full__readout"
+            aria-label={fill(copy.x4TimerAction, { time: state.label, action: copy.x4TimerCollapse })} aria-expanded
+            onClick={(event) => { if (event.detail === 0 || !swiped.current) close(); swiped.current = false; }}
+            onPointerDown={begin} onPointerMove={move} onPointerUp={end}
+            onPointerCancel={() => { swipe.current = null; }} onLostPointerCapture={() => { swipe.current = null; }}>{readout}</Button>
           {state.phase === 'over' && <p className="rest-timer__next">{copy.y4NextSet}</p>}
           {nextSet && <div className="rest-full__ghost" aria-label={copy.y4NextSet}>
             <p>{copy.y4NextSet}</p><strong>{nextSet.exercise}</strong>

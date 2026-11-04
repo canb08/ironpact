@@ -4,7 +4,8 @@
 .rest-timer__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .rest-timer__readout { flex: 1; justify-content: flex-start; gap: 8px; min-width: 100px; min-height: 56px; padding: 4px; touch-action: none; user-select: none; }
 .rest-timer__chip { font: 600 1.75rem/1 var(--font-number); font-variant-numeric: tabular-nums; }
-.rest-timer__expand { font-size: .8125rem; color: var(--text-muted); }
+.rest-timer__readout .rest-timer__chip { white-space: nowrap; }
+.rest-timer__expand { flex-shrink: 0; white-space: nowrap; font-size: .8125rem; color: var(--text-muted); }
 .rest-timer__controls { display: flex; flex-wrap: wrap; gap: 0; min-width: 0; max-width: 100%; }
 .rest-timer__controls .ui-button { min-width: 56px; min-height: 56px; padding: 8px; font-size: .9375rem; }
 .rest-timer__loaded, .rest-timer__sleep { margin: 0; font-size: .8125rem; color: var(--text-muted); }
@@ -33,3 +34,5 @@
   .rest-timer__progress > div { transition: none; }
   .rest-timer__pulse { display: none; animation: none; }
 }
+/* The rest bar's larger targets use the dock's outer padding, keeping rows visible. */
+.session-controls:has(.rest-timer__bar) { padding-top: 0; padding-bottom: 4px; }
