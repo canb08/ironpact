@@ -21,7 +21,13 @@ const focusable =
 export function Sheet({ open, onClose, title, children }: SheetProps) {
   const titleId = useId();
   const still = useReducedMotion(useMotionReduced()) || document.documentElement.dataset.reducedMotion === 'on';
-  const drag = useRef<{ id: number; start: number; y: number; time: number; velocity: number } | null>(null);
+  const drag = useRef<{
+    id: number;
+    start: number;
+    y: number;
+    samples: Array<{ y: number; at: number }>;
+  } | null>(null);
+  const handle = useRef<HTMLDivElement>(null);
   const animation = useRef<Animation | undefined>(undefined);
   const springToRest = () => {
     const node = panel.current;
@@ -31,30 +37,57 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
     if (!still && from) animation.current = node.animate?.([{ transform: from }, { transform: 'translateY(0)' }],
       { duration: SPRING_MS.ui, easing: SPRING_EASE.ui });
   };
-  const begin = (event: PointerEvent<HTMLHeadingElement>) => {
-    if (event.button !== 0) return;
+  const begin = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || event.isPrimary === false || drag.current) return;
+    // The title is a grab surface, not selectable/draggable text. In WebKit,
+    // letting this default run can transfer the next drag to native scrolling
+    // or HTML drag-and-drop and cancel our pointer stream.
+    event.preventDefault();
     animation.current?.cancel();
+    drag.current = {
+      id: event.pointerId, start: event.clientY, y: event.clientY,
+      samples: [{ y: event.clientY, at: performance.now() }],
+    };
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { id: event.pointerId, start: event.clientY, y: event.clientY, time: event.timeStamp, velocity: 0 };
   };
-  const move = (event: PointerEvent<HTMLHeadingElement>) => {
+  const move = (event: PointerEvent<HTMLDivElement>) => {
     const current = drag.current;
     if (!current || current.id !== event.pointerId) return;
-    const dt = event.timeStamp - current.time;
-    if (dt > 0) current.velocity = (event.clientY - current.y) / dt;
+    event.preventDefault();
+    const at = performance.now();
     current.y = event.clientY;
-    current.time = event.timeStamp;
+    current.samples.push({ y: current.y, at });
+    // Retain a short movement window, including its leading sample. A single
+    // late or stationary pointermove must not overwrite a real flick velocity.
+    while (current.samples.length > 2 && current.samples[1]!.at < at - 80) current.samples.shift();
     if (!still && panel.current) panel.current.style.transform = `translateY(${Math.max(-16, current.y - current.start)}px)`;
   };
-  const end = (event: PointerEvent<HTMLHeadingElement>, cancelled = false) => {
+  const releaseCapture = (event: PointerEvent<HTMLDivElement>, id: number) => {
+    if (event.currentTarget.hasPointerCapture(id)) event.currentTarget.releasePointerCapture(id);
+  };
+  const end = (event: PointerEvent<HTMLDivElement>) => {
     const current = drag.current;
     if (!current || current.id !== event.pointerId) return;
     drag.current = null;
-    const distance = event.clientY - current.start;
-    const velocity = event.timeStamp - current.time < 100 ? current.velocity : 0;
-    if (!cancelled && (distance > Math.max(80, (panel.current?.offsetHeight ?? 400) * 0.25)
-      || distance > 12 && velocity > 0.65)) close.current();
+    releaseCapture(event, current.id);
+    const at = performance.now();
+    const first = current.samples[0]!;
+    const last = current.samples.at(-1)!;
+    const elapsed = at - first.at;
+    const velocity = at - last.at < 100 && elapsed > 0 ? (last.y - first.y) / elapsed : 0;
+    // Use the last tracked position: WebKit's release/cancel coordinates need
+    // not describe the last movement of the captured pointer.
+    const distance = current.y - current.start;
+    if (distance > Math.max(80, (panel.current?.offsetHeight ?? 400) * 0.25)
+      || distance > 12 && velocity > 0.65) close.current();
     else springToRest();
+  };
+  const cancel = (event: PointerEvent<HTMLDivElement>) => {
+    const current = drag.current;
+    if (!current) return;
+    drag.current = null;
+    releaseCapture(event, current.id);
+    springToRest();
   };
   const panel = useRef<HTMLDivElement>(null);
   const backdrop = useRef<HTMLDivElement>(null);
@@ -62,6 +95,22 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
   useEffect(() => {
     close.current = onClose;
   }, [onClose]);
+
+  useEffect(() => {
+    if (!open || !handle.current) return;
+    const grip = handle.current;
+    // React's delegated touch listeners can be passive. Reserve only this
+    // non-scrollable handle with native, explicitly non-passive listeners.
+    const reserveTouch = (event: TouchEvent) => {
+      if (event.cancelable) event.preventDefault();
+    };
+    grip.addEventListener('touchstart', reserveTouch, { passive: false });
+    grip.addEventListener('touchmove', reserveTouch, { passive: false });
+    return () => {
+      grip.removeEventListener('touchstart', reserveTouch);
+      grip.removeEventListener('touchmove', reserveTouch);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open || !panel.current) return;
@@ -142,7 +191,12 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <h2 id={titleId} onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={(event) => end(event, true)}>{title}</h2>
+        <div ref={handle} className="ui-sheet__handle"
+          onPointerDown={begin} onPointerMove={move} onPointerUp={end}
+          onPointerCancel={cancel} onLostPointerCapture={cancel}
+          onDragStart={(event) => event.preventDefault()}>
+          <h2 id={titleId} draggable={false}>{title}</h2>
+        </div>
         <div className="ui-sheet__content">{children}</div>
         <Button variant="secondary" onClick={onClose}>
           {copy.close}

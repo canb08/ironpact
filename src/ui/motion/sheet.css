@@ -1,2 +1,11 @@
-.ui-sheet > h2 { touch-action: none; -webkit-user-select: none; user-select: none; cursor: grab; }
-.ui-sheet > h2:active { cursor: grabbing; }
+/* Keep the existing title geometry, including its bottom margin, as the grip. */
+.ui-sheet__handle { display: flow-root; cursor: grab; }
+.ui-sheet__handle,
+.ui-sheet__handle h2 {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+.ui-sheet__handle:active { cursor: grabbing; }
