@@ -97,3 +97,14 @@
     animation: none;
   }
 }
+.pr-takeover__bar { width: min(100%, 343px); overflow: visible; }
+.pr-takeover__bar path { stroke: var(--steel); stroke-width: 5; }
+.pr-takeover__bar rect { fill: var(--plate-yellow); }
+.pr-takeover__bar-left, .pr-takeover__bar-right { transform-origin: 171.5px 56px; }
+.pr-takeover--play .pr-takeover__bar-left { animation: pr-bend-left var(--spring-heavy-duration) var(--spring-heavy) both; }
+.pr-takeover--play .pr-takeover__bar-right { animation: pr-bend-right var(--spring-heavy-duration) var(--spring-heavy) both; }
+.pr-takeover--play [data-yellow-plate] { animation: pr-plate-slam var(--spring-slam-duration) var(--spring-slam) both; }
+@keyframes pr-bend-left { from { transform: rotate(var(--pr-bend)); } to { transform: rotate(0deg); } }
+@keyframes pr-bend-right { from { transform: rotate(var(--pr-bend-reverse)); } to { transform: rotate(0deg); } }
+@keyframes pr-plate-slam { from { translate: 0 -88px; opacity: 0; } to { translate: 0 0; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pr-takeover__bar * { animation: none !important; } }

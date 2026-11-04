@@ -1,0 +1,20 @@
+/* Snapshots move on the compositor. The shell chrome stays in place. */
+html[data-tab-transition='on'][data-tab-direction] .app-shell__content { view-transition-name: tab-page; }
+html[data-tab-direction='left'] { --tab-enter: 100%; --tab-exit: -100%; }
+html[data-tab-direction='right'] { --tab-enter: -100%; --tab-exit: 100%; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(tab-page) { animation: none; }
+::view-transition-old(tab-page) { animation: tab-exit var(--spring-ui-duration) var(--spring-ui) both; }
+::view-transition-new(tab-page) { animation: tab-enter var(--spring-ui-duration) var(--spring-ui) both; }
+@keyframes tab-enter { from { transform: translateX(var(--tab-enter)); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes tab-exit { from { transform: translateX(0); opacity: 1; } to { transform: translateX(var(--tab-exit)); opacity: 0; } }
+/* Shared-element group geometry is replaced by transform-only keyframes in JS. */
+::view-transition-group(exercise-name), ::view-transition-group(exercise-chart) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+html[data-reduced-motion='on']::view-transition-group(*),
+html[data-reduced-motion='on']::view-transition-old(*),
+html[data-reduced-motion='on']::view-transition-new(*) { animation: none !important; }
+
+::view-transition { pointer-events: none; }

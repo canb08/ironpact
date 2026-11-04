@@ -1,3 +1,4 @@
+import { AnimatedNumber } from './motion/AnimatedNumber';
 import { copy, fill } from './copy';
 
 export interface PlateBarMember {
@@ -40,7 +41,8 @@ export function PlateBar({ members, className = '' }: PlateBarProps) {
       {namedMembers.map((member, index) => <span key={index}>{member.name}</span>)}
     </div>
     <svg viewBox="0 0 343 112" aria-hidden="true" focusable="false">
-      <path d="M 3 56 H 340" className="ui-plate-bar__shaft" />
+      <g data-shaft="left"><path d="M 3 56 H 171.5" className="ui-plate-bar__shaft" /></g>
+      <g data-shaft="right"><path d="M 171.5 56 H 340" className="ui-plate-bar__shaft" /></g>
       <path d="M 155 53 V 59 M 163 53 V 59 M 180 53 V 59 M 188 53 V 59" className="ui-plate-bar__grip" />
       <rect x={140} y={38} width={8} height={36} rx={3} className="ui-plate-bar__collar" />
       <rect x={195} y={38} width={8} height={36} rx={3} className="ui-plate-bar__collar" />
@@ -64,9 +66,7 @@ export function PlateBar({ members, className = '' }: PlateBarProps) {
       })}
     </svg>
     <div className="ui-plate-bar__labels ui-plate-bar__counts" aria-hidden="true">
-      {namedMembers.map((member, index) => <span key={index}>{fill(copy.x1PlateCount, {
-        credits: member.credits, target: member.target,
-      })}</span>)}
+      {namedMembers.map((member, index) => <span key={index}>{fill(copy.x1PlateCount, { credits: '{credits}', target: '{target}' }).split(/(\{credits\}|\{target\})/).map((part, token) => part === '{credits}' ? <AnimatedNumber key={token} value={member.credits} /> : part === '{target}' ? <AnimatedNumber key={token} value={member.target} /> : part)}</span>)}
     </div>
   </div>;
 }

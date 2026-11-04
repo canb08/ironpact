@@ -15,7 +15,8 @@ import { usePresence } from '../duo/usePresence.ts';
 import { barTier, combinedKg, formatRawKg, platesAfterDebugClose, shiftDays } from '../duo/view.ts';
 import { useRepoQuery } from './useRepoQuery.ts';
 import { InstallChip } from './InstallChip.tsx';
-import { SharedBar } from './SharedBar.tsx';
+import { WeekBar } from './WeekBar.tsx';
+import { AnimatedNumber } from '../../ui/motion/AnimatedNumber';
 import '../duo/duo.css';
 import './floor.css';
 
@@ -103,7 +104,7 @@ export default function FloorScreen() {
       archived={duo.archived} inSession={duo.openSession} />
     <p className="floor-date"><time dateTime={me.today}>{friendlyDate(me.today)}</time></p>
     <section className="floor-hero" aria-label={copy.x3SharedBar} data-testid="shared-bar" data-user={me.id} data-partner={partner?.id}>
-      <SharedBar me={me} partner={partner} reduced={duo.reduceMotion || duo.batterySaver} />
+      <WeekBar duo={{ ...duo, me, partners }} weightKg={heaviestWorkingSet(data.last?.sets ?? [])?.weight_kg ?? 20} partnerWeightKg={heaviestWorkingSet(data.partners[0]?.last?.sets ?? [])?.weight_kg ?? 20} />
       {duo.archived ? <p className="floor-note">{copy.x3Archived}</p>
         : !partner ? <p className="floor-note">{copy.x3Invite}</p> : null}
     </section>
@@ -134,8 +135,8 @@ export default function FloorScreen() {
         trailing={<span className="ui-chip ui-chip--pr">{copy.x3Pr}</span>}
         chevron={!!pr.exercise_id} onClick={pr.exercise_id ? () => navigate(`/exercise/${pr.exercise_id}`) : undefined} />)}
     </section>
-    <p className="floor-volume">{fill(copy.x3Volume, { kg: formatRawKg(data.volume) })}</p>
-    {shownPlates >= 1 && <p className="floor-note" data-testid="week-streak">{fill(copy.x3Streak, { count: shownPlates })}</p>}
+    <p className="floor-volume">{copy.x3Volume.split('{kg}').map((part, index) => <span key={index}>{index > 0 && <AnimatedNumber value={data.volume} reduced={duo.reduceMotion} />}{part}</span>)}</p>
+    {shownPlates >= 1 && <p className="floor-note" data-testid="week-streak">{copy.x3Streak.split('{count}').map((part, index) => <span key={index}>{index > 0 && <AnimatedNumber value={shownPlates} reduced={duo.reduceMotion} />}{part}</span>)}</p>}
     {duo.adjusted && <p className="floor-note">{copy.x3Adjusted}</p>}
     {debugClose && <p className="floor-note" role="status" data-testid="debug-week">{copy.x3DebugWeek}</p>}
     <InstallChip />

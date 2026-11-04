@@ -6,7 +6,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { detectSetPr, type PrEventDraft, type PrHistory } from '../../../../src/core/prs.ts';
 import type { Session, SetRow } from '../../../../src/core/types.ts';
-import { firePrConfetti, PR_CHALK_COUNT, PR_CONFETTI_TOTAL, PR_SPARK_COUNT, setPrBurstForTests } from '../../../../src/features/prs/confetti.ts';
+import { firePrConfettiLazy, resetPrConfetti, setPrBurstForTests } from '../../../../src/features/prs/confetti.ts';
+import { CHALK_COUNT } from '../../../../src/features/prs/chalk.ts';
 import { PrCard } from '../../../../src/features/prs/PrCard.tsx';
 import { PR_FLASH_MS, prSequenceRespectsFlashCap } from '../../../../src/features/prs/sequence.ts';
 import { Takeover } from '../../../../src/features/prs/Takeover.tsx';
@@ -130,21 +131,10 @@ describe('PR takeover', () => {
   it('fires at most 120 particles and at most 3 flashes per second', async () => {
     expect(prSequenceRespectsFlashCap()).toBe(true);
     expect(PR_FLASH_MS.length).toBeLessThanOrEqual(3);
-    const calls: { particleCount?: number; gravity?: number; colors?: string[]; disableForReducedMotion?: boolean }[] = [];
-    const fire = Object.assign(async (options?: { particleCount?: number; gravity?: number; colors?: string[]; disableForReducedMotion?: boolean }) => {
-      calls.push(options ?? {});
-      return undefined;
-    }, { shapeFromPath: () => ({ type: 'path' }), reset() {} });
-    const total = await firePrConfetti(fire, 'circle');
-    expect(total).toBe(PR_CONFETTI_TOTAL);
-    expect(total).toBeLessThanOrEqual(120);
-    expect(calls.reduce((sum, row) => sum + (row.particleCount ?? 0), 0)).toBe(PR_CHALK_COUNT + PR_SPARK_COUNT);
-    expect(calls.every((row) => row.gravity === 0.4 && row.disableForReducedMotion === true)).toBe(true);
-    expect(calls[0]?.colors).toEqual(['#F2F0EB']);
-    expect(calls[1]?.colors).toEqual(['#FF4D00']);
-    expect(calls[1]?.particleCount).toBe(PR_SPARK_COUNT);
+    expect(CHALK_COUNT).toBeGreaterThan(0);
+    expect(CHALK_COUNT).toBeLessThanOrEqual(120);
 
-    const burst = vi.fn(async () => PR_CONFETTI_TOTAL);
+    const burst = vi.fn(async () => CHALK_COUNT);
     setPrBurstForTests(burst);
     render(
       <MotionProvider>
@@ -156,13 +146,25 @@ describe('PR takeover', () => {
     expect(document.querySelector('canvas')).toBeNull();
   });
 
-  it('keeps motion and canvas-confetti out of the static card and the entry graph', () => {
+  it('never loads a burst in battery saver or profile reduced motion, and cancels safely', async () => {
+    const burst = vi.fn(async () => CHALK_COUNT);
+    setPrBurstForTests(burst);
+    for (const flag of ['batterySaver', 'reducedMotion']) {
+      document.documentElement.dataset[flag] = 'on';
+      expect(await firePrConfettiLazy()).toBe(0);
+      delete document.documentElement.dataset[flag];
+    }
+    expect(burst).not.toHaveBeenCalled();
+    resetPrConfetti();
+  });
+
+  it('keeps motion and the chalk canvas out of the static card and the entry graph', () => {
     const card = readFileSync('src/features/prs/PrCard.tsx', 'utf8');
     const burst = readFileSync('src/features/prs/confetti.ts', 'utf8');
     expect(card).toContain("import('./arm.ts')");
     expect(card).not.toContain('canvas-confetti');
     expect(card).not.toContain('motion/react');
-    expect(burst).toContain("import('canvas-confetti')");
+    expect(burst).toContain("import('./chalk')");
     expect(burst).not.toMatch(/from\s+['"]canvas-confetti['"]/);
     expect(burst).not.toMatch(/import\s+['"]canvas-confetti['"]/);
   });
