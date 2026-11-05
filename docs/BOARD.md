@@ -123,7 +123,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | merged #80 (follow-up idea, not a ticket yet: AnimatedNumber for totals in session/stats/crew-feed/progress) |
 | Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
 | Y7 | Voice log (experimental) | Codex Sol High (Grok out until ~8 Nov) | E | merged #82 |
-| Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High (owner's) | **C** | **TAKEN OVER by lane C 2026-11-05 18:40 at Can's request — running on Can's Codex. Lane E: do NOT fire Y8; tell Eytan lane C started it.** |
+| Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High (owner's) | C | merged #83 by lane C (Can's request) — all 3 ack conditions built + tested; CI db job now starts storage-api. **Lane E: Y9 is unblocked and yours.** |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
 
 **Midnight test bug (2026-11-03 00:45):** `ExerciseDetailScreen.test.tsx` used a UTC date while the screen labels Today in local time (red between local 00:00 and 01:00). Fixed on main by lane C in X8 (#73, profile timezone); lane E's duplicate fix was dropped in the merge.
