@@ -123,7 +123,7 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 | Y5 | Motion pass: tabs, list→detail, sheets, lockout, PR, shockwave | Codex Sol High | E | merged #80 (follow-up idea, not a ticket yet: AnimatedNumber for totals in session/stats/crew-feed/progress) |
 | Y6 | Runs: dials, live pace, same as last, live run | Grok Build | E | merged #72 (Lead ran it at 375×812 on mock: wheel drag 5.0→5.6 km, live pace; round 2 layout polish, round 3 contrast) |
 | Y7 | Voice log (experimental) | Codex Sol High (Grok out until ~8 Nov) | E | merged #82 |
-| Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | **waiting for lane C ack** (shared data contract) + friend's Codex |
+| Y8 | Proof data: together links, photo bucket + RLS, offline upload (L21) | Codex Sol High | E | lane C acked 2026-11-05 (3 conditions below) — waits for friend's Codex |
 | Y9 | Proof screens: together/photo prompt, Proof tab, viewer | Codex/Grok | E | queued (after Y8, Y2) |
 
 **Midnight test bug (2026-11-03 00:45):** `ExerciseDetailScreen.test.tsx` used a UTC date while the screen labels Today in local time (red between local 00:00 and 01:00). Fixed on main by lane C in X8 (#73, profile timezone); lane E's duplicate fix was dropped in the merge.
@@ -147,3 +147,5 @@ Order: **Y1 now** → Y2 + Y6 (after X3) → Y3 (after X4) → Y4 + Y7 (after Y3
 - Keep-alive must touch the **database**, not just the `health` function (R1 #9: only DB/API activity is documented to stop the free-tier pause) → at G1 point `HEALTH_URL` at a PostgREST read (e.g. `/rest/v1/exercises?select=id&limit=1` with the anon `apikey` header) or make `health` run `select 1`.
 - Email: **no custom SMTP** (L6). At G1: invite the friend to the Supabase organization so built-in mail reaches him.
 - Installed iOS app does **not** share Safari storage or open at `/join/<CODE>` (R1 #5) → B3 must show the code big with Copy/Paste/typing.
+
+**Lane C ack (owner's Lead, 2026-11-05):** L20 order note: fine, nothing to undo; Y5 refreshes the X11 baselines it changes. **L21 / Y8 acked** with three conditions for the Y8 PR: (1) `proof_links` insert policy checks the linked entry belongs to `auth.uid()` (no linking someone else's set/run); (2) removing a photo deletes the storage object in the same flow, not just `deleted_at` (L21 privacy line); (3) the bucket's 5 MB + jpeg/webp limits are enforced server-side and pgTAP covers a stranger uploading into another crew's path. Y9's 5th tab in the X2 shell: OK.
