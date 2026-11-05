@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useSyncExternalStore } from 'react';
-import { haptic } from '../../platform/haptics.ts';
+import { feel } from '../../ui/feel/feel.ts';
 import { keepAwake } from '../../platform/wakeLock.ts';
 import { copy } from '../../ui/copy.ts';
 import {
@@ -35,7 +35,7 @@ export { defaultRestSeconds, COMPOUND_REST_SECONDS, ISOLATION_REST_SECONDS } fro
  * ```
  *
  * Mount one `<RestTimerOverlay />` in the session dock. It contains the slim
- * readout and ±15 / Skip controls; tapping its readout expands it in place.
+ * readout and ±15 / Skip controls; tapping or swiping its readout opens full-screen rest.
  * Pass `reduceMotion` from the profile; otherwise it reads the device preference.
  *
  * Wake lock: call `keepAwake()` from `src/platform/wakeLock.ts` inside the
@@ -44,11 +44,7 @@ export { defaultRestSeconds, COMPOUND_REST_SECONDS, ISOLATION_REST_SECONDS } fro
  * should stay awake. Call `releaseKeepAwake()` on RACK IT. Read
  * `screenMaySleep()` for the "Screen may sleep." chip; the overlay already shows it.
  *
- * Haptics: call `setHapticsOn(profile.haptics_on)` when the profile loads
- * (default true). At zero the timer calls `haptic('timerZero')` — Android
- * `[80,60,80,60,200]`, no-op when the flag is off or `navigator.vibrate` is
- * missing. P2D can call `haptic('setLogged')` and `haptic('pr')` for the other
- * D16 patterns. No sound in this phase.
+ * Feedback: the feel kernel owns the ten-second tick and completion bell.
  */
 export const REST_TIMER_STORAGE_KEY = 'ironpact.rest-timer';
 const TICK_MS = 250;
@@ -64,6 +60,8 @@ export interface RestTimerView {
   label: string;
   live: string;
   showLoaded: boolean;
+  pulse: boolean;
+  progress: number;
 }
 
 export interface RestTimerApi {
@@ -86,6 +84,7 @@ let snapshot: RestSnapshot = { timer: state, live: liveMessage, now: 0 };
 let announcedFor: number | null = null;
 let announcedTen = false;
 let announcedZero = false;
+let zeroPulse = false;
 let ticker = 0;
 const listeners = new Set<() => void>();
 
@@ -149,6 +148,7 @@ function noteClock(now: number): void {
     announcedFor = state.startedAt;
     announcedTen = false;
     announcedZero = false;
+    zeroPulse = false;
     liveMessage = '';
   }
   if (state.endsAt === null) return;
@@ -156,11 +156,12 @@ function noteClock(now: number): void {
   if (left === 10 && !announcedTen) {
     announcedTen = true;
     liveMessage = copy.restTenSeconds;
+    feel('tick');
   }
   if (left === 0 && !announcedZero) {
     announcedZero = true;
     liveMessage = copy.restOverAnnounce;
-    haptic('timerZero');
+    feel('round', { pulse: ({ instant }) => { zeroPulse = !instant; } });
   }
 }
 
@@ -192,6 +193,9 @@ export function subscribeRest(listener: () => void): () => void {
 export function toView(timer: RestTimer, now: number, live = ''): RestTimerView {
   return {
     phase: phaseOf(timer, now),
+    pulse: zeroPulse,
+    progress: timer.endsAt === null || timer.startedAt === null ? 0
+      : Math.min(1, Math.max(0, (now - timer.startedAt) / Math.max(1, timer.endsAt - timer.startedAt))),
     exerciseId: timer.exerciseId,
     endsAt: timer.endsAt,
     startedAt: timer.startedAt,

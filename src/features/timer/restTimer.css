@@ -1,15 +1,38 @@
 .rest-timer { min-width: 0; border-top: 1px solid var(--line); }
-.rest-timer__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.rest-timer__readout { flex: 1; justify-content: flex-start; min-width: 72px; padding: 4px; }
+.rest-timer__progress { height: 4px; overflow: hidden; background: var(--line); }
+.rest-timer__progress > div { height: 100%; background: var(--plate-red); transform-origin: left; transition: transform var(--spring-ui-duration) var(--spring-ui); }
+.rest-timer__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.rest-timer__readout { flex: 1; justify-content: flex-start; gap: 8px; min-width: 100px; min-height: 56px; padding: 4px; touch-action: none; user-select: none; }
 .rest-timer__chip { font: 600 1.75rem/1 var(--font-number); font-variant-numeric: tabular-nums; }
-.rest-timer__controls { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; max-width: 100%; }
-.rest-timer__controls .ui-button { min-width: 44px; min-height: 44px; padding: 8px; font-size: .9375rem; }
-.rest-timer--expanded .rest-timer__bar { flex-wrap: wrap; }
-.rest-timer--expanded .rest-timer__readout { flex-basis: 100%; justify-content: center; }
-.rest-timer--expanded .rest-timer__chip { font-size: 3.5rem; }
-.rest-timer--expanded .rest-timer__controls { width: 100%; justify-content: center; }
+.rest-timer__readout .rest-timer__chip { white-space: nowrap; }
+.rest-timer__expand { flex-shrink: 0; white-space: nowrap; font-size: .8125rem; color: var(--text-muted); }
+.rest-timer__controls { display: flex; flex-wrap: wrap; gap: 0; min-width: 0; max-width: 100%; }
+.rest-timer__controls .ui-button { min-width: 56px; min-height: 56px; padding: 8px; font-size: .9375rem; }
 .rest-timer__loaded, .rest-timer__sleep { margin: 0; font-size: .8125rem; color: var(--text-muted); }
+.rest-timer__next { margin: 0; font-weight: 600; }
 .rest-timer__live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.rest-timer__pulse { position: fixed; inset: 0; z-index: 30; pointer-events: none; background: var(--plate-green); animation: rest-timer-pulse 300ms linear forwards; }
-@keyframes rest-timer-pulse { 0%, 100% { opacity: 0; } 50% { opacity: .2; } }
-@media (prefers-reduced-motion: reduce) { .rest-timer__pulse { display: none; animation: none; } }
+/* The positioned dock contains the pulse. It never obscures or intercepts input. */
+.rest-timer__pulse { position: absolute; inset: 0; pointer-events: none; border-radius: 14px; background: var(--plate-red); animation: rest-timer-pulse 300ms var(--spring-ui) forwards; }
+@keyframes rest-timer-pulse { 0%, 100% { opacity: 0; } 50% { opacity: .16; } }
+.ui-sheet:has(.rest-full) { position: fixed; inset: 0; box-sizing: border-box; width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none; border-radius: 0; padding: max(16px, env(safe-area-inset-top)) 0 max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; }
+.ui-sheet:has(.rest-full) .ui-sheet__handle { flex: 0 0 auto; min-height: 56px; padding-inline: 24px; }
+.ui-sheet:has(.rest-full) .ui-sheet__content { flex: 1; min-height: 0; overflow: auto; padding: 0; }
+.ui-sheet:has(.rest-full) > .ui-button { flex: 0 0 auto; min-height: 56px; margin-inline: 16px; }
+.rest-full { min-height: 100%; display: flex; flex-direction: column; text-align: center; }
+.rest-full__readout { touch-action: none; user-select: none; flex: 1; display: grid; place-items: center; padding: 24px 16px; }
+.rest-full__readout .rest-timer__chip { font-size: clamp(4rem, 22vw, 10rem); overflow-wrap: anywhere; }
+.rest-full__ghost { border-block: 1px dashed var(--line); padding: 16px; display: grid; gap: 8px; }
+.rest-full__ghost p { margin: 0; color: var(--text-muted); font-size: .9375rem; }
+.rest-full__ghost span { font: 600 1.75rem/1.2 var(--font-number); }
+.rest-full__targets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: auto; }
+.rest-full__targets .ui-button { min-width: 0; min-height: max(112px, 20dvh); border-radius: 0; font: 600 3.5rem/1 var(--font-number); border-bottom: 1px solid var(--line); }
+.rest-full__targets .ui-button + .ui-button { border-left: 1px solid var(--line); }
+.rest-full > .ui-button { min-height: 56px; margin: 8px 16px 0; }
+.rest-timer--instant .rest-timer__progress > div { transition: none; }
+.rest-timer--instant .rest-timer__pulse { display: none; animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rest-timer__progress > div { transition: none; }
+  .rest-timer__pulse { display: none; animation: none; }
+}
+/* The rest bar's larger targets use the dock's outer padding, keeping rows visible. */
+.session-controls:has(.rest-timer__bar) { padding-top: 0; padding-bottom: 4px; }

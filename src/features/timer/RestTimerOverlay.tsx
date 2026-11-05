@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from 'react';
 import { screenMaySleep, subscribeScreenMaySleep } from '../../platform/wakeLock.ts';
+import { Sheet } from '../../ui/Sheet.tsx';
+import { MotionReducedContext, useMotionReduced } from '../../ui/motion/reduced-context.ts';
+import { useReducedMotion } from '../../ui/motion/reduced.ts';
+import { feel } from '../../ui/feel/feel.ts';
 import { Button, copy, fill } from '../../ui/index.ts';
 import { useRestTimer } from './useRestTimer.ts';
 import './restTimer.css';
@@ -56,43 +60,113 @@ function SkipButton({ onSkip, onSkipHold }: { onSkip: () => void; onSkipHold?: (
   );
 }
 
-/** One readout, kept in the dock; expanding changes its size rather than duplicating it. */
-export function RestTimerOverlay({ reduceMotion, onSkipHold }: { part?: RestTimerPart; reduceMotion?: boolean; onSkipHold?: () => void }) {
+interface NextSet {
+  exercise: string;
+  weightKg: number;
+  reps: number;
+  bodyweight?: boolean;
+}
+
+/** One timestamp-derived readout, presented in the dock or in the full-screen sheet. */
+export function RestTimerOverlay({ reduceMotion, onSkipHold, nextSet }: {
+  part?: RestTimerPart;
+  reduceMotion?: boolean;
+  onSkipHold?: () => void;
+  nextSet?: NextSet;
+}) {
   const { state, adjust, skip } = useRestTimer();
   const asleep = useSyncExternalStore(subscribeScreenMaySleep, screenMaySleep, () => false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState<number | null>(null);
   const [pulse, setPulse] = useState(false);
   const pulsedFor = useRef<number | null>(null);
-  const reduce = reduceMotion ?? (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const swipe = useRef<{ id: number; y: number; last: number } | null>(null);
+  const swiped = useRef(false);
+  const profileReduced = useMotionReduced();
+  const reduce = useReducedMotion(reduceMotion || profileReduced);
+  const open = expanded !== null && expanded === state.startedAt && state.phase !== 'idle';
 
+  const expand = () => { feel('tick'); setExpanded(state.startedAt); };
+  const close = () => { feel('tick'); setExpanded(null); };
+  const shift = (seconds: 15 | -15) => { adjust(seconds); feel('tick'); };
+  const skipWithFeel = () => { skip(); setExpanded(null); feel('tick'); };
+
+  // The kernel earns the pulse at zero. Rendering never triggers another bell.
   useEffect(() => {
-    if (reduce || state.phase !== 'over' || state.overSeconds > 0 || state.endsAt === null || pulsedFor.current === state.endsAt) return;
-    pulsedFor.current = state.endsAt;
+    if (reduce || !state.pulse || state.phase !== 'over' || state.overSeconds > 0 || state.startedAt === null || pulsedFor.current === state.startedAt) return;
+    pulsedFor.current = state.startedAt;
     setPulse(true);
-  }, [reduce, state.phase, state.overSeconds, state.endsAt]);
+  }, [reduce, state.pulse, state.phase, state.overSeconds, state.startedAt]);
   useEffect(() => {
     if (!pulse) return;
     const id = window.setTimeout(() => setPulse(false), 300);
     return () => window.clearTimeout(id);
   }, [pulse]);
 
+  const begin = (event: PointerEvent<HTMLElement>) => {
+    if (event.button !== 0 || event.isPrimary === false) return;
+    event.preventDefault();
+    if (!open) event.currentTarget.focus();
+    swipe.current = { id: event.pointerId, y: event.clientY, last: event.clientY };
+    swiped.current = false;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const move = (event: PointerEvent<HTMLElement>) => {
+    if (swipe.current?.id === event.pointerId) swipe.current.last = event.clientY;
+  };
+  const end = (event: PointerEvent<HTMLElement>) => {
+    const current = swipe.current;
+    swipe.current = null;
+    if (!current || current.id !== event.pointerId) return;
+    const delta = current.last - current.y;
+    if (!open && delta <= -40) { swiped.current = true; expand(); }
+    else if (open && delta >= 80) { swiped.current = true; close(); }
+  };
+
   if (state.phase === 'idle' && !asleep) return null;
-  return <section className={`rest-timer${expanded ? ' rest-timer--expanded' : ''}`} aria-label={copy.restTimerLabel}>
+  const readout = <span className="rest-timer__chip">{state.label}</span>;
+  const controls = <>
+    <Button variant="ghost" onClick={() => shift(-15)}>{copy.restMinus15}</Button>
+    <Button variant="ghost" onClick={() => shift(15)}>{copy.restPlus15}</Button>
+  </>;
+  return <section className={`rest-timer${reduce ? ' rest-timer--instant' : ''}`} aria-label={copy.restTimerLabel}>
     {state.phase !== 'idle' && <>
+      <div className="rest-timer__progress" role="progressbar" aria-label={copy.y4RestProgress}
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(state.progress * 100)}>
+        <div style={{ transform: `scaleX(${state.progress})` }} />
+      </div>
       <div className="rest-timer__bar">
-        <Button className="rest-timer__readout" variant="ghost" aria-label={fill(copy.x4TimerAction, { time: state.label, action: expanded ? copy.x4TimerCollapse : copy.x4TimerExpand })}
-          aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-          <span className="rest-timer__chip">{state.label}</span>
+        <Button className="rest-timer__readout" variant="ghost"
+          aria-label={fill(copy.x4TimerAction, { time: state.label, action: copy.x4TimerExpand })}
+          aria-expanded={open} aria-haspopup="dialog" onPointerDown={begin} onPointerMove={move} onPointerUp={end}
+          onPointerCancel={() => { swipe.current = null; }} onLostPointerCapture={() => { swipe.current = null; }}
+          onClick={(event) => { if (event.detail === 0 || !swiped.current) expand(); swiped.current = false; }}>
+          {!open && readout}{' '}<span className="rest-timer__expand">{copy.y4Expand}</span>
         </Button>
         <div className="rest-timer__controls">
-          <Button variant="ghost" onClick={() => adjust(-15)}>{copy.restMinus15}</Button>
-          <Button variant="ghost" onClick={() => adjust(15)}>{copy.restPlus15}</Button>
-          <SkipButton onSkip={skip} onSkipHold={onSkipHold} />
+          {controls}
+          <SkipButton onSkip={skipWithFeel} onSkipHold={onSkipHold} />
         </div>
       </div>
+      {state.phase === 'over' && <p className="rest-timer__next">{copy.y4NextSet}</p>}
       {state.showLoaded && <p className="rest-timer__loaded">{copy.restComplete}</p>}
       <div className="rest-timer__live" role="status" aria-live="polite">{state.live}</div>
       {pulse && !reduce && <div className="rest-timer__pulse" data-testid="rest-pulse" aria-hidden="true" />}
+      <MotionReducedContext.Provider value={reduce}><Sheet open={open} onClose={close} title={copy.y4Rest}>
+        <div className="rest-full">
+          <Button variant="ghost" className="rest-full__readout"
+            aria-label={fill(copy.x4TimerAction, { time: state.label, action: copy.x4TimerCollapse })} aria-expanded
+            onClick={(event) => { if (event.detail === 0 || !swiped.current) close(); swiped.current = false; }}
+            onPointerDown={begin} onPointerMove={move} onPointerUp={end}
+            onPointerCancel={() => { swipe.current = null; }} onLostPointerCapture={() => { swipe.current = null; }}>{readout}</Button>
+          {state.phase === 'over' && <p className="rest-timer__next">{copy.y4NextSet}</p>}
+          {nextSet && <div className="rest-full__ghost" aria-label={copy.y4NextSet}>
+            <p>{copy.y4NextSet}</p><strong>{nextSet.exercise}</strong>
+            <span>{fill(nextSet.bodyweight ? copy.y4GhostBodyweight : copy.y4GhostSet, { kg: nextSet.weightKg, reps: nextSet.reps })}</span>
+          </div>}
+          <div className="rest-full__targets">{controls}</div>
+          <SkipButton onSkip={skipWithFeel} onSkipHold={onSkipHold} />
+        </div>
+      </Sheet></MotionReducedContext.Provider>
     </>}
     {asleep && <p className="rest-timer__sleep">{copy.screenMaySleep}</p>}
   </section>;

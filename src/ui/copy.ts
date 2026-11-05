@@ -947,6 +947,13 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
   x7Min: 'MIN, {description}',
   x7WeighIn: 'Weigh-in {kg} kg',
   x7Warmup: 'Warm-up',
+  // ── Y4 · Rest ritual
+  y4Rest: 'Rest',
+  y4Expand: 'Expand',
+  y4NextSet: 'Next set',
+  y4GhostSet: '{kg} kg × {reps}',
+  y4GhostBodyweight: '{reps} reps, bodyweight + {kg} kg',
+  y4RestProgress: 'Rest elapsed',
 } as const;
 
 type Placeholders<T extends string> = T extends `${string}{${infer Key}}${infer Rest}`
