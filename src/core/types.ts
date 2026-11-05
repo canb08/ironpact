@@ -180,6 +180,9 @@ export const SYNCED_TABLES = [
   'reactions',
   'goals',
   'challenges',
+  'proof_cards',
+  'proof_links',
+  'proof_photos',
 ] as const;
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
 
@@ -196,3 +199,37 @@ export const PULLED_TABLES = [
 export type PulledTable = (typeof PULLED_TABLES)[number];
 
 export type Result<T, E extends string> = { ok: true; value: T } | { ok: false; error: E };
+
+// L21 / Y8: Proof uses the existing ordered outbox without changing workout rows.
+export type ProofKind = 'lift' | 'run' | 'muay_thai';
+export interface ProofEntryRef { table: 'sessions' | 'sets' | 'cardio_entries' | 'martial_entries'; id: Uuid }
+export interface ProofFields {
+  id: Uuid;
+  client_updated_at: Instant;
+  updated_at?: Instant;
+  created_at: Instant;
+  deleted_at: Instant | null;
+}
+export interface ProofCard extends ProofFields {
+  crew_id: Uuid;
+  day: LocalDate;
+  kind: ProofKind;
+  together: boolean;
+  caption: string | null;
+  created_by: Uuid;
+}
+export interface ProofLink extends ProofFields {
+  card_id: Uuid;
+  entry_table: ProofEntryRef['table'];
+  entry_id: Uuid;
+  user_id: Uuid;
+}
+export interface ProofPhoto extends ProofFields {
+  card_id: Uuid;
+  user_id: Uuid;
+  storage_path: string;
+  width: number;
+  height: number;
+  bytes: number;
+}
+export interface ProofCardWithMedia extends ProofCard { links: ProofLink[]; photos: ProofPhoto[] }

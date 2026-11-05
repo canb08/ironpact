@@ -143,3 +143,22 @@ export function disciplineInNamespaceSchema(liftLabels: readonly string[]) {
   const taken = new Set(liftLabels.map((s) => s.toLowerCase()));
   return disciplineSchema.refine((s) => !taken.has(s.toLowerCase()));
 }
+
+// Y8: only the new Proof shapes are added to the frozen validation contract.
+const proofFields = {
+  id: uuid, client_updated_at: instantSchema, updated_at: instantSchema.optional(),
+  created_at: instantSchema, deleted_at: instantSchema.nullable(),
+};
+export const proofCardSchema = z.object({
+  ...proofFields, crew_id: uuid, day: localDateSchema,
+  kind: z.enum(['lift', 'run', 'muay_thai']), together: z.boolean(),
+  caption: text(0, 80).nullable(), created_by: uuid,
+});
+export const proofLinkSchema = z.object({
+  ...proofFields, card_id: uuid, user_id: uuid,
+  entry_table: z.enum(['sessions', 'sets', 'cardio_entries', 'martial_entries']), entry_id: uuid,
+});
+export const proofPhotoSchema = z.object({
+  ...proofFields, card_id: uuid, user_id: uuid, storage_path: z.string(),
+  width: z.int().min(1).max(1600), height: z.int().min(1).max(1600), bytes: z.int().min(1).max(5_000_000),
+});

@@ -3800,3 +3800,74 @@ On 200, REPLACE my whole SPOTTER section (past days can be edited or deleted). N
 - The badge count = unseen partner PRs + unseen hype. It is cleared on Crew open.
 - It never counts missed days, the outbox or anything you owe. That is a §3.12 ban.
 - Feature-detect it, and do nothing if it is missing.
+## Proof data (L21 / Y8)
+
+Proof is additive: workout tables and `sessions.together_id` are unchanged. The
+private `proof` bucket stores JPEG/WebP with a server-enforced **5,000,000 byte**
+limit. Paths are `<crew_id>/<card_id>/<user_id>.jpg` (the client always encodes
+JPEG). Bucket settings live in migration `0012_proof.sql`, so reset and hosted
+migration apply the same limits. No Edge Function is added.
+
+- `proof_cards`: id, crew_id, day, kind (`lift|run|muay_thai`), together, nullable
+  caption (80 Unicode code points), created_by, created_at, client_updated_at,
+  updated_at, deleted_at. Crew members read; only the creator changes the caption
+  or deletes the card. Identity, crew, day, kind and creator cannot be updated.
+- `proof_links`: id, card_id, entry_table (`sessions|sets|cardio_entries|martial_entries`),
+  entry_id, user_id and the same timestamps. Links are immutable and idempotent.
+  INSERT requires both `user_id = auth.uid()` and an actual live entry owned by
+  that authenticated user, matching the card's date and kind. Lift sessions must
+  be gym sessions; fight entries must be Muay Thai. Each person adds their own
+  link; nobody inserts a partner's link on their behalf.
+- `proof_photos`: id, card_id, user_id, storage_path, width, height, bytes and the
+  same timestamps. There is exactly one identity per `(card_id,user_id)`, even
+  after removal. Replacement and re-add reuse it. A together card admits one
+  photo from each person; a solo card admits only its creator's photo. Crew
+  members read; only the photo owner can replace/remove it or write its path.
+
+The approved `Repo.proof` seam exposes `listCards('YYYY-MM')` (cards with links
+and photo metadata), `createOrJoinCard({kind,day,together,entryRef:{table,id}})`,
+`setCaption(cardId,caption)`, `addPhoto(cardId,blob)`, `removePhoto(photoId)` and
+`photoUrl(photoId)`. Writes return the existing Result shape plus Proof errors
+`no_crew|not_owner|invalid_entry|invalid_image`. `Repo.w` and existing queries
+retain their behavior. `Remote.proofStorage` isolates upload, removal and signed
+URLs for the Supabase and mock adapters.
+
+Together IDs are UUIDv5 of crew, day and kind; solo IDs also include the user.
+Both devices can create the same together card while offline. On reconnect an
+insert conflict joins the canonical card without updating another user's row;
+their own entry link then flushes normally. Cards flush after workout entries,
+followed by links and photos. A non-creator cannot edit the caption.
+
+`addPhoto` decodes on the device and draws into a fresh canvas, caps the longest
+side at 1600 px without upscaling, then encodes JPEG at quality 0.8. Re-encoding
+omits source EXIF/GPS. Only the encoded Blob is stored, atomically with local
+metadata and the outbox entry in IndexedDB (schema version 2). Pure dimension
+and byte checks live in `core/image.ts`; browser I/O lives in `data/image.ts`.
+Normal retries use the existing single-flight, revision checks, backoff and
+4xx dead-letter rules. Uploads overwrite a deterministic owner path, so a lost
+acknowledgement/replay cannot create duplicate objects or photo rows.
+
+Removing a photo queues a tombstone and immediately hides the local photo. The
+same outbox flush **calls Storage.remove before writing/acknowledging the server
+tombstone**. Offline deletion waits for reconnect; failed removal stays queued
+or becomes a visible dead letter, never a successful deletion. Add then remove
+while offline coalesces into deletion without uploading the discarded Blob.
+Upload, replacement and removal share the same per-database flush lock. Storage
+API removal deletes the file; deleting only a `storage.objects` SQL row is not
+used by the application.
+
+Photo URLs never enter IndexedDB/outbox. Pending photos use temporary object
+URLs; uploaded photos use 300-second signed URLs, with a 240-second in-memory
+cache. URLs are cleared on photo changes, account changes and repo close; object
+URLs are revoked. The mock stores encoded Blobs and returns object URLs while
+exercising the same outbox and sync code. Leaving a crew removes local read
+access; already-issued signed URLs expire within five minutes.
+
+Y8 adds no screen or route. The development-only `data/proof.harness.ts` and the
+opt-in `tests/unit/data/proof.browser.test.ts` exercise actual canvas encoding,
+IndexedDB close/reopen, offline/reconnect, upload-once and Storage removal. Run
+with `PROOF_BROWSER_TEST=1` and optionally `PROOF_CHROMIUM_PATH` pointing to a
+local Chromium. The shared Repo contract also probes bucket limits directly,
+bypassing client validation; the existing CI db job runs it on Supabase as well
+as the mock. pgTAP covers entry ownership, crew privacy, owner deletion, path
+isolation, uniqueness and private bucket settings.

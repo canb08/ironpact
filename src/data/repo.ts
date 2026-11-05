@@ -13,6 +13,8 @@ import { bodyweightId, newId } from './ids.ts';
 import { enqueue, isPending, type Mutation } from './outbox.ts';
 import type { Remote } from './adapter.ts';
 import { browserEnvironment, SyncEngine, type SyncEnvironment } from './sync.ts';
+import { createProof } from './proof.ts';
+import type { PreparedImage } from './image.ts';
 import { createDuo } from './duo.ts';
 
 /** E4.6 natural key. UUIDv5 of `ironpact.exercise_prefs` in the DNS namespace (L9). */
@@ -22,7 +24,7 @@ function exercisePrefId(userId: string, exerciseId: string): string {
 }
 const SESSION_CHILDREN = ['sets', 'cardio_entries', 'martial_entries', 'min_entries'] as const;
 
-export interface DataRepoOptions { db?: IronpactDB; clock?: Clock; environment?: SyncEnvironment; autoStart?: boolean; realtime?: boolean }
+export interface DataRepoOptions { prepareProofImage?: (blob: Blob) => Promise<PreparedImage>; db?: IronpactDB; clock?: Clock; environment?: SyncEnvironment; autoStart?: boolean; realtime?: boolean }
 export interface ManagedRepo extends Repo { ready: Promise<void>; close(): void }
 class WriteFailure extends Error { constructor(readonly code: WriteError | 'label_taken') { super(code); } }
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
@@ -738,12 +740,13 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
     if (closed || generation !== epoch) return;
     await engine.refresh();
   }
+  const proof = createProof(db, remote, clock, ordinary, read, options.prepareProofImage);
   const initialUser = remote.currentUserId();
   const initialGeneration = epoch;
   gate = initialize(initialUser, initialGeneration);
   armNetwork(initialUser, initialGeneration, gate);
   const unsubscribeAuth = remote.onAuthChange((user) => {
-    duo.stop();
+    duo.stop(); proof.clear();
     const generation = ++epoch; engine.invalidate();
     const local = gate.catch(() => {}).then(() => initialize(user, generation));
     gate = local.then(() => {
@@ -757,12 +760,12 @@ export function createDataRepo(remote: Remote, options: DataRepoOptions = {}): M
   });
   const ready = gate.then(() => { if (!closed) { if (realtimeEnabled) duo.start(); if (options.autoStart !== false) engine.start(); } });
   const repo: ManagedRepo = {
-    backend: remote.kind, ready,
+    backend: remote.kind, ready, proof: proof.api,
     duo: { ...duo.api, useSpot: (week) => rpc(async (valid) => {
       await engine.flushNow();
       return valid() ? duo.api.useSpot(week) : { ok: false, error: 'network' as const };
     }) },
-    close() { closed = true; epoch++; duo.close(); unsubscribeAuth(); engine.close(); authListeners.clear(); if (!options.db) db.close(); },
+    close() { proof.clear(); closed = true; epoch++; duo.close(); unsubscribeAuth(); engine.close(); authListeners.clear(); if (!options.db) db.close(); },
     auth: {
       userId: () => remote.currentUserId(),
       onChange(cb) { authListeners.add(cb); return () => { authListeners.delete(cb); }; },

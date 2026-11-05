@@ -1,5 +1,5 @@
 import { PULLED_TABLES, type ExportTokenMeta, type PulledTable, type Result, type SyncedTable } from '../core/types.ts';
-import { bodyweightEntrySchema, cardioEntrySchema, exerciseSchema, martialEntrySchema, minEntrySchema, profileSchema, sessionSchema, setImportSchema, syncFieldsSchema } from '../core/validate.ts';
+import { bodyweightEntrySchema, cardioEntrySchema, exerciseSchema, martialEntrySchema, minEntrySchema, profileSchema, proofCardSchema, proofLinkSchema, proofPhotoSchema, sessionSchema, setImportSchema, syncFieldsSchema } from '../core/validate.ts';
 import type { KeysetCursor, Remote, RemoteRow, RemoteWriteError } from './adapter.ts';
 import { rowKey, SNAPSHOT_TABLES, SNAPSHOT_TIMESTAMP } from './db.ts';
 import { defaultProfile } from './defaults.ts';
@@ -33,6 +33,8 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
   const invitations = new Map<string, Invitation>();
   const attempts = new Map<string, number[]>();
   const tokens = new Map<string, Token>();
+  const photos = new Map<string, Blob>();
+  const photoUrls = new Set<string>();
   let failures = 0;
   let failureKind: 'client' | 'transient' = 'transient';
   const map = (table: PulledTable) => tables.get(table)!;
@@ -42,6 +44,8 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
   const crewmate = (actor: string, other: unknown) => rows('crew_members').some((row) => row.user_id === other && row.left_at === null && member(actor, row.crew_id));
   function visible(table: PulledTable, row: RemoteRow, actor: string | null): boolean {
     if (!actor) return false;
+    if (table === 'proof_cards') return member(actor, row.crew_id);
+    if (table === 'proof_links' || table === 'proof_photos') { const card = map('proof_cards').get(String(row.card_id)); return !!card && member(actor, card.crew_id); }
     if (table === 'profiles') return row.id === actor || crewmate(actor, row.id);
     if (table === 'exercises') return row.owner_id === null || row.owner_id === actor || crewmate(actor, row.owner_id);
     if (table === 'exercise_muscles') { const exercise = map('exercises').get(String(row.exercise_id)); return !!exercise && visible('exercises', exercise, actor); }
@@ -67,8 +71,8 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
   function client(message: string): { ok: false; error: RemoteWriteError } { return { ok: false, error: { kind: 'client', status: 400, message } }; }
   function validateWrite(table: SyncedTable, row: RemoteRow, actor: string): string | null {
     const existing = map(table).get(rowKey(table, row));
-    const owner = table === 'profiles' ? row.id : table === 'exercises' ? row.owner_id : table === 'challenges' ? row.created_by : row.user_id;
-    const previousOwner = !existing ? actor : table === 'profiles' ? existing.id : table === 'exercises' ? existing.owner_id : table === 'challenges' ? existing.created_by : existing.user_id;
+    const owner = table === 'profiles' ? row.id : table === 'exercises' ? row.owner_id : ['challenges', 'proof_cards'].includes(table) ? row.created_by : row.user_id;
+    const previousOwner = !existing ? actor : table === 'profiles' ? existing.id : table === 'exercises' ? existing.owner_id : ['challenges', 'proof_cards'].includes(table) ? existing.created_by : existing.user_id;
     if (table === 'exercise_muscles') {
       if (map('exercises').get(String(row.exercise_id))?.owner_id !== actor || existing) return 'ownership';
       return typeof row.muscle === 'string' && ['chest','front_delts','side_delts','rear_delts','biceps','triceps','forearms','lats','upper_back','traps','lower_back','abs','obliques','glutes','quads','hamstrings','adductors','calves'].includes(row.muscle) && [0.5, 1].includes(Number(row.weight)) ? null : 'check';
@@ -83,6 +87,20 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
       return null;
     }
     if (table === 'challenges') return member(actor, row.crew_id) && row.status === 'proposed' && ['e1rm_pct','sessions','run_km','season'].includes(String(row.kind)) && typeof row.starts_on === 'string' && new Date(`${row.starts_on}T00:00:00Z`).getUTCDay() === 1 && typeof row.ends_on === 'string' && (row.stake_text == null || (typeof row.stake_text === 'string' && Array.from(row.stake_text).length <= 80)) ? null : 'check';
+    if (table === 'proof_cards') return proofCardSchema.safeParse(row).success && member(actor, row.crew_id) ? null : 'check';
+    if (table === 'proof_links' || table === 'proof_photos') {
+      const card = map('proof_cards').get(String(row.card_id));
+      if (!card || card.deleted_at || !member(actor, card.crew_id) || (!card.together && card.created_by !== actor)) return 'ownership';
+      if (table === 'proof_photos') return proofPhotoSchema.safeParse(row).success
+        && row.storage_path === `${card.crew_id}/${card.id}/${actor}.jpg`
+        && !rows(table).some((p) => p.id !== row.id && p.card_id === row.card_id && p.user_id === actor) ? null : 'check';
+      if (!proofLinkSchema.safeParse(row).success) return 'check';
+      const entry = map(row.entry_table as SyncedTable).get(String(row.entry_id));
+      const kind = row.entry_table === 'cardio_entries' ? 'run' : row.entry_table === 'martial_entries' ? 'muay_thai' : 'lift';
+      return entry && !entry.deleted_at && entry.user_id === actor && entry.local_date === card.day && kind === card.kind
+        && (row.entry_table !== 'sessions' || entry.kind === 'gym')
+        && (row.entry_table !== 'martial_entries' || entry.discipline === 'Muay Thai') ? null : 'entry_ownership';
+    }
     if (!syncFieldsSchema.safeParse(row).success) return 'check';
     if (['sets', 'cardio_entries', 'martial_entries', 'min_entries'].includes(table)) {
       const parent = map('sessions').get(String(row.session_id));
@@ -109,7 +127,27 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
     if (table === 'goals') return ['weekly_sessions','e1rm','bodyweight','run_distance'].includes(String(row.kind)) && typeof row.target_value === 'number' && Number.isFinite(row.target_value) && typeof row.unit === 'string' && typeof row.starts_on === 'string' && (row.exercise_id == null || map('exercises').has(String(row.exercise_id))) ? null : 'check';
     return null;
   }
+  function allowedPhoto(path: string, writing: boolean): boolean {
+    const [crew, cardId, file, extra] = path.split('/');
+    const card = map('proof_cards').get(cardId ?? '');
+    return !!userId && !extra && !!card && !card.deleted_at && card.crew_id === crew && member(userId, crew)
+      && (!writing || ((card.together === true || card.created_by === userId) && file === `${userId}.jpg`));
+  }
   const remote: MockRemote = {
+    proofStorage: {
+      async upload(path, blob) {
+        if (!allowedPhoto(path, true)) return client('storage_ownership');
+        if (!['image/jpeg','image/webp'].includes(blob.type) || blob.size <= 0 || blob.size > 5_000_000) return client('storage_limits');
+        photos.set(path, blob); return success(undefined);
+      },
+      async remove(path) { if (!allowedPhoto(path, true)) return client('storage_ownership'); photos.delete(path); return success(undefined); },
+      async signedUrl(path) {
+        const blob = photos.get(path);
+        if (!allowedPhoto(path, false) || !blob) return { ok: false, error: 'network' };
+        const url = URL.createObjectURL(blob); photoUrls.add(url); return success(url);
+      },
+      clear() { for (const url of photoUrls) URL.revokeObjectURL(url); photoUrls.clear(); },
+    },
     async markPrEventsSeen(ids) {
       const actor = userId; await pause();
       if (!actor || actor !== userId) return { ok: false, error: 'network' };
@@ -198,15 +236,24 @@ export function createMockRemote(options: MockOptions = {}): MockRemote {
         for (const row of records) {
           const key = rowKey(table, row);
           const existing = map(table).get(key);
+          if (existing && table === 'proof_cards' && existing.created_by !== actor) {
+            if (visible(table, existing, actor) && existing.together && row.together && existing.crew_id === row.crew_id
+              && existing.day === row.day && existing.kind === row.kind && row.caption === null && row.deleted_at === null) { output.push(projection(table, existing)); continue; }
+            tables.set(table, backup); return client('ownership');
+          }
+          if (existing && table === 'proof_links') {
+            if (existing.user_id === actor && ['card_id','entry_table','entry_id','user_id'].every((k) => row[k] === existing[k])) { output.push(projection(table, existing)); continue; }
+            tables.set(table, backup); return client('immutable');
+          }
           if (existing && ['exercise_muscles', 'reactions', 'challenges'].includes(table)) {
-            const owner = table === 'exercise_muscles' ? map('exercises').get(String(existing.exercise_id))?.owner_id : table === 'challenges' ? existing.created_by : existing.user_id;
+            const owner = table === 'exercise_muscles' ? map('exercises').get(String(existing.exercise_id))?.owner_id : ['challenges', 'proof_cards'].includes(table) ? existing.created_by : existing.user_id;
             const fields = Object.keys(row).filter((field) => !['updated_at', 'created_at', 'received_at'].includes(field));
             if (owner === actor && fields.every((field) => JSON.stringify(existing[field]) === JSON.stringify(row[field]))) { output.push(projection(table, existing)); continue; }
             tables.set(table, backup); return client('immutable');
           }
           // SQL's LWW BEFORE trigger skips stale updates before row checks/child triggers.
           if (existing && typeof existing.client_updated_at === 'string' && typeof row.client_updated_at === 'string' && compareInstant(row.client_updated_at, existing.client_updated_at) < 0) {
-            const ownerField = table === 'exercises' ? 'owner_id' : 'user_id';
+            const ownerField = table === 'exercises' ? 'owner_id' : table === 'proof_cards' ? 'created_by' : 'user_id';
             if (row[ownerField] !== actor || existing[ownerField] !== actor) { tables.set(table, backup); return client('ownership'); }
             output.push(projection(table, existing)); continue;
           }

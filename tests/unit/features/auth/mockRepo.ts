@@ -172,5 +172,10 @@ export function mockRepo(partial: {
     presence: { onChange: () => () => {} },
     onCrewChange: () => () => {},
   };
-  return { backend: 'mock', auth, q, w, crew, exportTokens, sync, duo };
+  const proof: Repo['proof'] = {
+    listCards: async () => [], createOrJoinCard: async () => ({ ok: false, error: 'no_crew' }),
+    setCaption: async () => ({ ok: false, error: 'not_owner' }), addPhoto: async () => ({ ok: false, error: 'invalid_image' }),
+    removePhoto: async () => ({ ok: false, error: 'not_owner' }), photoUrl: async () => ({ ok: false, error: 'network' }),
+  };
+  return { backend: 'mock', proof, auth, q, w, crew, exportTokens, sync, duo };
 }

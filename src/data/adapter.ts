@@ -7,6 +7,7 @@
 
 import type { CrewRealtime, CrewRealtimeCallbacks, RepoDuo, SpotError } from './duo.contract.ts';
 import type {
+  ProofCard, ProofCardWithMedia, ProofEntryRef, ProofKind, ProofPhoto,
   BodyweightEntry,
   CardioEntry,
   Crew,
@@ -54,6 +55,7 @@ export interface KeysetCursor {
 
 export interface Remote {
   readonly kind: 'supabase' | 'mock';
+  proofStorage: ProofStorage;
   /** L16: online-only, idempotent acknowledgement of live crewmate PRs. */
   markPrEventsSeen(ids: readonly Uuid[]): Promise<Result<void, 'network'>>;
   useSpot(weekStart: LocalDate): Promise<Result<Uuid, SpotError>>;
@@ -388,7 +390,25 @@ export interface RepoSync {
   discardDead(seq: number): Promise<void>;
 }
 
+/** Y8 / L21 approved extension. URLs live only in memory, never in the mirror. */
+export type ProofStorageResult = { ok: true; value: void } | { ok: false; error: RemoteWriteError };
+export interface ProofStorage {
+  upload(path: string, blob: Blob): Promise<ProofStorageResult>;
+  remove(path: string): Promise<ProofStorageResult>;
+  signedUrl(path: string, expiresIn: number): Promise<Result<string, 'network'>>;
+  clear(): void;
+}
+export type ProofError = WriteError | 'not_owner' | 'invalid_entry' | 'no_crew' | 'invalid_image';
+export interface RepoProof {
+  listCards(month: string): Promise<ProofCardWithMedia[]>;
+  createOrJoinCard(input: { kind: ProofKind; day: LocalDate; together: boolean; entryRef: ProofEntryRef }): Promise<Result<ProofCard, ProofError>>;
+  setCaption(cardId: Uuid, caption: string | null): Promise<Result<ProofCard, ProofError>>;
+  addPhoto(cardId: Uuid, blob: Blob): Promise<Result<ProofPhoto, ProofError>>;
+  removePhoto(photoId: Uuid): Promise<Result<void, ProofError>>;
+  photoUrl(photoId: Uuid): Promise<Result<string, 'network'>>;
+}
 export interface Repo {
+  proof: RepoProof;
   duo: RepoDuo;
   readonly backend: 'supabase' | 'mock';
   auth: RepoAuth;
