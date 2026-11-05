@@ -65,6 +65,53 @@ export function runRepoContract(makeRemote: RemoteFactory) {
       await repo.ready;
     }
 
+    async function proofCard() {
+      environment.setOnline(true); await repo.sync.pullNow();
+      if (!await repo.q.myCrew()) { unwrap(await repo.crew.create('Proof crew')); await repo.sync.pullNow(); }
+      const entry = unwrap(await repo.w.logRun({ distance_m: 5000, duration_s: 1800 }));
+      const card = unwrap(await repo.proof.createOrJoinCard({ kind: 'run', day: entry.local_date, together: true, entryRef: { table: 'cardio_entries', id: entry.id } }));
+      await repo.sync.flushNow();
+      expect(await repo.q.deadLetters()).toEqual([]);
+      return card;
+    }
+
+    it('Y8: bucket enforces 5 MB and JPEG/WebP on the network edge', async () => {
+      const card = await proofCard();
+      const path = `${card.crew_id}/${card.id}/${remote.currentUserId()}.jpg`;
+      try {
+        // These call the network seam directly, bypassing every client image check.
+        expect((await remote.proofStorage.upload(path, new Blob(['pixels'], { type: 'image/jpeg' }))).ok).toBe(true);
+        expect(await remote.proofStorage.upload(path, new Blob(['pixels'], { type: 'image/png' }))).toMatchObject({ ok: false, error: { kind: 'client' } });
+        expect(await remote.proofStorage.upload(path, new Blob([new Uint8Array(5_000_001)], { type: 'image/jpeg' }))).toMatchObject({ ok: false, error: { kind: 'client' } });
+        expect((await remote.proofStorage.upload(path, new Blob([new Uint8Array(5_000_000)], { type: 'image/jpeg' }))).ok).toBe(true);
+        expect((await remote.proofStorage.upload(path, new Blob(['pixels'], { type: 'image/webp' }))).ok).toBe(true);
+      } finally { expect((await remote.proofStorage.remove(path)).ok).toBe(true); }
+    }, 30_000);
+
+    it('Y8: offline photo and caption flush, then removal erases the Storage object', async () => {
+      const card = await proofCard();
+      repo.close();
+      repo = createDataRepo(remote, { db, clock: clock(), environment, autoStart: false,
+        prepareProofImage: async (blob) => ({ blob, width: 1, height: 1 }) });
+      await repo.ready; environment.setOnline(false);
+      const photo = unwrap(await repo.proof.addPhoto(card.id, new Blob(['pixels'], { type: 'image/jpeg' })));
+      instant += 1000;
+      unwrap(await repo.proof.setCaption(card.id, 'Together'));
+      await repo.sync.flushNow();
+      expect(unwrap(await remote.fetchByIds('proof_photos', [photo.id]))).toEqual([]);
+      environment.setOnline(true);
+      await Promise.all([repo.sync.flushNow(), repo.sync.flushNow()]);
+      expect(await repo.q.deadLetters()).toEqual([]);
+      expect(unwrap(await remote.fetchByIds('proof_photos', [photo.id]))).toHaveLength(1);
+      expect(unwrap(await remote.fetchByIds('proof_cards', [card.id]))[0]?.caption).toBe('Together');
+      expect((await remote.proofStorage.signedUrl(photo.storage_path, 30)).ok).toBe(true);
+      instant += 1000; unwrap(await repo.proof.removePhoto(photo.id));
+      await repo.sync.flushNow();
+      expect(await db.outbox.count()).toBe(0);
+      expect((await remote.proofStorage.signedUrl(photo.storage_path, 30)).ok).toBe(false);
+      expect(unwrap(await remote.fetchByIds('proof_photos', [photo.id]))[0]?.deleted_at).not.toBeNull();
+    }, 30_000);
+
     it('20 offline sets flush to exactly 20 server rows, with no duplicates', async () => {
       const rows = await logSets(20);
       expect(await db.sets.count()).toBe(20);

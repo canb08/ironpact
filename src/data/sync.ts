@@ -127,6 +127,29 @@ export class SyncEngine {
   private async batch(entries: OutboxEntry[], alive: () => boolean): Promise<boolean> {
     if (!alive() || !entries.length) return alive();
     const table = entries[0]!.table;
+    // Storage and metadata share one outbox acknowledgement/retry lifecycle.
+    // A failed delete can never be acknowledged as a removed photo.
+    if (table === 'proof_photos') {
+      for (const entry of entries) {
+        if (!alive()) return false;
+        const path = String(entry.payload.storage_path);
+        let result;
+        try { result = entry.payload.deleted_at
+          ? await this.remote.proofStorage.remove(path)
+          : entry.blob ? await this.remote.proofStorage.upload(path, entry.blob)
+          : { ok: true as const, value: undefined }; }
+        catch { result = { ok: false as const, error: { kind: 'transient' as const, status: null, message: 'Storage unavailable' } }; }
+        if (!alive()) return false;
+        if (!result.ok) {
+          if (result.error.kind === 'transient') { await this.transient(result.error, alive); return false; }
+          if (entry.seq !== undefined) await this.db.transaction('rw', this.db.outbox, async () => {
+            const current = await this.db.outbox.get(entry.seq!);
+            if (alive() && current?.revision === entry.revision) await this.db.outbox.update(entry.seq!, { status: 'dead', last_error: result.error.message });
+          });
+          return true;
+        }
+      }
+    }
     let response;
     try { response = await this.remote.upsert(table, entries.map((entry) => entry.payload)); }
     catch { response = { ok: false as const, error: { kind: 'transient' as const, status: null, message: 'network' } }; }
@@ -183,7 +206,7 @@ export class SyncEngine {
         const pending = await this.db.outbox.where('status').equals('pending').toArray();
         const table = SYNCED_TABLES.find((candidate) => pending.some((entry) => entry.table === candidate));
         if (!table) break;
-        const entries = pending.filter((entry) => entry.table === table).slice(0, 100);
+        const entries = pending.filter((entry) => entry.table === table).slice(0, table === 'proof_photos' ? 1 : 100);
         if (!await this.batch(entries, alive)) return;
       }
       if (alive()) { this.state.state = 'idle'; this.state.lastSyncedAt = this.clock.now(); }

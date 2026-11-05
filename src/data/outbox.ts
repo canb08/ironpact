@@ -3,11 +3,11 @@ import type { RemoteRow } from './adapter.ts';
 import { type IronpactDB, rowKey } from './db.ts';
 import { newId } from './ids.ts';
 
-export interface Mutation { table: SyncedTable; row: RemoteRow }
+export interface Mutation { table: SyncedTable; row: RemoteRow; blob?: Blob }
 /** May be nested in a broader transaction (session + child, or set + PR tombstones). */
 export async function enqueue(db: IronpactDB, mutations: readonly Mutation[], now: string): Promise<void> {
   await db.transaction('rw', [...new Set(mutations.map(({ table }) => db.mirror(table))), db.outbox], async () => {
-    for (const { table, row } of mutations) {
+    for (const { table, row, blob } of mutations) {
       const row_id = rowKey(table, row);
       const existing = await db.outbox.where('[table+row_id]').equals([table, row_id]).toArray();
       const pending = existing.find((entry) => entry.status === 'pending');
@@ -16,7 +16,7 @@ export async function enqueue(db: IronpactDB, mutations: readonly Mutation[], no
       await db.mirror(table).put(row);
       await db.outbox.put({
         ...(pending?.seq !== undefined ? { seq: pending.seq } : {}), table, row_id, payload: row,
-        revision: newId(), status: 'pending', created_at: pending?.created_at ?? now, last_error: null,
+        ...(blob ? { blob } : {}), revision: newId(), status: 'pending', created_at: pending?.created_at ?? now, last_error: null,
       });
     }
   });

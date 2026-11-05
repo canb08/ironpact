@@ -1,9 +1,10 @@
 import Dexie, { type Table } from 'dexie';
-import type { BodyweightEntry, CardioEntry, Crew, CrewMember, Exercise, MartialEntry, MinEntry, Profile, PulledTable, Session, SetRow, SyncedTable } from '../core/types.ts';
+import type { ProofCard, ProofLink, ProofPhoto, BodyweightEntry, CardioEntry, Crew, CrewMember, Exercise, MartialEntry, MinEntry, Profile, PulledTable, Session, SetRow, SyncedTable } from '../core/types.ts';
 import type { RemoteRow } from './adapter.ts';
 
 export interface OutboxEntry {
   seq?: number;
+  blob?: Blob;
   table: SyncedTable;
   row_id: string;
   payload: RemoteRow;
@@ -15,6 +16,9 @@ export interface OutboxEntry {
 export interface MetaEntry { key: string; value: unknown }
 
 export class IronpactDB extends Dexie {
+  declare proof_cards: Table<ProofCard, string>;
+  declare proof_links: Table<ProofLink, string>;
+  declare proof_photos: Table<ProofPhoto, string>;
   declare profiles: Table<Profile, string>;
   declare crews: Table<Crew, string>;
   declare crew_members: Table<CrewMember, [string, string]>;
@@ -45,6 +49,11 @@ export class IronpactDB extends Dexie {
       streak_tokens: 'id, crew_id, week_start', crew_weeks: '[crew_id+week_start]',
       challenges: 'id, crew_id, status', challenge_participants: '[challenge_id+user_id]',
       outbox: '++seq, [table+row_id], row_id, status, created_at', meta: 'key',
+    });
+    this.version(2).stores({
+      proof_cards: 'id, crew_id, day, updated_at',
+      proof_links: 'id, card_id, user_id, updated_at',
+      proof_photos: 'id, card_id, user_id, updated_at',
     });
   }
 

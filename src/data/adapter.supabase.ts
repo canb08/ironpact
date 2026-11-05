@@ -5,11 +5,12 @@ import { rowKey, SNAPSHOT_TABLES, SNAPSHOT_TIMESTAMP } from './db.ts';
 import { compareInstant } from './clock.ts';
 import { getSupabaseClient } from './supabase.ts';
 import { SPOT_ERRORS } from './duo.contract.ts';
+import { supabaseProofStorage } from './proof.storage.ts';
 import { createSupabaseRealtime } from './realtime.ts';
 
 const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 const network = { ok: false, error: 'network' } as const;
-const immutable = new Set<SyncedTable>(['exercise_muscles', 'reactions', 'challenges']);
+const immutable = new Set<SyncedTable>(['exercise_muscles', 'reactions', 'challenges', 'proof_links']);
 const snapshotKeys: Partial<Record<PulledTable, readonly string[]>> = {
   exercise_muscles: ['exercise_id', 'muscle'], crew_members: ['crew_id', 'user_id'],
   crew_weeks: ['crew_id', 'week_start'], challenge_participants: ['challenge_id', 'user_id'],
@@ -97,6 +98,7 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
   }
 
   return {
+    proofStorage: supabaseProofStorage(ready),
     markPrEventsSeen: (ids) => rpc('mark_pr_events_seen', { ids: [...ids] }, []).then((result) => result.ok ? ok(undefined) : result),
     useSpot: (weekStart) => rpc('use_spot', { week_start: weekStart }, SPOT_ERRORS),
     async subscribeCrew(crewId, callbacks) {
@@ -163,6 +165,37 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
           if (SNAPSHOT_TABLES.has(table)) { delete copy.updated_at; delete copy.id; }
           return copy;
         });
+        if (table === 'proof_cards' || table === 'proof_photos') {
+          const output: RemoteRow[] = [];
+          for (const row of rows) {
+            // INSERT DO NOTHING handles two partners creating the same deterministic
+            // together id concurrently. A partner never updates the creator's card.
+            const { error: insertError, status: insertStatus } = await client.from(table)
+              .upsert(row, { onConflict: 'id', ignoreDuplicates: true }).retry(false);
+            if (insertError) return writeError(insertStatus || null, insertError.message);
+            const fetched = await fetchRows(table, [String(row.id)]);
+            if (!fetched.ok || !fetched.value[0]) return writeError(null, 'Missing Proof acknowledgement');
+            const existing = fetched.value[0];
+            if (table === 'proof_cards' && existing.created_by !== userId) {
+              if (!existing.together || !row.together || existing.crew_id !== row.crew_id
+                || existing.day !== row.day || existing.kind !== row.kind || row.caption !== null || row.deleted_at !== null) return clientError('Proof card is not owned');
+              output.push(existing); continue;
+            }
+            if (table === 'proof_photos' && (existing.user_id !== userId || existing.card_id !== row.card_id || existing.storage_path !== row.storage_path)) return clientError('Proof photo is not owned');
+            const columns = table === 'proof_cards' ? ['caption', 'client_updated_at', 'deleted_at']
+              : ['width', 'height', 'bytes', 'client_updated_at', 'deleted_at'];
+            const patch = Object.fromEntries(columns.map((key) => [key, row[key]]));
+            const { data, error, status } = await client.from(table).update(patch).eq('id', row.id).select('*').retry(false).returns<RemoteRow[]>();
+            if (error) return writeError(status || null, error.message);
+            if (data?.[0]) output.push(data[0]);
+            else {
+              const canonical = await fetchRows(table, [String(row.id)]);
+              if (!canonical.ok || !canonical.value[0]) return writeError(null, 'Missing Proof acknowledgement');
+              output.push(canonical.value[0]);
+            }
+          }
+          return ok(output);
+        }
         if (!immutable.has(table)) {
           const { data, error, status } = await client.from(table)
             .upsert(rows, { onConflict: 'id', ignoreDuplicates: false }).select('*').retry(false).returns<RemoteRow[]>();
@@ -174,7 +207,7 @@ export function createSupabaseRemote(suppliedClient?: SupabaseClient): Remote {
         if (!before.ok) return writeError(null, 'Canonical read failed');
         const canonical = new Map(before.value.map((row) => [rowKey(table, row), row]));
         const matches = async (row: RemoteRow, existing: RemoteRow) => await immutableOwner(client, table, existing)
-          && Object.entries(row).every(([key, value]) => ['updated_at', 'created_at', 'received_at'].includes(key) || sameValue(value, existing[key]));
+          && Object.entries(row).every(([key, value]) => (['updated_at', 'created_at', 'received_at'].includes(key) || (table === 'proof_links' && key === 'client_updated_at')) || sameValue(value, existing[key]));
         for (const row of rows) {
           const existing = canonical.get(rowKey(table, row));
           if (existing && !await matches(row, existing)) return clientError('Immutable row differs or is not owned');
