@@ -1,13 +1,17 @@
 import type { SyncedTable } from '../core/types.ts';
 import type { RemoteRow } from './adapter.ts';
-import { type IronpactDB, rowKey } from './db.ts';
+import { type IronpactDB, type OutboxEntry, type OutboxPhoto, rowKey } from './db.ts';
 import { newId } from './ids.ts';
 
-export interface Mutation { table: SyncedTable; row: RemoteRow; blob?: Blob }
+export interface Mutation { table: SyncedTable; row: RemoteRow; photo?: OutboxPhoto }
+/** Rebuild only at preview/upload boundaries; IndexedDB writes contain no Blob/File. */
+export function outboxPhotoBlob(entry: OutboxEntry): Blob | undefined {
+  return entry.photo ? new Blob([entry.photo.data], { type: entry.photo.mimeType }) : entry.blob;
+}
 /** May be nested in a broader transaction (session + child, or set + PR tombstones). */
 export async function enqueue(db: IronpactDB, mutations: readonly Mutation[], now: string): Promise<void> {
   await db.transaction('rw', [...new Set(mutations.map(({ table }) => db.mirror(table))), db.outbox], async () => {
-    for (const { table, row, blob } of mutations) {
+    for (const { table, row, photo } of mutations) {
       const row_id = rowKey(table, row);
       const existing = await db.outbox.where('[table+row_id]').equals([table, row_id]).toArray();
       const pending = existing.find((entry) => entry.status === 'pending');
@@ -16,7 +20,7 @@ export async function enqueue(db: IronpactDB, mutations: readonly Mutation[], no
       await db.mirror(table).put(row);
       await db.outbox.put({
         ...(pending?.seq !== undefined ? { seq: pending.seq } : {}), table, row_id, payload: row,
-        ...(blob ? { blob } : {}), revision: newId(), status: 'pending', created_at: pending?.created_at ?? now, last_error: null,
+        ...(photo ? { photo } : {}), revision: newId(), status: 'pending', created_at: pending?.created_at ?? now, last_error: null,
       });
     }
   });

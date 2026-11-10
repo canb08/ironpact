@@ -1,6 +1,7 @@
 /** Detail pages belong to Progress; Settings returns to the tab that opened it. */
 export function parentTab(pathname: string): string {
   if (pathname === '/progress' || pathname.startsWith('/exercise/') || pathname.startsWith('/day/')) return '/progress';
+  if (pathname === '/proof') return '/proof';
   if (pathname === '/session') return '/session';
   if (pathname === '/crew') return '/crew';
   return '/';

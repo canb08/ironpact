@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, type MouseEvent, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate, useOutlet, useParams } from 'react-router';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { CalendarDays, ChartNoAxesCombined, Dumbbell, Settings, Users } from 'lucide-react';
+import { CalendarDays, ChartNoAxesCombined, Dumbbell, Images, Settings, Users } from 'lucide-react';
 import { useRepo } from '../useRepo.ts';
 import { ScreenHeader } from '../../ui/ScreenHeader.tsx';
 import { copy } from '../../ui/copy.ts';
@@ -10,18 +10,27 @@ import { localDateOf } from '../../core/weeks.ts';
 import { canGoBack, isDetail, parentTab } from './routes.ts';
 import { settingsSections } from '../../features/settings/sections.ts';
 import { useOpenSession } from './useOpenSession.ts';
-import { screenReady, startViewTransition, tabDirection } from '../../ui/motion/viewTransition.ts';
+import { screenReady, startViewTransition } from '../../ui/motion/viewTransition.ts';
 import '../../ui/motion/navigation.css';
 import './shell.css';
+import { ProofPromptProvider } from '../../features/proof/ProofPromptProvider.tsx';
+const ProofCrewLink = lazy(() => import('../../features/proof/ProofCrewLink.tsx'));
 
 const TodayScreen = lazy(() => import('../../features/floor/FloorScreen.tsx'));
 
 const tabs = [
   { to: '/', label: copy.x10Today, Icon: CalendarDays },
   { to: '/session', label: copy.x10Train, Icon: Dumbbell },
+  { to: '/proof', label: copy.y9Title, Icon: Images },
   { to: '/progress', label: copy.progressTitle, Icon: ChartNoAxesCombined },
   { to: '/crew', label: copy.crewTitle, Icon: Users },
 ];
+
+function tabDirection(from: string, to: string): 'left' | 'right' | null {
+  const before = tabs.findIndex((tab) => tab.to === from);
+  const after = tabs.findIndex((tab) => tab.to === to);
+  return before < 0 || after < 0 || before === after ? null : after > before ? 'left' : 'right';
+}
 
 export default function AppLayout() {
   const location = useLocation();
@@ -71,7 +80,7 @@ export default function AppLayout() {
       else await navigate(to, { flushSync: true, replace });
       const selector = target === '/' ? '[data-testid="shared-bar"]'
         : target === '/session' ? '.session-active, [role="dialog"]'
-        : target === '/progress' ? '.progress-lifts' : target === '/crew' ? '.crew-hero' : '.exercise-detail';
+        : target === '/proof' ? '.proof-stats' : target === '/progress' ? '.progress-lifts' : target === '/crew' ? '.crew-hero' : '.exercise-detail';
       await screenReady(selector);
       if (shared) {
         const row = document.querySelector<HTMLAnchorElement>(`a.progress-lift-link[href="${pathname.startsWith('/exercise/') ? pathname : target}"]`);
@@ -91,6 +100,7 @@ export default function AppLayout() {
     const anchor = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
     if (!anchor || anchor.target || anchor.hasAttribute('download') || anchor.origin !== locationOrigin()) return;
     const to = anchor.pathname;
+    if (anchor.search) return;
     if (!tabDirection(pathname, to) && !(pathname === '/progress' && to.startsWith('/exercise/'))) return;
     event.preventDefault();
     document.querySelectorAll<HTMLElement | SVGElement>('[style*="view-transition-name"]').forEach((node) => node.style.viewTransitionName = 'none');
@@ -105,14 +115,14 @@ export default function AppLayout() {
     else transitionTo(pathname.startsWith('/settings/') ? '/settings' : currentTab, true);
   };
 
-  return <div className="app-shell" onClickCapture={follow}>
+  return <ProofPromptProvider defer={quickLog}><div className="app-shell" onClickCapture={follow}>
     <div className="app-shell__header">
       <ScreenHeader title={title} onBack={detail ? back : undefined}
         trailing={pathname === '/' || pathname === '/crew' ? <Link className="app-shell__settings" to="/settings" aria-label={copy.settings}>
           <Settings size={24} aria-hidden="true" />
         </Link> : undefined} />
     </div>
-    <div className="app-shell__content">{quickLog ? background.outlet : outlet}</div>
+    <div className="app-shell__content">{quickLog ? background.outlet : outlet}{pathname === '/crew' && <Suspense fallback={null}><ProofCrewLink /></Suspense>}</div>
     <nav className="app-shell__tabs" aria-label={copy.appName}>
       {tabs.map(({ to, label, Icon }) => <Link key={to} to={to} className="app-shell__tab"
         aria-current={currentTab === to ? 'page' : undefined}>
@@ -124,7 +134,7 @@ export default function AppLayout() {
       </Link>)}
     </nav>
     {quickLog && outlet}
-  </div>;
+  </div></ProofPromptProvider>;
 }
 
 function locationOrigin() { return window.location.origin; }

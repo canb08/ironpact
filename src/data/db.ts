@@ -2,8 +2,17 @@ import Dexie, { type Table } from 'dexie';
 import type { ProofCard, ProofLink, ProofPhoto, BodyweightEntry, CardioEntry, Crew, CrewMember, Exercise, MartialEntry, MinEntry, Profile, PulledTable, Session, SetRow, SyncedTable } from '../core/types.ts';
 import type { RemoteRow } from './adapter.ts';
 
+export interface OutboxPhoto {
+  data: ArrayBuffer;
+  mimeType: string;
+  width: number;
+  height: number;
+  bytes: number;
+}
 export interface OutboxEntry {
   seq?: number;
+  photo?: OutboxPhoto;
+  /** Read-only compatibility with photos queued before byte-based storage. */
   blob?: Blob;
   table: SyncedTable;
   row_id: string;

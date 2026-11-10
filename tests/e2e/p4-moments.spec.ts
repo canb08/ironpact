@@ -42,6 +42,7 @@ async function preparePr(page: Page): Promise<void> {
     await page.keyboard.up('Enter');
   }
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
+  await page.getByRole('dialog', { name: copy.y9Together }).getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('shared-bar')).toBeVisible();
   await page.clock.setFixedTime(CLOCK + 120_000);

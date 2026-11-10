@@ -4,8 +4,8 @@ import { localDateSchema, proofCardSchema, proofPhotoSchema } from '../core/vali
 import { imageDimensions, validImageBytes } from '../core/image.ts';
 import type { ProofError, Remote, RepoProof, WriteError } from './adapter.ts';
 import type { Clock } from './clock.ts';
-import { type IronpactDB, asRemote } from './db.ts';
-import { enqueue } from './outbox.ts';
+import { type IronpactDB, type OutboxPhoto, asRemote } from './db.ts';
+import { enqueue, outboxPhotoBlob } from './outbox.ts';
 import { prepareProofImage, type PreparedImage } from './image.ts';
 const NS_PROOF = '9b056718-c58d-51c7-8abc-3261fc173e0a';
 export const proofId = (key: string): string => v5(key, NS_PROOF);
@@ -88,12 +88,15 @@ export function createProof(
     }),
     async addPhoto(cardId, source) {
       const actor = remote.currentUserId();
-      let image: PreparedImage;
+      let image: OutboxPhoto;
       try {
-        image = await prepare(source);
-        const size = imageDimensions(image.width, image.height);
-        if (!validImageBytes(image.blob.size) || image.blob.type !== 'image/jpeg'
-          || size.width !== image.width || size.height !== image.height) throw new Error('invalid_image');
+        const prepared = await prepare(source);
+        const size = imageDimensions(prepared.width, prepared.height);
+        if (!validImageBytes(prepared.blob.size) || prepared.blob.type !== 'image/jpeg'
+          || size.width !== prepared.width || size.height !== prepared.height) throw new Error('invalid_image');
+        // Native Blob I/O must finish before write() opens its IndexedDB transaction.
+        image = { data: await prepared.blob.arrayBuffer(), mimeType: prepared.blob.type,
+          width: prepared.width, height: prepared.height, bytes: prepared.blob.size };
       } catch { return { ok: false, error: 'invalid_image' }; }
       return mutate(async (user) => {
         if (user !== actor) throw new ProofFailure('not_owner');
@@ -103,9 +106,9 @@ export function createProof(
         const now = clock.now();
         const photo: ProofPhoto = { id, card_id: cardId, user_id: user,
           storage_path: `${card.crew_id}/${cardId}/${user}.jpg`, width: image.width, height: image.height,
-          bytes: image.blob.size, created_at: old?.created_at ?? now, client_updated_at: now, deleted_at: null };
+          bytes: image.bytes, created_at: old?.created_at ?? now, client_updated_at: now, deleted_at: null };
         if (!proofPhotoSchema.safeParse(photo).success) throw new ProofFailure('invalid_image');
-        await enqueue(db, [{ table: 'proof_photos', row: asRemote(photo), blob: image.blob }], now);
+        await enqueue(db, [{ table: 'proof_photos', row: asRemote(photo), photo: image }], now);
         clear(); return photo;
       });
     },
@@ -129,8 +132,9 @@ export function createProof(
       const cached = urls.get(key);
       if (cached && cached.expires > Date.parse(clock.now())) return ok(cached.url);
       if (cached?.object) URL.revokeObjectURL(cached.url);
-      if (queued?.blob) {
-        const url = URL.createObjectURL(queued.blob);
+      const blob = queued && outboxPhotoBlob(queued);
+      if (blob) {
+        const url = URL.createObjectURL(blob);
         urls.set(key, { url, expires: Infinity, object: true }); return ok(url);
       }
       const result = await remote.proofStorage.signedUrl(photo.storage_path, 300);

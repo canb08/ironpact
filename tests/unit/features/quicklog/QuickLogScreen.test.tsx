@@ -11,6 +11,7 @@ import { defaultProfile } from '../../../../src/data/defaults.ts';
 import { bodyweightId } from '../../../../src/data/ids.ts';
 import { createDataRepo } from '../../../../src/data/repo.ts';
 import { RepoProvider } from '../../../../src/app/RepoProvider.tsx';
+import { ProofPromptProvider } from '../../../../src/features/proof/ProofPromptProvider.tsx';
 import QuickLogScreen from '../../../../src/features/quicklog/QuickLogScreen.tsx';
 import { copy, fill } from '../../../../src/ui/copy.ts';
 import * as feelModule from '../../../../src/ui/feel/feel.ts';
@@ -61,7 +62,7 @@ function renderLog(path: string) {
   ], { initialEntries: [path] });
   render(
     <RepoProvider repo={repo!}>
-      <RouterProvider router={router} />
+      <ProofPromptProvider><RouterProvider router={router} /></ProofPromptProvider>
     </RepoProvider>,
   );
 }
@@ -145,7 +146,8 @@ it('same as last run is two taps and lands with a plate feel', async () => {
   const saved = entries.cardio.find((row) => row.id !== first.value.id);
   expect(saved).toMatchObject({ distance_m: 5200, duration_s: 1660, rpe: 7, note: 'easy' });
   expect(feelSpy).toHaveBeenCalledWith('plate');
-  expect(await screen.findByText(copy.x11RunSaved)).toBeTruthy();
+  expect(await screen.findByRole('dialog', { name: copy.y9Together })).toBeTruthy();
+  expect(screen.getByText(copy.summarySaved)).toBeTruthy();
   feelSpy.mockRestore();
 });
 

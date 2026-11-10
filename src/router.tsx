@@ -13,6 +13,7 @@ export const router = createBrowserRouter([
       { path: '/', ...screen(() => import('./features/floor/FloorScreen.tsx')) },
       { path: '/session', ...screen(() => import('./features/session/SessionScreen.tsx')) },
       { path: '/log/:kind', ...screen(() => import('./features/quicklog/QuickLogScreen.tsx')) },
+      { path: '/proof', ...screen(() => import('./features/proof/ProofScreen.tsx')) },
       { path: '/crew', ...screen(() => import('./features/crew-feed/CrewScreen.tsx')) },
       { path: '/settings/*', ...screen(() => import('./features/settings/SettingsScreen.tsx')) },
       { path: '/settings/:section', ...screen(() => import('./features/settings/SettingsScreen.tsx')) },
