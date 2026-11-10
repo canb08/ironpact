@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, Sheet, copy, fill } from '../../ui';
 import { feel } from '../../ui/feel/feel.ts';
+import { consumeSelectedPhoto } from './photoSelection.ts';
 import type { ProofPromptInput } from './promptContext.ts';
 import './proof.css';
 
@@ -49,8 +50,8 @@ export default function ProofPrompt({ input, onDone }: { input: ProofPromptInput
         <Button size="xl" disabled={busy} onClick={() => camera.current?.click()}>{copy.y9TakePhoto}</Button>
         <Button size="xl" variant="secondary" disabled={busy} onClick={() => library.current?.click()}>{copy.y9ChoosePhoto}</Button>
         <Button size="xl" variant="quiet" disabled={busy} onClick={() => { void save(together); }}>{copy.y9Skip}</Button>
-        <input ref={camera} hidden type="file" accept="image/*" capture="environment" aria-label={copy.y9TakePhoto} onChange={(event) => { const file = event.target.files?.[0]; if (file) void save(together, file); event.target.value = ''; }} />
-        <input ref={library} hidden type="file" accept="image/*" aria-label={copy.y9ChoosePhoto} onChange={(event) => { const file = event.target.files?.[0]; if (file) void save(together, file); event.target.value = ''; }} />
+        <input ref={camera} hidden type="file" accept="image/*" capture="environment" aria-label={copy.y9TakePhoto} onChange={(event) => { void consumeSelectedPhoto(event.currentTarget, (file) => save(together, file)); }} />
+        <input ref={library} hidden type="file" accept="image/*" aria-label={copy.y9ChoosePhoto} onChange={(event) => { void consumeSelectedPhoto(event.currentTarget, (file) => save(together, file)); }} />
       </> : <>
         <Button size="xl" aria-pressed={together} disabled={!partner} onClick={() => choose(true)}>{fill(copy.y9With, { partner: partner || copy.y9Partner })}</Button>
         <Button size="xl" variant="secondary" aria-pressed={!together} onClick={() => choose(false)}>{copy.y9Solo}</Button>

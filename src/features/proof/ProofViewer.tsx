@@ -6,6 +6,7 @@ import { formatDate } from '../../core/formatDate.ts';
 import { copy } from '../../ui/copy.ts';
 import { feel } from '../../ui/feel/feel.ts';
 import { cardDetails, type ProofData } from './model.ts';
+import { consumeSelectedPhoto } from './photoSelection.ts';
 import { ProofMedia } from './ProofMedia.tsx';
 
 export function ProofViewer({ card, data, onClose, onChange }: { card: ProofCardWithMedia; data: ProofData; onClose: () => void; onChange: (id: string) => void }) {
@@ -47,7 +48,7 @@ export function ProofViewer({ card, data, onClose, onChange }: { card: ProofCard
       {ownPhoto && <button disabled={busy} onClick={() => { void action(() => repo.proof.removePhoto(ownPhoto.id)); }}>{copy.y9Remove}</button>}
       {card.created_by === data.me?.id && <button onClick={() => setCaption(card.caption ?? '')}>{copy.y9Caption}</button>}
     </div>}
-    <input ref={input} hidden type="file" accept="image/*" aria-label={copy.y9Replace} onChange={(event) => { const file = event.target.files?.[0]; if (file) void action(() => repo.proof.addPhoto(card.id, file)); event.target.value = ''; }} />
+    <input ref={input} hidden type="file" accept="image/*" aria-label={copy.y9Replace} onChange={(event) => { void consumeSelectedPhoto(event.currentTarget, (file) => action(() => repo.proof.addPhoto(card.id, file))); }} />
     <div className="proof-viewer__photos" style={{ viewTransitionName: `proof-${card.id}` }}
       onPointerDown={(event) => { gesture.current = { x: event.clientX, y: event.clientY }; }}
       onPointerUp={(event) => { const start = gesture.current; gesture.current = null; if (!start) return; const dx = event.clientX - start.x; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(event.clientY - start.y) * 1.5) move(dx < 0 ? 1 : -1); }}

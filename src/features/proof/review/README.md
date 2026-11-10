@@ -6,4 +6,6 @@ All PNGs and the GIF are 375×812 at device scale 1 in system Chromium with the 
 
 The frozen Playwright configuration discovers `p*-*.spec.ts`, so `p7-shell.spec.ts` imports `y9-proof.spec.ts`. Run the new scenarios with `npx playwright test p7-shell.spec.ts -g 'Y9 Proof'`. They check an offline photo, solo placeholder, both close defaults, caption, replace/remove, swipe/button navigation, the Crew deep link, axe AA, and target/viewport bounds.
 
-WebKit downloads are denied by this environment's network policy. Existing WebKit snapshot PNGs are outside the ticket's allowed file list and need a Lead baseline refresh for the fifth tab and the run-save prompt.
+WebKit downloads are denied by this environment's network policy. The Lead authorized the WebKit baseline refresh after CI run 42729327099. All 34 replacements are byte-for-byte copies of its x11-visual-diffs retry actual PNGs: 30 differ only in the tab bar; two Crew images additionally have eight one-level RGB rasterization differences on an unchanged SVG grip; two run-save images show the required Y9 together prompt instead of the previous confirmation sheet. No screenshot assertions or tolerances changed.
+
+The photo-input follow-up keeps camera/library selections alive through async card creation and image decoding, including viewer replacement. A shared helper resets only after the consumer settles; three unit cases cover pending readers, failed readers, and cancelled selection.
