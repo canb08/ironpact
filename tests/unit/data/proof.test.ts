@@ -33,18 +33,69 @@ describe('Proof through the full mock Repo/outbox/sync pipeline', () => {
     const photo = unwrap(await repo.proof.addPhoto(c.id, image()));
     await repo.sync.flushNow();
     expect(upload).not.toHaveBeenCalled();
-    expect((await db.outbox.where('row_id').equals(photo.id).first())?.blob?.size).toBe(image().size);
-    repo.close();
+    const queued = await db.outbox.where('row_id').equals(photo.id).first();
+    expect(queued).not.toHaveProperty('blob');
+    expect(queued?.photo).toEqual({ data: await image().arrayBuffer(), mimeType: 'image/jpeg',
+      width: 800, height: 1200, bytes: image().size });
+    expect(queued?.photo?.data).toBeInstanceOf(ArrayBuffer);
+    repo.close(); db.close(); await db.open();
     repo = createDataRepo(remote, { db, environment: env, autoStart: false }); await repo.ready;
+    const createUrl = vi.spyOn(URL, 'createObjectURL');
+    expect(unwrap(await repo.proof.photoUrl(photo.id))).toMatch(/^blob:/);
+    const preview = createUrl.mock.calls[0]![0] as Blob;
+    expect(preview.type).toBe('image/jpeg');
+    expect(await preview.arrayBuffer()).toEqual(await image().arrayBuffer());
     env.setOnline(true);
     await Promise.all([repo.sync.flushNow(), repo.sync.flushNow(), repo.sync.flushNow()]);
     expect(upload).toHaveBeenCalledTimes(1);
+    const uploaded = upload.mock.calls[0]![1];
+    expect(uploaded.type).toBe('image/jpeg');
+    expect(await uploaded.arrayBuffer()).toEqual(await image().arrayBuffer());
     expect(remote.inspect('proof_photos')).toHaveLength(1);
     expect(await db.outbox.count()).toBe(0);
     await repo.sync.flushNow(); expect(upload).toHaveBeenCalledTimes(1);
     expect((await repo.proof.listCards('2026-11'))[0]?.photos).toHaveLength(1);
     expect((await repo.proof.photoUrl(photo.id)).ok).toBe(true);
     expect(JSON.stringify(await db.proof_photos.toArray())).not.toContain('blob:');
+  });
+
+  it('reopens legacy Blob-only entries for local preview and upload without losing their bytes', async () => {
+    const c = await card(); env.setOnline(false);
+    const photo = unwrap(await repo.proof.addPhoto(c.id, image()));
+    const legacy = (await db.outbox.where('row_id').equals(photo.id).first())!;
+    delete legacy.photo;
+    legacy.blob = image();
+    await db.outbox.put(legacy);
+    repo.close(); db.close(); await db.open();
+    repo = createDataRepo(remote, { db, environment: env, autoStart: false }); await repo.ready;
+    const createUrl = vi.spyOn(URL, 'createObjectURL');
+    expect(unwrap(await repo.proof.photoUrl(photo.id))).toMatch(/^blob:/);
+    const preview = createUrl.mock.calls[0]![0] as Blob;
+    expect(preview.type).toBe('image/jpeg');
+    expect(await preview.arrayBuffer()).toEqual(await image().arrayBuffer());
+    const upload = vi.spyOn(remote.proofStorage, 'upload');
+    env.setOnline(true); await repo.sync.flushNow();
+    expect(upload).toHaveBeenCalledExactlyOnceWith(photo.storage_path, expect.any(Blob));
+    const uploaded = upload.mock.calls[0]![1];
+    expect(uploaded.type).toBe('image/jpeg');
+    expect(await uploaded.arrayBuffer()).toEqual(await image().arrayBuffer());
+    expect(await db.outbox.count()).toBe(0);
+  });
+
+  it('replaces a legacy queued Blob with bytes when the photo is edited offline', async () => {
+    const c = await card(); env.setOnline(false);
+    const photo = unwrap(await repo.proof.addPhoto(c.id, image()));
+    const legacy = (await db.outbox.where('row_id').equals(photo.id).first())!;
+    delete legacy.photo;
+    legacy.blob = image();
+    await db.outbox.put(legacy);
+    const replacement = new Blob(['replacement jpeg'], { type: 'image/jpeg' });
+    unwrap(await repo.proof.addPhoto(c.id, replacement));
+    const queued = await db.outbox.where('row_id').equals(photo.id).toArray();
+    expect(queued).toHaveLength(1);
+    expect(queued[0]).not.toHaveProperty('blob');
+    expect(queued[0]?.photo?.data).toEqual(await replacement.arrayBuffer());
+    expect(queued[0]?.seq).toBe(legacy.seq);
   });
 
   it('deletes the Storage object before acknowledging the tombstone, retaining failures for retry', async () => {

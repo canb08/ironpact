@@ -3,6 +3,7 @@ import type { Remote, RemoteWriteError, SyncStatus, Unsubscribe } from './adapte
 import type { Clock } from './clock.ts';
 import { type IronpactDB, type OutboxEntry, mirrorRow, rowKey } from './db.ts';
 import { pullAll } from './pull.ts';
+import { outboxPhotoBlob } from './outbox.ts';
 
 // Distinct controllers over the same IndexedDB database must never send the same queue concurrently.
 const databaseFlights = new Map<string, Promise<void>>();
@@ -134,10 +135,13 @@ export class SyncEngine {
         if (!alive()) return false;
         const path = String(entry.payload.storage_path);
         let result;
-        try { result = entry.payload.deleted_at
-          ? await this.remote.proofStorage.remove(path)
-          : entry.blob ? await this.remote.proofStorage.upload(path, entry.blob)
-          : { ok: true as const, value: undefined }; }
+        try {
+          const blob = !entry.payload.deleted_at && outboxPhotoBlob(entry);
+          result = entry.payload.deleted_at
+            ? await this.remote.proofStorage.remove(path)
+            : blob ? await this.remote.proofStorage.upload(path, blob)
+            : { ok: true as const, value: undefined };
+        }
         catch { result = { ok: false as const, error: { kind: 'transient' as const, status: null, message: 'Storage unavailable' } }; }
         if (!alive()) return false;
         if (!result.ok) {

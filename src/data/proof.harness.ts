@@ -28,7 +28,7 @@ export async function queueOffline() {
   const localImage = new Image(); localImage.src = localUrl.value; await localImage.decode();
   await repo.sync.flushNow();
   const queued = await db.outbox.where('row_id').equals(photoId).first();
-  const state = { uploads, type: queued?.blob?.type, width: localImage.naturalWidth, height: localImage.naturalHeight, bytes: queued?.blob?.size };
+  const state = { uploads, type: queued?.photo?.mimeType, width: localImage.naturalWidth, height: localImage.naturalHeight, bytes: queued?.photo?.bytes };
   repo.close(); db.close(); db = new IronpactDB(name); repo = createDataRepo(remote, { db, autoStart: false }); await repo.ready;
   return state;
 }
