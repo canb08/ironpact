@@ -12,7 +12,7 @@ export default function ProofPrompt({ input, onDone }: { input: ProofPromptInput
   const repo = useRepo();
   const [photoStep, setPhotoStep] = useState(false);
   const [together, setTogether] = useState(input.defaultTogether ?? false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ message: string; detail: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const cardId = useRef<string | null>(null);
@@ -23,23 +23,36 @@ export default function ProofPrompt({ input, onDone }: { input: ProofPromptInput
     const id = crew?.members.find((m) => m.user_id !== me?.id && !m.left_at)?.user_id;
     return id ? proofDisplayName((await repo.q.profiles([id]))[0]?.display_name) : null;
   }, [repo]);
+  function reportError(stage: string, reason: unknown) {
+    const detail = `${stage}: ${String(reason)}`;
+    console.error(`[Proof save] ${detail}`);
+    setError({
+      message: reason === 'invalid_image' ? copy.y9InvalidImage
+        : reason === 'storage_full' ? copy.storageFull
+          : reason === 'no_crew' ? copy.noCrew : copy.y9SaveError,
+      detail,
+    });
+    feel('error');
+  }
   async function save(withPartner: boolean, file?: File, dismiss = false) {
     if (saving.current) { if (dismiss) onDone(); return; }
     saving.current = true;
-    setBusy(true); setError('');
+    setBusy(true); setError(null);
+    let stage = 'create_card';
     if (dismiss) onDone();
     try {
       if (!cardId.current) {
         const result = await repo.proof.createOrJoinCard({ kind: input.kind, day: input.day, entryRef: input.entryRef, together: withPartner });
-        if (!result.ok) { if (result.error === 'no_crew') { onDone(); return; } throw new Error('save'); }
+        if (!result.ok) { reportError(stage, result.error); return; }
         cardId.current = result.value.id;
       }
       if (file) {
+        stage = 'add_photo';
         const result = await repo.proof.addPhoto(cardId.current, file);
-        if (!result.ok) { setError(result.error === 'invalid_image' ? copy.y9InvalidImage : copy.y9SaveError); feel('error'); return; }
+        if (!result.ok) { reportError(stage, result.error); return; }
       }
       feel('tick'); onDone();
-    } catch { setError(copy.y9SaveError); feel('error'); }
+    } catch (reason) { reportError(stage, reason); }
     finally { saving.current = false; setBusy(false); }
   }
   const choose = (value: boolean) => { setTogether(value); setPhotoStep(true); feel('tick'); };
@@ -58,7 +71,7 @@ export default function ProofPrompt({ input, onDone }: { input: ProofPromptInput
         <Button size="xl" variant="secondary" aria-pressed={!together} onClick={() => choose(false)}>{copy.y9Solo}</Button>
       </>}
       {busy && <p role="status">{copy.y9Saving}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{error.message}{import.meta.env.DEV && <><br /><small>{error.detail}</small></>}</p>}
     </div>
   </Sheet>;
 }

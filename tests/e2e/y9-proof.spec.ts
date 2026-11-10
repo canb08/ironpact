@@ -5,11 +5,29 @@ import { copy } from '../../src/ui/copy.ts';
 import { logBench, reachFloor, waitForBench } from './helpers.ts';
 
 test.describe('Y9 Proof', () => {
+  const consoleErrors = new WeakMap<Page, string[]>();
   test.use({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 1 });
   test.beforeEach(async ({ page }) => {
+    const errors: string[] = [];
+    consoleErrors.set(page, errors);
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    page.on('pageerror', (error) => errors.push(error.stack ?? String(error)));
     await page.addInitScript(() => localStorage.setItem('ironpact.install-dismissed', '1'));
     await reachFloor(page);
     await waitForBench(page);
+  });
+  test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status === testInfo.expectedStatus) return;
+    const dialogs = page.isClosed() ? ['Page closed before dialog capture.']
+      : await page.locator('[role="dialog"], dialog').allInnerTexts().catch((error: unknown) => [`Dialog capture failed: ${String(error)}`]);
+    const dialogText = dialogs.join('\n\n') || 'No dialog remained in the DOM.';
+    const errors = (consoleErrors.get(page) ?? []).join('\n\n') || 'No page console errors captured.';
+    await Promise.all([
+      testInfo.attach('proof-dialog.txt', { body: dialogText, contentType: 'text/plain' }),
+      testInfo.attach('proof-console-errors.txt', { body: errors, contentType: 'text/plain' }),
+    ]);
+    // Keep diagnostics visible in CI's list reporter even without a trace download.
+    console.log(`[Y9 Proof failure: dialog]\n${dialogText}\n[Y9 Proof failure: console errors]\n${errors}`);
   });
   async function capture(page: Page, name: string) {
     if (!process.env.Y9_ARTIFACT_DIR) return;

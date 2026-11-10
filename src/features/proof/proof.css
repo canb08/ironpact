@@ -33,7 +33,7 @@
 .proof-empty { text-align: center; padding: 24px 16px; }
 .proof-empty > .proof-media { height: 240px; max-width: 220px; margin: 0 auto 24px; border-radius: 14px; }
 .proof-prompt { display: grid; gap: 8px; }
-.proof-prompt p { margin: 0 0 12px; }
+.proof-prompt p { margin: 0 0 12px; overflow-wrap: anywhere; }
 .proof-prompt .ui-button { min-height: 56px; }
 .proof-card--new { animation: proof-arrive var(--spring-heavy-duration) var(--spring-heavy) both; }
 @keyframes proof-arrive { from { transform: translateX(48px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
