@@ -39,8 +39,12 @@ test('each quick log confirms its own action inside the accessible sheet', async
     const sheet = page.getByRole('dialog');
     if (kind === 'weight') await sheet.getByLabel(copy.weight, { exact: true }).fill('78.4');
     await sheet.getByRole('button', { name: save, exact: true }).click();
-    await expect(sheet.getByRole('status')).toHaveText(saved);
-    await expect(sheet.getByText(saved, { exact: true })).toBeVisible();
+    if (kind === 'run') {
+      await expect(page.getByRole('dialog', { name: copy.y9Together }).getByText(copy.summarySaved)).toBeVisible();
+    } else {
+      await expect(sheet.getByRole('status')).toHaveText(saved);
+      await expect(sheet.getByText(saved, { exact: true })).toBeVisible();
+    }
     await page.keyboard.press('Escape');
   }
 });

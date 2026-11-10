@@ -28,8 +28,10 @@ test('Today to Muay Thai to Log class saves 6 rounds in two taps', async ({ page
   await expect(dialog.getByTestId('class-minutes')).toHaveText('~60 min');
   await expect(dialog.getByTestId('class-note')).toHaveText('Pads');
   await dialog.getByRole('button', { name: copy.y2LogClass, exact: true }).click();
-  await expect(dialog.getByText(copy.summarySaved)).toBeVisible();
-  await expect(dialog.locator('input, textarea')).toHaveCount(0);
+  const prompt = page.getByRole('dialog', { name: copy.y9Together });
+  await expect(prompt.getByText(copy.summarySaved)).toBeVisible();
+  await expect(prompt.locator('input, textarea')).toHaveCount(0);
+  await expect(prompt.getByRole('button', { name: /^With / })).toHaveAttribute('aria-pressed', 'true');
   expect(await page.evaluate(() => (window as unknown as { __keyboardOpens: number }).__keyboardOpens)).toBe(0);
   const saved = await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -66,8 +68,9 @@ test('adjusting to 2 combos records the note and the combo book', async ({ page 
   await dialog.getByRole('button', { name: '2', exact: true }).click();
   await dialog.getByRole('button', { name: 'R kick', exact: true }).click();
   await dialog.getByRole('button', { name: copy.y2LogClass, exact: true }).click();
-  await expect(dialog.getByText(copy.summarySaved)).toBeVisible();
-  await dialog.getByRole('button', { name: copy.close, exact: true }).click();
+  const prompt = page.getByRole('dialog', { name: copy.y9Together });
+  await expect(prompt.getByText(copy.summarySaved)).toBeVisible();
+  await prompt.getByRole('button', { name: copy.close, exact: true }).click();
   await expect(dialog).toBeHidden();
   await page.locator('.app-shell__tabs').getByRole('link', { name: copy.progressTitle, exact: true }).click();
   await page.getByRole('radio', { name: copy.x5Fight, exact: true }).click();

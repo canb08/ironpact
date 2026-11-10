@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
+import type { CardioEntry } from '../../core/types.ts';
 import { cardioEntrySchema, uiSchemas } from '../../core/validate.ts';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, copy, fill, ScrubDial } from '../../ui';
@@ -28,7 +29,7 @@ const LiveRun = lazy(() => import('./run/LiveRun.tsx'));
 
 const RPE = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10] as const;
 
-export function RunForm() {
+export function RunForm({ onSaved }: { onSaved?: (entry: CardioEntry) => void }) {
   const repo = useRepo();
   const { showToast } = useToast();
   const distanceDial = useRef<HTMLDivElement>(null);
@@ -105,6 +106,7 @@ export function RunForm() {
       }
       showToast({ message: copy.x11RunSaved });
       feel('plate');
+      onSaved?.(result.value);
     } finally {
       setSaving(false);
     }

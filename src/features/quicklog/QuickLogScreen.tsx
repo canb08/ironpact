@@ -1,3 +1,4 @@
+import { type ProofPromptInput, useProofPrompt } from '../proof/promptContext.ts';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Sheet, ToastProvider, copy } from '../../ui';
 import { MartialForm } from './MartialForm.tsx';
@@ -22,6 +23,10 @@ function isKind(value: string | undefined): value is Kind {
 export default function QuickLogScreen() {
   const { kind } = useParams();
   const navigate = useNavigate();
+  const prompt = useProofPrompt();
+  const saved = (input: ProofPromptInput) => {
+    void Promise.resolve(navigate('/')).then(() => prompt(input));
+  };
   if (!isKind(kind)) {
     return (
       <main className="ql-missing">
@@ -32,8 +37,8 @@ export default function QuickLogScreen() {
   }
   return (
     <Sheet open title={TITLES[kind]} onClose={() => navigate('/')}><ToastProvider>
-      {kind === 'run' ? <RunForm /> : null}
-      {kind === 'martial' ? <MartialForm /> : null}
+      {kind === 'run' ? <RunForm onSaved={(entry) => { saved({ kind: 'run', day: entry.local_date, entryRef: { table: 'cardio_entries', id: entry.id } }); }} /> : null}
+      {kind === 'martial' ? <MartialForm onSaved={(entry) => { saved({ kind: 'muay_thai', day: entry.local_date, entryRef: { table: 'martial_entries', id: entry.id }, defaultTogether: entry.note?.startsWith(copy.y2Pads) }); }} /> : null}
       {kind === 'weight' ? <WeightForm /> : null}
       {kind === 'min' ? <MinForm /> : null}
     </ToastProvider></Sheet>

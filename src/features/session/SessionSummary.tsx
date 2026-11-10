@@ -1,3 +1,4 @@
+import { useProofPrompt } from '../proof/promptContext.ts';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
@@ -10,6 +11,11 @@ import { formatSessionDuration, sessionSeconds, workingKg } from './sessionModel
 
 export function SessionSummary({ session, onDone }: { session: Session; onDone: () => void }) {
   const repo = useRepo();
+  const prompt = useProofPrompt();
+  const done = () => {
+    if (!session.deleted_at) prompt({ kind: 'lift', day: session.local_date, entryRef: { table: 'sessions', id: session.id } });
+    onDone();
+  };
   const write = useSessionWrite();
   const [note, setNote] = useState(session.note ?? '');
   const [readiness, setReadiness] = useState<Partial<Readiness>>(session.readiness ?? {});
@@ -72,8 +78,8 @@ export function SessionSummary({ session, onDone }: { session: Session; onDone: 
       const next = note.trim();
       const complete = readiness.sleep && readiness.soreness && readiness.energy
         ? { sleep: readiness.sleep, soreness: readiness.soreness, energy: readiness.energy } : null;
-      if (working.length === 0 || (next === (session.note ?? '') && complete === null)) { onDone(); return; }
-      void write.run(() => repo.w.updateSession(session.id, { note: next, ...(complete ? { readiness: complete } : {}) }), onDone);
+      if (working.length === 0 || (next === (session.note ?? '') && complete === null)) { done(); return; }
+      void write.run(() => repo.w.updateSession(session.id, { note: next, ...(complete ? { readiness: complete } : {}) }), done);
     }}>{copy.summaryDone}</Button>
   </section>;
 }

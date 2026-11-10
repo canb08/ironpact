@@ -104,6 +104,7 @@ test('three taps to a set, ten sets scroll in the page, and Done returns to Toda
   await page.keyboard.up('Enter');
   await expect(page.getByRole('region', { name: copy.summaryTitle })).toContainText('Bench press');
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
+  await page.getByRole('dialog', { name: copy.y9Together }).getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('shared-bar')).toBeVisible();
 });

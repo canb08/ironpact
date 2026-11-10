@@ -83,7 +83,8 @@ for (const theme of ['dark', 'light'] as const) {
       await page.getByRole('dialog').locator('button[type="submit"]').click();
       if (process.env.X11_CAPTURE !== 'before') {
         const saved = kind === 'weight' ? copy.x11WeighInSaved : kind === 'run' ? copy.x11RunSaved : copy.x11MinSaved;
-        await expect(page.getByRole('dialog').getByRole('status')).toHaveText(saved);
+        if (kind === 'run') await expect(page.getByRole('dialog', { name: copy.y9Together }).getByText(copy.summarySaved)).toBeVisible();
+        else await expect(page.getByRole('dialog').getByRole('status')).toHaveText(saved);
       }
       await capture(page, `${theme}/log-${kind}-saved`);
       await page.getByRole('button', { name: copy.close, exact: true }).click();

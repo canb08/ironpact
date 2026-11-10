@@ -1,3 +1,5 @@
+// Y9 is registered here because the frozen Playwright config discovers p*-*.spec.ts.
+import './y9-proof.spec.ts';
 import { expect, test } from '@playwright/test';
 import { copy } from '../../src/ui/copy.ts';
 import { logBench, reachFloor, waitForBench } from './helpers.ts';
@@ -13,6 +15,7 @@ test.beforeEach(async ({ page }) => {
 test('tabs reach every main screen; Progress reaches an exercise and its day, with back headers', async ({ page }) => {
   await reachFloor(page);
   await waitForBench(page);
+  await expect(tabs(page).getByRole('link')).toHaveCount(5);
   await logBench(page, 1);
   await expect(page.getByTestId('session-live')).toBeVisible();
   await tabs(page).getByRole('link', { name: copy.progressTitle, exact: true }).click();
@@ -100,6 +103,7 @@ test('only set-input focus hides the tabs; they return after blur and workout co
   await expect(page.getByTestId('session-live')).toHaveCount(0);
   await expect(tabs(page)).toBeVisible();
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
+  await page.getByRole('dialog', { name: copy.y9Together }).getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await tabs(page).getByRole('link', { name: copy.x10Today, exact: true }).click();
   await page.locator('.app-shell__header').getByRole('link', { name: copy.settings, exact: true }).click();

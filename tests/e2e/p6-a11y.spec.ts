@@ -130,6 +130,7 @@ test('axe, targets, names, rings and tab order on S1–S16', async ({ page }, in
   await audit(page, project, 'S5', device, findings);
 
   await page.getByRole('button', { name: copy.summaryDone, exact: true }).click();
+  await page.getByRole('dialog', { name: copy.y9Together }).getByRole('button', { name: copy.close, exact: true }).click();
   await expect(page.getByRole('link', { name: copy.x3StartWorkout, exact: true })).toBeVisible();
   await page.getByRole('link', { name: copy.x3StartWorkout, exact: true }).click();
   const again = page.getByRole('dialog', { name: copy.pickerTitle });
