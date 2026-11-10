@@ -18,6 +18,11 @@
 .proof-media__photo.is-loaded { opacity: 1; }
 .proof-media__retry { position: absolute; top: 12px; inset-inline: 8px; z-index: 2; min-height: 44px; color: #edebe6; background: #1e1f22; border: 1px solid #8c9199; border-radius: 8px; }
 .proof-placeholder { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 35%, #454951, #1e1f22 80%); }
+.proof-route { position: absolute; top: 8%; left: 12%; width: 76%; height: 60%; overflow: visible; }
+.proof-route path { fill: none; stroke: var(--steel); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1 10; }
+.proof-route circle { stroke: #edebe6; stroke-width: 2; }
+.proof-route__start { fill: var(--plate-red); }
+.proof-route__finish { fill: var(--plate-green); }
 .proof-bar { position: absolute; inset: 35% 8% auto; height: 6px; border-radius: 3px; background: #8c9199; transform: rotate(-18deg); }
 .proof-plates { position: absolute; top: 22%; left: 15%; display: flex; align-items: center; gap: 2px; transform: rotate(-18deg); }
 .proof-plates--1 { left: auto; right: 15%; top: 18%; flex-direction: row-reverse; }

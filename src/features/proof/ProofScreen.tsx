@@ -9,6 +9,7 @@ import { copy, fill } from '../../ui/copy.ts';
 import { feel } from '../../ui/feel/feel.ts';
 import { startViewTransition } from '../../ui/motion/viewTransition.ts';
 import { cardDetails, loadProof, longestStreak, type ProofData } from './model.ts';
+import { proofDisplayName } from './names.ts';
 import { ProofMedia } from './ProofMedia.tsx';
 import { ProofViewer } from './ProofViewer.tsx';
 import './proof.css';
@@ -58,7 +59,7 @@ function ProofWall({ data }: { data: ProofData }) {
           const details = cardDetails(card, data);
           return <article key={card.id} className={`proof-card${newCards.has(card.id) ? ' proof-card--new' : ''}`}>
             <button className="proof-card__open" onClick={() => open(card.id)} aria-label={`${formatDate(card.day, data.today, copy)} · ${details.title}`}>
-              <div className="proof-card__image" style={{ viewTransitionName: selected ? 'none' : `proof-${card.id}` }}><ProofMedia photo={card.photos[0]} volume={details.volume} /></div>
+              <div className="proof-card__image" style={{ viewTransitionName: selected ? 'none' : `proof-${card.id}` }}><ProofMedia kind={card.kind} photo={card.photos[0]} volume={details.volume} /></div>
               <span className="proof-card__scrim" />
               <span className="proof-card__text"><time dateTime={card.day}>{formatDate(card.day, data.today, copy)}</time><span className="proof-chip">{details.title}</span><Avatars card={card} data={data} />{details.pr && <span className="proof-pr">{copy.y9Pr}</span>}</span>
             </button>
@@ -73,6 +74,6 @@ export function Avatars({ card, data }: { card: ProofCardWithMedia; data: ProofD
   const ids = card.together ? [card.created_by, ...data.profiles.map((p) => p.id).filter((id) => id !== card.created_by)].slice(0, 2) : [card.created_by];
   return <span className="proof-avatars" aria-label={card.together ? copy.y9Together : copy.y9Solo}>{ids.map((id) => {
     const profile = data.profiles.find((p) => p.id === id);
-    return <span key={id} title={profile?.display_name} style={{ background: id === data.me?.id ? 'var(--plate-red)' : 'var(--plate-blue)' }}>{profile?.initial ?? '•'}</span>;
+    return <span key={id} title={proofDisplayName(profile?.display_name, id === data.me?.id ? copy.x7You : copy.x3Partner)} style={{ background: id === data.me?.id ? 'var(--plate-red)' : 'var(--plate-blue)' }}>{profile?.initial ?? '•'}</span>;
   })}</span>;
 }

@@ -78,7 +78,10 @@ test.describe('Y9 Proof', () => {
     await expect(cards).toHaveCount(2);
     const boxes = await cards.evaluateAll((nodes) => nodes.map((n) => { const r = n.getBoundingClientRect(); return { x: r.x, y: r.y }; }));
     expect(boxes[0]!.y).toBe(boxes[1]!.y); expect(boxes[1]!.x).toBeGreaterThan(boxes[0]!.x);
-    await expect(page.locator('.proof-card').filter({ hasText: /^.*Run/s }).locator('img')).toHaveCount(0);
+    const runCard = page.locator('.proof-card').filter({ hasText: /^.*Run/s });
+    await expect(runCard.locator('img')).toHaveCount(0);
+    await expect(runCard.locator('.proof-route')).toBeVisible();
+    await expect(runCard.locator('.proof-bar')).toHaveCount(0);
     await assertQuality(page); await capture(page, 'proof-filled');
     await cards.filter({ has: page.locator('img') }).getByRole('button').click();
     const viewer = page.getByRole('dialog', { name: copy.y9Title, exact: true });

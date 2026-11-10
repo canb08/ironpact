@@ -3,6 +3,7 @@ import type { DayEntries, Repo } from '../../data/adapter.ts';
 import { volume as workingVolume } from '../../core/volume.ts';
 import { recomputePrs } from '../../core/prs.ts';
 import { localDateOf } from '../../core/weeks.ts';
+import { proofDisplayName } from './names.ts';
 import { copy, fill } from '../../ui/copy.ts';
 import { formatClock, formatKm, formatPace } from '../quicklog/time.ts';
 
@@ -30,7 +31,12 @@ export async function loadProof(repo: Repo) {
   const [me, crew, exercises, prs] = await Promise.all([repo.q.me(), repo.q.myCrew(), repo.q.exercises(), repo.q.prEvents({})]);
   const today = localDateOf(new Date().toISOString(), me?.tz ?? 'UTC');
   const users = crew?.members.filter((m) => !m.left_at).map((m) => m.user_id) ?? [];
-  const profiles = await repo.q.profiles(users);
+  const profiles = (await repo.q.profiles(users)).map((profile) => {
+    const fallback = profile.id === me?.id ? copy.x7You : copy.x3Partner;
+    const displayName = proofDisplayName(profile.display_name, fallback);
+    const legacy = !profile.display_name.trim() || profile.display_name.trim() === copy.x3LegacyName;
+    return { ...profile, display_name: displayName, initial: legacy ? displayName.charAt(0) : profile.initial };
+  });
   const histories = await Promise.all(users.map((id) => repo.q.entriesBetween(id, '0001-01-01', '9999-12-31')));
   const dates = [today, ...(crew?.members.map((m) => m.joined_at.slice(0, 10)) ?? []), ...histories.flatMap((h) => [...h.sessions, ...h.cardio, ...h.martial].map((row) => row.local_date))].sort();
   const earliest = dates[0] ?? today;

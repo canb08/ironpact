@@ -53,7 +53,7 @@ export function ProofViewer({ card, data, onClose, onChange }: { card: ProofCard
       onPointerDown={(event) => { gesture.current = { x: event.clientX, y: event.clientY }; }}
       onPointerUp={(event) => { const start = gesture.current; gesture.current = null; if (!start) return; const dx = event.clientX - start.x; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(event.clientY - start.y) * 1.5) move(dx < 0 ? 1 : -1); }}
       onPointerCancel={() => { gesture.current = null; }}>
-      {card.photos.length ? card.photos.map((photo) => <ProofMedia key={photo.id} photo={photo} eager />) : <ProofMedia volume={details.volume} eager />}
+      {card.photos.length ? card.photos.map((photo) => <ProofMedia key={photo.id} kind={card.kind} photo={photo} eager />) : <ProofMedia kind={card.kind} volume={details.volume} eager />}
     </div>
     <div className="proof-viewer__paging"><button disabled={index === 0 || busy} onClick={() => move(-1)}>{copy.y9Previous}</button><button disabled={index === data.cards.length - 1 || busy} onClick={() => move(1)}>{copy.y9Next}</button></div>
     <section className="proof-viewer__details" aria-label={copy.y9Details}>

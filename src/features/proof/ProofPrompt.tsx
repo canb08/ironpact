@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRepo } from '../../app/useRepo.ts';
 import { Button, Sheet, copy, fill } from '../../ui';
 import { feel } from '../../ui/feel/feel.ts';
+import { proofDisplayName } from './names.ts';
 import { consumeSelectedPhoto } from './photoSelection.ts';
 import type { ProofPromptInput } from './promptContext.ts';
 import './proof.css';
@@ -20,7 +21,7 @@ export default function ProofPrompt({ input, onDone }: { input: ProofPromptInput
   const partner = useLiveQuery(async () => {
     const [me, crew] = await Promise.all([repo.q.me(), repo.q.myCrew()]);
     const id = crew?.members.find((m) => m.user_id !== me?.id && !m.left_at)?.user_id;
-    return id ? (await repo.q.profiles([id]))[0]?.display_name || copy.y9Partner : null;
+    return id ? proofDisplayName((await repo.q.profiles([id]))[0]?.display_name) : null;
   }, [repo]);
   async function save(withPartner: boolean, file?: File, dismiss = false) {
     if (saving.current) { if (dismiss) onDone(); return; }
@@ -53,7 +54,7 @@ export default function ProofPrompt({ input, onDone }: { input: ProofPromptInput
         <input ref={camera} hidden type="file" accept="image/*" capture="environment" aria-label={copy.y9TakePhoto} onChange={(event) => { void consumeSelectedPhoto(event.currentTarget, (file) => save(together, file)); }} />
         <input ref={library} hidden type="file" accept="image/*" aria-label={copy.y9ChoosePhoto} onChange={(event) => { void consumeSelectedPhoto(event.currentTarget, (file) => save(together, file)); }} />
       </> : <>
-        <Button size="xl" aria-pressed={together} disabled={!partner} onClick={() => choose(true)}>{fill(copy.y9With, { partner: partner || copy.y9Partner })}</Button>
+        <Button size="xl" aria-pressed={together} disabled={!partner} onClick={() => choose(true)}>{fill(copy.y9With, { partner: partner ?? copy.x3Partner })}</Button>
         <Button size="xl" variant="secondary" aria-pressed={!together} onClick={() => choose(false)}>{copy.y9Solo}</Button>
       </>}
       {busy && <p role="status">{copy.y9Saving}</p>}

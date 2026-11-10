@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRepo } from '../../app/useRepo.ts';
-import type { ProofPhoto } from '../../core/types.ts';
+import type { ProofKind, ProofPhoto } from '../../core/types.ts';
 import { copy } from '../../ui/copy.ts';
 
-export function ProofMedia({ photo, eager = false, volume = 0 }: { photo?: ProofPhoto; eager?: boolean; volume?: number }) {
+export function ProofMedia({ photo, eager = false, volume = 0, kind = 'lift' }: { photo?: ProofPhoto; eager?: boolean; volume?: number; kind?: ProofKind }) {
   const repo = useRepo();
   const box = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(eager || typeof IntersectionObserver === 'undefined');
@@ -42,10 +42,14 @@ export function ProofMedia({ photo, eager = false, volume = 0 }: { photo?: Proof
   }, [repo, photo, key, visible, retry]);
   return <div ref={box} className="proof-media">
     <div className="proof-placeholder" aria-hidden={photo ? true : undefined} aria-label={copy.y9NoPhoto} role="img">
-      <span className="proof-bar" />
+      {kind === 'run' ? <svg className="proof-route" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+        <path d="M24 94 C12 66 78 78 68 52 S28 30 88 18" />
+        <circle className="proof-route__start" cx="24" cy="94" r="6" />
+        <circle className="proof-route__finish" cx="88" cy="18" r="6" />
+      </svg> : <><span className="proof-bar" />
       {[0, 1].map((side) => <span key={side} className={`proof-plates proof-plates--${side}`}>
         {['red', 'blue', 'yellow', 'green'].slice(0, Math.max(1, Math.min(4, Math.ceil(volume / 500)))).map((color) => <i key={color} style={{ background: `var(--plate-${color})` }} />)}
-      </span>)}
+      </span>)}</>}
     </div>
     {media?.key === key && <>
       {media.small && loaded !== key && <img className="proof-media__blur" src={media.small} alt="" aria-hidden="true" />}
